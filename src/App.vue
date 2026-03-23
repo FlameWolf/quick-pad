@@ -9,9 +9,10 @@
 	<BApp>
 		<h1>Hello App!</h1>
 		<p><strong>Current route path:</strong> {{ $route.fullPath }}</p>
-		<RouterLink to="/Notes">Notes</RouterLink>
+		<RouterLink to="/notes">Notes</RouterLink>
+		<RouterLink to="/drive">Drive Demo</RouterLink>
 		<main>
-			<RouterView />
+			<RouterView/>
 		</main>
 	</BApp>
 </template>
