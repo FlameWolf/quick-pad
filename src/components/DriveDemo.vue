@@ -1,37 +1,34 @@
 <script setup lang="ts">
-	import { ref } from "vue";
-	import { useGoogleDrive } from "../composables/useGoogleDrive";
-	const { isAuthorized, signIn, saveJsonToAppData, loadJsonFromAppData, listAppDataFiles } = useGoogleDrive();
-	const output = ref("");
-	async function handleLogin() {
-		await signIn();
-		output.value = "Signed in.";
+	import { onMounted } from "vue";
+	import { useGoogleAuth } from "@/composables/useGoogleAuth";
+	import { useGoogleDrive } from "@/composables/useGoogleDrive";
+
+	const { user, isReady, isSignedIn, tryRestoreSession, signIn, signOut } = useGoogleAuth();
+	const { readJSON, writeJSON } = useGoogleDrive();
+
+	async function loadData() {
+		const data = await readJSON("app-data.json");
+		console.log("Loaded:", data);
 	}
-	async function saveSample() {
-		const payload = {
-			theme: "dark",
-			lastProjectId: 42,
-			savedAt: new Date().toISOString()
-		};
-		const result = await saveJsonToAppData("my-app-state.json", payload);
-		output.value = `Saved. File ID: ${result.id}`;
+
+	async function saveData() {
+		await writeJSON("app-data.json", { notes: ["hello"], lastSync: new Date().toISOString() });
 	}
-	async function loadSample() {
-		const data = await loadJsonFromAppData("my-app-state.json");
-		output.value = JSON.stringify(data, null, 2);
-	}
-	async function listFiles() {
-		const data = await listAppDataFiles();
-		output.value = JSON.stringify(data, null, 2);
-	}
+
+	onMounted(() => {
+		tryRestoreSession();
+	});
 </script>
 
 <template>
-	<div>
-		<button @click="handleLogin">Connect Google Drive</button>
-		<button @click="saveSample" :disabled="!isAuthorized">Save App State</button>
-		<button @click="loadSample" :disabled="!isAuthorized">Load App State</button>
-		<button @click="listFiles" :disabled="!isAuthorized">List AppData Files</button>
-		<pre>{{ output }}</pre>
+	<div v-if="!isReady">Restoring session…</div>
+	<div v-else-if="!isSignedIn">
+		<button @click="signIn">Sign in with Google</button>
+	</div>
+	<div v-else>
+		<p>Hello, {{ user?.name }}</p>
+		<button @click="loadData">Load from Drive</button>
+		<button @click="saveData">Save to Drive</button>
+		<button @click="signOut">Sign out</button>
 	</div>
 </template>

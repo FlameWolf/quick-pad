@@ -1,3 +1,6 @@
+declare namespace globalThis {
+	declare const google: any;
+}
 declare module "crypto" {
 	type UUID = `${string}-${string}-${string}-${string}-${string}`;
 }
