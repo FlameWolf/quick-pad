@@ -19,7 +19,9 @@ export function useUndoRedo<T>(initial: T): UndoRedo<T> {
 	const canRedo = computed(() => future.value.length > 0);
 
 	function push(value: T) {
-		if (value === current.value) return;
+		if (value === current.value) {
+			return;
+		}
 		past.value.push(current.value);
 		if (past.value.length > MAX_HISTORY) {
 			past.value.shift();

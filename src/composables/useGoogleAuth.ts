@@ -1,5 +1,8 @@
+import { emptyString } from "@/library";
 import { ref, readonly } from "vue";
 
+let tokenClient: any | null = null;
+let tokenExpiresAt = 0;
 const CLIENT_ID = import.meta.env.VITE_GOOG_OAUTH_CLIENT_ID;
 const SCOPES = "https://www.googleapis.com/auth/drive.appdata openid email profile";
 const SESSION_KEY = "google_session_hint";
@@ -7,8 +10,6 @@ const accessToken = ref<string | null>(null);
 const user = ref<{ email: string; name: string } | null>(null);
 const isReady = ref(false);
 const isSignedIn = ref(false);
-let tokenClient: any | null = null;
-let tokenExpiresAt = 0;
 
 export function useGoogleAuth() {
 	function initClient() {
@@ -40,7 +41,7 @@ export function useGoogleAuth() {
 		}
 		const hadSession = localStorage.getItem(SESSION_KEY);
 		if (hadSession) {
-			tokenClient!.requestAccessToken({ prompt: "" });
+			tokenClient!.requestAccessToken({ prompt: emptyString });
 		} else {
 			isReady.value = true;
 		}
@@ -97,7 +98,7 @@ export function useGoogleAuth() {
 					resolve(response.access_token);
 				}
 			};
-			tokenClient!.requestAccessToken({ prompt: "" });
+			tokenClient!.requestAccessToken({ prompt: emptyString });
 		});
 	}
 

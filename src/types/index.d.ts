@@ -1,9 +1,11 @@
 declare namespace globalThis {
 	declare const google: any;
 }
+
 declare module "crypto" {
 	type UUID = `${string}-${string}-${string}-${string}-${string}`;
 }
+
 declare namespace Intl {
 	type Intl$Locale = string;
 	type Intl$Locales = Intl$Locale | Intl$Locale[];

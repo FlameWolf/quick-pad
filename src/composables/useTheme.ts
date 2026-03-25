@@ -19,6 +19,7 @@ export function useTheme() {
 		mediaQuery.addEventListener("change", handleChange);
 		isListening.value = true;
 	}
+
 	return {
 		isDark: readonly(isDark)
 	};

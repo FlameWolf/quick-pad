@@ -4,6 +4,7 @@
 	import type { UUID } from "crypto";
 	import type { NoteModel } from "@/models/NoteModel";
 	import { emptyString } from "@/library";
+
 	const notes = useNotesStore();
 	const props = defineProps<{
 		id: UUID;
