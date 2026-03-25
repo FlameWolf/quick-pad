@@ -1,14 +1,14 @@
 import { createRouter, createWebHistory } from "vue-router";
 import DisplayNoteList from "@/components/DisplayNoteList.vue";
-import DisplayNote from "@/components/DisplayNote.vue";
-import DriveDemo from "@/components/DriveDemo.vue";
+import EditNote from "@/components/EditNote.vue";
 
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
 	routes: [
+		{ path: "/", redirect: "/notes" },
 		{ path: "/notes", component: DisplayNoteList },
-		{ path: "/notes/:id", component: DisplayNote, props: true },
-		{ path: "/drive", component: DriveDemo }
+		{ path: "/notes/new", component: EditNote },
+		{ path: "/notes/:id", component: EditNote, props: true }
 	]
 });
 
