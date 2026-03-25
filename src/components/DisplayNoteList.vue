@@ -1,7 +1,9 @@
 <script setup lang="ts">
 	import { useNotesStore } from "@/stores/notes";
+	import { useFileIO } from "@/composables/useFileIO";
 	import { computed } from "vue";
 	const noteStore = useNotesStore();
+	const { importFiles, exportAllNotes } = useFileIO();
 	const hasNotes = computed(() => noteStore.notes.length > 0);
 
 	function formatDate(date?: Date): string {
@@ -19,10 +21,18 @@
 			</svg>
 		</div>
 		<p class="text-muted mb-3">No notes yet</p>
-		<RouterLink to="/notes/new" class="btn btn-primary">Create your first note</RouterLink>
+		<div class="d-flex gap-2 justify-content-center">
+			<RouterLink to="/notes/new" class="btn btn-primary">Create your first note</RouterLink>
+			<button class="btn btn-outline-secondary" @click="importFiles">Import from files</button>
+		</div>
 	</div>
 
-	<div v-else class="notes-grid">
+	<div v-else>
+		<div class="d-flex gap-2 mb-3 justify-content-end">
+			<button class="btn btn-outline-secondary btn-sm" @click="importFiles">Import</button>
+			<button class="btn btn-outline-secondary btn-sm" @click="exportAllNotes">Export All</button>
+		</div>
+		<div class="notes-grid">
 		<RouterLink to="/notes/new" class="card note-card new-note-card text-decoration-none">
 			<div class="card-body d-flex align-items-center justify-content-center">
 				<span class="fs-1 text-muted">+</span>
@@ -41,6 +51,7 @@
 				<p class="card-text text-muted small flex-grow-1 overflow-hidden">{{ note.summary }}</p>
 			</div>
 		</RouterLink>
+		</div>
 	</div>
 </template>
 

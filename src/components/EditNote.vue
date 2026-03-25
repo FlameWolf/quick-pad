@@ -4,6 +4,7 @@
 	import { useNotesStore } from "@/stores/notes";
 	import { useUndoRedo } from "@/composables/useUndoRedo";
 	import { NoteModel } from "@/models/NoteModel";
+	import { useFileIO } from "@/composables/useFileIO";
 	import { getSentenceCount, getWordCount, getCharacterCount } from "@/library";
 	import type { UUID } from "crypto";
 
@@ -11,6 +12,7 @@
 	const router = useRouter();
 	const route = useRoute();
 	const store = useNotesStore();
+	const { exportNote } = useFileIO();
 
 	const isCreateMode = computed(() => route.path === "/notes/new");
 	const existingNote = computed(() => (props.id && !isCreateMode.value) ? store.getNote(props.id) : undefined);
@@ -112,6 +114,7 @@
 			<RouterLink to="/notes" class="btn btn-outline-secondary btn-sm">&larr; Back</RouterLink>
 			<div class="d-flex gap-2" v-if="!isCreateMode && !isEditing">
 				<button class="btn btn-outline-primary btn-sm" @click="startEditing">Edit</button>
+				<button class="btn btn-outline-secondary btn-sm" v-if="existingNote" @click="exportNote(existingNote)">Export</button>
 				<button
 					v-if="!confirmingDelete"
 					class="btn btn-outline-danger btn-sm"
