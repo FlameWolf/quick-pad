@@ -31,6 +31,9 @@ export const useNotesStore = defineStore("notes", () => {
 	const removeAllNotes = () => {
 		notes.value = [];
 	};
+	const replaceAllNotes = (newNotes: NoteModel[]) => {
+		notes.value = newNotes;
+	};
 	return {
 		notes,
 		noteCount,
@@ -39,6 +42,7 @@ export const useNotesStore = defineStore("notes", () => {
 		getNote,
 		removeNote,
 		getAllNotes,
-		removeAllNotes
+		removeAllNotes,
+		replaceAllNotes
 	};
 });
