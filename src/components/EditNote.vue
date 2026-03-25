@@ -15,7 +15,7 @@
 	const { exportNote } = useFileIO();
 
 	const isCreateMode = computed(() => route.path === "/notes/new");
-	const existingNote = computed(() => (props.id && !isCreateMode.value) ? store.getNote(props.id) : undefined);
+	const existingNote = computed(() => (props.id && !isCreateMode.value ? store.getNote(props.id) : undefined));
 	const isEditing = ref(isCreateMode.value);
 
 	const editTitle = ref(existingNote.value?.title ?? "");
@@ -92,7 +92,7 @@
 		confirmingDelete.value = false;
 	}
 
-	const displayContent = computed(() => isEditing.value ? editContent.value : (existingNote.value?.content ?? ""));
+	const displayContent = computed(() => (isEditing.value ? editContent.value : (existingNote.value?.content ?? "")));
 	const sentenceCount = computed(() => getSentenceCount(displayContent.value));
 	const wordCount = computed(() => getWordCount(displayContent.value));
 	const characterCount = computed(() => getCharacterCount(displayContent.value));
@@ -109,17 +109,12 @@
 
 <template>
 	<div class="edit-note">
-		<!-- Top action bar -->
 		<div class="d-flex justify-content-between align-items-center mb-3">
 			<RouterLink to="/notes" class="btn btn-outline-secondary btn-sm">&larr; Back</RouterLink>
 			<div class="d-flex gap-2" v-if="!isCreateMode && !isEditing">
 				<button class="btn btn-outline-primary btn-sm" @click="startEditing">Edit</button>
 				<button class="btn btn-outline-secondary btn-sm" v-if="existingNote" @click="exportNote(existingNote)">Export</button>
-				<button
-					v-if="!confirmingDelete"
-					class="btn btn-outline-danger btn-sm"
-					@click="deleteNote"
-				>Delete</button>
+				<button v-if="!confirmingDelete" class="btn btn-outline-danger btn-sm" @click="deleteNote">Delete</button>
 				<template v-if="confirmingDelete">
 					<button class="btn btn-danger btn-sm" @click="deleteNote">Confirm Delete</button>
 					<button class="btn btn-outline-secondary btn-sm" @click="cancelDelete">Cancel</button>
@@ -132,8 +127,6 @@
 				<button class="btn btn-outline-secondary btn-sm" @click="cancelEditing">Cancel</button>
 			</div>
 		</div>
-
-		<!-- View mode -->
 		<template v-if="!isEditing && existingNote">
 			<h2 class="mb-3">{{ existingNote.title }}</h2>
 			<div class="text-muted small mb-3" v-if="existingNote.modifiedAt || existingNote.createdAt">
@@ -141,25 +134,10 @@
 			</div>
 			<div class="note-content">{{ existingNote.content }}</div>
 		</template>
-
-		<!-- Edit / Create mode -->
 		<template v-if="isEditing">
-			<input
-				v-model="editTitle"
-				type="text"
-				class="form-control form-control-lg mb-3"
-				placeholder="Note title"
-			/>
-			<textarea
-				:value="editContent"
-				@input="onContentInput"
-				class="form-control note-textarea"
-				placeholder="Start writing..."
-				rows="12"
-			></textarea>
+			<input v-model="editTitle" type="text" class="form-control form-control-lg mb-3" placeholder="Note title"/>
+			<textarea :value="editContent" @input="onContentInput" class="form-control note-textarea" placeholder="Start writing..." rows="12"></textarea>
 		</template>
-
-		<!-- Stats footer -->
 		<div class="d-flex gap-2 mt-3" v-if="displayContent">
 			<span class="badge text-bg-secondary" v-if="sentenceCount">{{ sentenceCount }} sentences</span>
 			<span class="badge text-bg-secondary" v-if="wordCount">{{ wordCount }} words</span>
@@ -168,18 +146,16 @@
 	</div>
 </template>
 
-<style scoped>
+<style>
 	.edit-note {
 		max-width: 800px;
 		margin: 0 auto;
 	}
-
 	.note-content {
 		white-space: pre-wrap;
 		word-break: break-word;
 		line-height: 1.7;
 	}
-
 	.note-textarea {
 		min-height: 300px;
 		resize: vertical;

@@ -26,66 +26,56 @@
 			<button class="btn btn-outline-secondary" @click="importFiles">Import from files</button>
 		</div>
 	</div>
-
 	<div v-else>
 		<div class="d-flex gap-2 mb-3 justify-content-end">
 			<button class="btn btn-outline-secondary btn-sm" @click="importFiles">Import</button>
 			<button class="btn btn-outline-secondary btn-sm" @click="exportAllNotes">Export All</button>
 		</div>
 		<div class="notes-grid">
-		<RouterLink to="/notes/new" class="card note-card new-note-card text-decoration-none">
-			<div class="card-body d-flex align-items-center justify-content-center">
-				<span class="fs-1 text-muted">+</span>
-			</div>
-		</RouterLink>
-
-		<RouterLink
-			v-for="note in noteStore.notes"
-			:key="note.id"
-			:to="`/notes/${note.id}`"
-			class="card note-card text-decoration-none"
-		>
-			<div class="card-body d-flex flex-column">
-				<h6 class="card-title text-truncate mb-1">{{ note.title }}</h6>
-				<small class="text-muted mb-2">{{ formatDate(note.modifiedAt ?? note.createdAt) }}</small>
-				<p class="card-text text-muted small flex-grow-1 overflow-hidden">{{ note.summary }}</p>
-			</div>
-		</RouterLink>
+			<RouterLink to="/notes/new" class="card note-card new-note-card text-decoration-none">
+				<div class="card-body d-flex align-items-center justify-content-center">
+					<span class="fs-1 text-muted">+</span>
+				</div>
+			</RouterLink>
+			<RouterLink v-for="note in noteStore.notes" :key="note.id" :to="`/notes/${note.id}`" class="card note-card text-decoration-none">
+				<div class="card-body d-flex flex-column">
+					<h6 class="card-title text-truncate mb-1">{{ note.title }}</h6>
+					<small class="text-muted mb-2">{{ formatDate(note.modifiedAt ?? note.createdAt) }}</small>
+					<p class="card-text text-muted small flex-grow-1 overflow-hidden">{{ note.summary }}</p>
+				</div>
+			</RouterLink>
 		</div>
 	</div>
 </template>
 
-<style scoped>
+<style>
 	.notes-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 		gap: 0.75rem;
 	}
-
 	.note-card {
 		height: 160px;
-		transition: box-shadow 0.15s ease, transform 0.15s ease;
+		transition:
+			box-shadow 0.15s ease,
+			transform 0.15s ease;
 		overflow: hidden;
 	}
-
 	.note-card:hover {
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 		transform: translateY(-2px);
 	}
-
 	.new-note-card {
 		border-style: dashed;
 		opacity: 0.7;
 	}
-
 	.new-note-card:hover {
 		opacity: 1;
 	}
-
 	.card-text {
 		display: -webkit-box;
-		-webkit-line-clamp: 3;
-		-webkit-box-orient: vertical;
+		line-clamp: 3;
+		box-orient: vertical;
 		overflow: hidden;
 	}
 </style>

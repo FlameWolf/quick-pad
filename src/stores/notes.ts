@@ -8,7 +8,9 @@ const STORAGE_KEY = "quick-pad-notes";
 
 function loadFromStorage(): NoteModel[] {
 	const raw = localStorage.getItem(STORAGE_KEY);
-	if (!raw) return [];
+	if (!raw) {
+		return [];
+	}
 	try {
 		const parsed: NoteJSON[] = JSON.parse(raw);
 		return parsed.map(NoteModel.fromJSON);
@@ -21,9 +23,13 @@ export const useNotesStore = defineStore("notes", () => {
 	const notes = ref<NoteModel[]>(loadFromStorage());
 	const noteCount = computed(() => notes.value.length);
 
-	watch(notes, () => {
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(notes.value));
-	}, { deep: true });
+	watch(
+		notes,
+		() => {
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(notes.value));
+		},
+		{ deep: true }
+	);
 
 	const addNote = (note: NoteModel) => {
 		notes.value.push(note);
@@ -56,7 +62,7 @@ export const useNotesStore = defineStore("notes", () => {
 		notes.value = [];
 	};
 
-	const replaceAll = (newNotes: NoteModel[]) => {
+	const replaceAllNotes = (newNotes: NoteModel[]) => {
 		notes.value = newNotes;
 	};
 
@@ -69,6 +75,6 @@ export const useNotesStore = defineStore("notes", () => {
 		removeNote,
 		getAllNotes,
 		removeAllNotes,
-		replaceAll
+		replaceAllNotes
 	};
 });

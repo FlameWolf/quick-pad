@@ -4,13 +4,15 @@ import { NoteModel } from "@/models/NoteModel";
 
 function triggerDownload(blob: Blob, filename: string) {
 	const url = URL.createObjectURL(blob);
-	const a = document.createElement("a");
-	a.href = url;
-	a.download = filename;
-	document.body.appendChild(a);
-	a.click();
-	document.body.removeChild(a);
-	URL.revokeObjectURL(url);
+	const anchor = document.createElement("a");
+	anchor.href = url;
+	anchor.download = filename;
+	document.body.appendChild(anchor);
+	anchor.click();
+	setTimeout(() => {
+		document.body.removeChild(anchor);
+		URL.revokeObjectURL(url);
+	});
 }
 
 function sanitizeFilename(name: string): string {
@@ -21,19 +23,17 @@ export function useFileIO() {
 	const store = useNotesStore();
 
 	function importFiles(): Promise<number> {
-		return new Promise((resolve) => {
+		return new Promise(resolve => {
 			const input = document.createElement("input");
 			input.type = "file";
 			input.multiple = true;
 			input.accept = ".txt,text/plain";
-
 			input.addEventListener("change", async () => {
 				const files = input.files;
 				if (!files || files.length === 0) {
 					resolve(0);
 					return;
 				}
-
 				let count = 0;
 				for (const file of files) {
 					const content = await file.text();
@@ -44,7 +44,6 @@ export function useFileIO() {
 				}
 				resolve(count);
 			});
-
 			input.click();
 		});
 	}
@@ -56,11 +55,11 @@ export function useFileIO() {
 
 	async function exportAllNotes() {
 		const notes = store.getAllNotes();
-		if (notes.length === 0) return;
-
+		if (notes.length === 0) {
+			return;
+		}
 		const zip = new JSZip();
 		const usedNames = new Set<string>();
-
 		for (const note of notes) {
 			let name = sanitizeFilename(note.title);
 			let uniqueName = name;
@@ -71,7 +70,6 @@ export function useFileIO() {
 			usedNames.add(uniqueName);
 			zip.file(`${uniqueName}.txt`, note.content);
 		}
-
 		const blob = await zip.generateAsync({ type: "blob" });
 		triggerDownload(blob, "quick-pad-notes.zip");
 	}

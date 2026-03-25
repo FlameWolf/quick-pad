@@ -11,10 +11,7 @@
 	useTheme();
 
 	const { isSignedIn, isReady, user, tryRestoreSession, signIn, signOut } = useGoogleAuth();
-	const {
-		isSyncing, lastSyncedAt, syncError, autoSyncEnabled,
-		lastSyncMessage, saveToCloud, loadFromCloud, setAutoSync, dismissMessage
-	} = useNotesSync();
+	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, lastSyncMessage, saveToCloud, loadFromCloud, setAutoSync, dismissMessage } = useNotesSync();
 	const showSyncMenu = ref(false);
 
 	onMounted(() => {
@@ -70,55 +67,31 @@
 					<template v-if="isReady">
 						<template v-if="isSignedIn">
 							<div class="position-relative">
-								<button
-									class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
-									@click="toggleSyncMenu"
-									:disabled="isSyncing"
-									title="Google Drive Sync"
-								>
+								<button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" @click="toggleSyncMenu" :disabled="isSyncing" title="Google Drive Sync">
 									<span v-if="isSyncing" class="spinner-border spinner-border-sm" role="status"></span>
 									<span v-else-if="syncError" class="sync-icon text-warning" title="Sync error">&#9888;</span>
 									<span v-else-if="lastSyncedAt" class="sync-icon text-success">&#10003;</span>
 									<span v-else class="sync-icon">&#9729;</span>
-									{{ user?.name ?? "Sync" }}
+									<span>{{ user?.name ?? "Sync" }}</span>
 								</button>
-								<div
-									v-if="showSyncMenu"
-									class="dropdown-menu show position-absolute end-0 mt-1"
-									style="min-width: 220px; z-index: 1050;"
-								>
-									<div class="dropdown-header text-muted small px-3 py-1">
-										{{ user?.email }}
-									</div>
+								<div v-if="showSyncMenu" class="dropdown-menu show position-absolute end-0 mt-1" style="min-width: 220px; z-index: 1050">
+									<div class="dropdown-header text-muted small px-3 py-1">{{ user?.email }}</div>
 									<div class="dropdown-divider"></div>
 									<button class="dropdown-item d-flex align-items-center gap-2" @click="handleToggleAutoSync">
-										<input
-											type="checkbox"
-											:checked="autoSyncEnabled"
-											class="form-check-input m-0"
-											@click.stop="handleToggleAutoSync"
-										/>
-										Auto-sync
+										<input type="checkbox" :checked="autoSyncEnabled" class="form-check-input m-0" @click.stop="handleToggleAutoSync"/>
+										<span>Auto-sync</span>
 									</button>
 									<div class="dropdown-divider"></div>
-									<button class="dropdown-item" @click="handleSave">
-										&#9650; Save to Drive
-									</button>
-									<button class="dropdown-item" @click="handleLoad">
-										&#9660; Load from Drive
-									</button>
-									<div v-if="lastSyncedLabel" class="dropdown-header text-muted small px-3 py-1">
-										Last synced: {{ lastSyncedLabel }}
-									</div>
+									<button class="dropdown-item" @click="handleSave">&#9650; Save to Drive</button>
+									<button class="dropdown-item" @click="handleLoad">&#9660; Load from Drive</button>
+									<div v-if="lastSyncedLabel" class="dropdown-header text-muted small px-3 py-1">Last synced: {{ lastSyncedLabel }}</div>
 									<div class="dropdown-divider"></div>
 									<button class="dropdown-item text-danger" @click="handleSignOut">Sign out</button>
 								</div>
 							</div>
-							<div v-if="showSyncMenu" class="position-fixed top-0 start-0 w-100 h-100" style="z-index: 1040;" @click="closeSyncMenu"></div>
+							<div v-if="showSyncMenu" class="position-fixed top-0 start-0 w-100 h-100" style="z-index: 1040" @click="closeSyncMenu"></div>
 						</template>
-						<button v-else class="btn btn-outline-primary btn-sm" @click="signIn">
-							Sign in with Google
-						</button>
+						<button v-else class="btn btn-outline-primary btn-sm" @click="signIn">Sign in with Google</button>
 					</template>
 				</div>
 			</div>
@@ -126,13 +99,7 @@
 		<main class="container pb-4">
 			<RouterView/>
 		</main>
-		<SyncToast
-			v-if="lastSyncMessage"
-			:message="lastSyncMessage.text"
-			:type="lastSyncMessage.type"
-			:visible="!!lastSyncMessage"
-			@dismiss="dismissMessage"
-		/>
+		<SyncToast v-if="lastSyncMessage" :message="lastSyncMessage.text" :type="lastSyncMessage.type" :visible="!!lastSyncMessage" @dismiss="dismissMessage"/>
 	</BApp>
 </template>
 
@@ -140,7 +107,6 @@
 	body {
 		min-height: 100vh;
 	}
-
 	.sync-icon {
 		font-size: 0.875rem;
 		line-height: 1;

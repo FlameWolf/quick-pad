@@ -46,7 +46,10 @@ export function useNotesSync() {
 		isSyncing.value = true;
 		syncError.value = null;
 		try {
-			await writeJSON(SYNC_FILENAME, store.notes.map(n => n.toJSON()));
+			await writeJSON(
+				SYNC_FILENAME,
+				store.notes.map(n => n.toJSON())
+			);
 			const now = new Date();
 			lastSyncedAt.value = now;
 			persistLastSynced(now);
@@ -66,7 +69,7 @@ export function useNotesSync() {
 		try {
 			const data = await readJSON<NoteJSON[]>(SYNC_FILENAME);
 			if (data && Array.isArray(data)) {
-				store.replaceAll(data.map(NoteModel.fromJSON));
+				store.replaceAllNotes(data.map(NoteModel.fromJSON));
 				const now = new Date();
 				lastSyncedAt.value = now;
 				persistLastSynced(now);
@@ -93,15 +96,23 @@ export function useNotesSync() {
 	}
 
 	function startAutoSync() {
-		if (watcherStop) return;
+		if (watcherStop) {
+			return;
+		}
 		const store = useNotesStore();
-		watcherStop = watch(() => store.notes, () => {
-			if (!isSignedIn.value || !autoSyncEnabled.value) return;
-			if (debounceTimer) clearTimeout(debounceTimer);
-			debounceTimer = setTimeout(() => {
-				saveToCloud();
-			}, DEBOUNCE_MS);
-		}, { deep: true });
+		watcherStop = watch(
+			() => store.notes,
+			() => {
+				if (!isSignedIn.value || !autoSyncEnabled.value) {
+					return;
+				}
+				if (debounceTimer) clearTimeout(debounceTimer);
+				debounceTimer = setTimeout(() => {
+					saveToCloud();
+				}, DEBOUNCE_MS);
+			},
+			{ deep: true }
+		);
 	}
 
 	function stopAutoSync() {
@@ -119,14 +130,17 @@ export function useNotesSync() {
 		lastSyncMessage.value = null;
 	}
 
-	// Start auto-sync if conditions are met
-	watch(isSignedIn, (signedIn) => {
-		if (signedIn && autoSyncEnabled.value) {
-			startAutoSync();
-		} else {
-			stopAutoSync();
-		}
-	}, { immediate: true });
+	watch(
+		isSignedIn,
+		signedIn => {
+			if (signedIn && autoSyncEnabled.value) {
+				startAutoSync();
+			} else {
+				stopAutoSync();
+			}
+		},
+		{ immediate: true }
+	);
 
 	return {
 		isSyncing: readonly(isSyncing),

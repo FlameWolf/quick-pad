@@ -20,7 +20,9 @@ export function useUndoRedo<T>(initial: T): UndoRedo<T> {
 	const canRedo = computed(() => future.value.length > 0);
 
 	function push(value: T) {
-		if (value === current.value) return;
+		if (value === current.value) {
+			return;
+		}
 		past.value.push(current.value);
 		if (past.value.length > MAX_HISTORY) {
 			past.value.shift();
@@ -30,13 +32,17 @@ export function useUndoRedo<T>(initial: T): UndoRedo<T> {
 	}
 
 	function undo() {
-		if (past.value.length === 0) return;
+		if (past.value.length === 0) {
+			return;
+		}
 		future.value.push(current.value);
 		current.value = past.value.pop()!;
 	}
 
 	function redo() {
-		if (future.value.length === 0) return;
+		if (future.value.length === 0) {
+			return;
+		}
 		past.value.push(current.value);
 		current.value = future.value.pop()!;
 	}

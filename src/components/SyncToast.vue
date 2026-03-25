@@ -11,11 +11,14 @@
 		dismiss: [];
 	}>();
 
-	watch(() => props.visible, (val) => {
-		if (val && props.type === "success") {
-			setTimeout(() => emit("dismiss"), 3000);
+	watch(
+		() => props.visible,
+		val => {
+			if (val && props.type === "success") {
+				setTimeout(() => emit("dismiss"), 3000);
+			}
 		}
-	});
+	);
 </script>
 
 <template>
@@ -30,14 +33,13 @@
 	</Transition>
 </template>
 
-<style scoped>
+<style>
 	.toast-container {
 		position: fixed;
 		bottom: 1.5rem;
 		right: 1.5rem;
 		z-index: 2000;
 	}
-
 	.toast-notification {
 		display: flex;
 		align-items: center;
@@ -48,28 +50,23 @@
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 		max-width: 360px;
 	}
-
 	.toast-notification.success {
 		background-color: var(--bs-success-bg-subtle, #d1e7dd);
 		color: var(--bs-success-text-emphasis, #0a3622);
 		border: 1px solid var(--bs-success-border-subtle, #a3cfbb);
 	}
-
 	.toast-notification.error {
 		background-color: var(--bs-danger-bg-subtle, #f8d7da);
 		color: var(--bs-danger-text-emphasis, #58151c);
 		border: 1px solid var(--bs-danger-border-subtle, #f1aeb5);
 	}
-
 	.toast-icon {
 		font-size: 1rem;
 		flex-shrink: 0;
 	}
-
 	.toast-text {
 		flex: 1;
 	}
-
 	.toast-close {
 		background: none;
 		border: none;
@@ -80,16 +77,13 @@
 		opacity: 0.6;
 		padding: 0 0.25rem;
 	}
-
 	.toast-close:hover {
 		opacity: 1;
 	}
-
 	.toast-slide-enter-active,
 	.toast-slide-leave-active {
 		transition: all 0.3s ease;
 	}
-
 	.toast-slide-enter-from,
 	.toast-slide-leave-to {
 		transform: translateX(100%);

@@ -1,5 +1,6 @@
-import { ref, readonly, onUnmounted } from "vue";
+import { ref, readonly } from "vue";
 
+const isListening = ref(false);
 const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 const isDark = ref(mediaQuery.matches);
 
@@ -12,13 +13,11 @@ function handleChange(e: MediaQueryListEvent) {
 	applyTheme(e.matches);
 }
 
-let listening = false;
-
 export function useTheme() {
-	if (!listening) {
+	if (!isListening.value === true) {
 		applyTheme(isDark.value);
 		mediaQuery.addEventListener("change", handleChange);
-		listening = true;
+		isListening.value = true;
 	}
 
 	return {
