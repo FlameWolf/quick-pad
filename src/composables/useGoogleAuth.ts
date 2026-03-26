@@ -36,11 +36,26 @@ export function useGoogleAuth() {
 		if (isReady.value) {
 			return;
 		}
-		if (!tokenClient) {
-			initClient();
+		try {
+			if (!tokenClient) {
+				initClient();
+			}
+		} catch {
+			isReady.value = true;
+			return;
 		}
 		const hadSession = localStorage.getItem(SESSION_KEY);
 		if (hadSession) {
+			const timeout = setTimeout(() => {
+				if (!isReady.value) {
+					isReady.value = true;
+				}
+			}, 5000);
+			const originalCallback = tokenClient!.callback;
+			tokenClient!.callback = (response: any) => {
+				clearTimeout(timeout);
+				originalCallback(response);
+			};
 			tokenClient!.requestAccessToken({ prompt: emptyString });
 		} else {
 			isReady.value = true;

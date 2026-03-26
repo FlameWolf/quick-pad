@@ -54,8 +54,7 @@ export function useFileIO() {
 		triggerDownload(blob, `${sanitizeFilename(note.title)}.txt`);
 	}
 
-	async function exportAllNotes() {
-		const notes = store.getAllNotes();
+	async function exportNotes(notes: NoteModel[]) {
 		if (notes.length === 0) {
 			return;
 		}
@@ -75,5 +74,9 @@ export function useFileIO() {
 		triggerDownload(blob, "quick-pad-notes.zip");
 	}
 
-	return { importFiles, exportNote, exportAllNotes };
+	async function exportAllNotes() {
+		await exportNotes(store.getAllNotes());
+	}
+
+	return { importFiles, exportNote, exportNotes, exportAllNotes };
 }
