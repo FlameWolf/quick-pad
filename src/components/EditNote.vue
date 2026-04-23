@@ -105,9 +105,9 @@
 
 <template>
 	<div class="edit-note">
-		<div class="d-flex justify-content-between align-items-center mb-3">
-			<RouterLink to="/notes" class="btn btn-outline-secondary btn-sm">&larr; Back</RouterLink>
-			<div class="d-flex gap-2" v-if="!isCreateMode && !isEditing">
+		<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+			<RouterLink to="/notes" class="btn btn-outline-secondary btn-sm" aria-label="Back to notes">&larr; Back</RouterLink>
+			<div class="d-flex flex-wrap gap-2" v-if="!isCreateMode && !isEditing">
 				<button class="btn btn-outline-primary btn-sm" @click="startEditing">Edit</button>
 				<button class="btn btn-outline-secondary btn-sm" v-if="existingNote" @click="exportNote(existingNote)">Export</button>
 				<button v-if="!confirmingDelete" class="btn btn-outline-danger btn-sm" @click="deleteNote">Delete</button>
@@ -116,9 +116,9 @@
 					<button class="btn btn-outline-secondary btn-sm" @click="cancelDelete">Cancel</button>
 				</template>
 			</div>
-			<div class="d-flex gap-2" v-if="isEditing">
-				<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canUndo.value" @click="doUndo" title="Undo">&#x21A9;</button>
-				<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canRedo.value" @click="doRedo" title="Redo">&#x21AA;</button>
+			<div class="d-flex flex-wrap gap-2" v-if="isEditing">
+				<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canUndo.value" @click="doUndo" title="Undo" aria-label="Undo">&#x21A9;</button>
+				<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canRedo.value" @click="doRedo" title="Redo" aria-label="Redo">&#x21AA;</button>
 				<button class="btn btn-primary btn-sm" @click="saveNote">Save</button>
 				<button class="btn btn-outline-secondary btn-sm" @click="cancelEditing">Cancel</button>
 			</div>
@@ -134,7 +134,7 @@
 			<input v-model="editTitle" type="text" class="form-control form-control-lg mb-3" placeholder="Note title"/>
 			<textarea :value="editContent" @input="onContentInput" class="form-control note-textarea" placeholder="Start writing..." rows="12"></textarea>
 		</template>
-		<div class="d-flex gap-2 mt-3" v-if="displayContent">
+		<div class="d-flex flex-wrap gap-2 mt-3" v-if="displayContent">
 			<span class="badge text-bg-secondary" v-if="sentenceCount">{{ sentenceCount }} sentences</span>
 			<span class="badge text-bg-secondary" v-if="wordCount">{{ wordCount }} words</span>
 			<span class="badge text-bg-secondary" v-if="characterCount">{{ characterCount }} characters</span>

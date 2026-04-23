@@ -3,14 +3,14 @@
 	import "bootstrap-icons/font/bootstrap-icons.min.css";
 	import { BApp } from "bootstrap-vue-next/components";
 	import { RouterView } from "vue-router";
-	import { computed, onMounted, ref } from "vue";
+	import { computed, onMounted, onBeforeUnmount, ref } from "vue";
 	import { useTheme } from "@/composables/useTheme";
 	import { useGoogleAuth } from "@/composables/useGoogleAuth";
 	import { useNotesSync } from "@/composables/useNotesSync";
 	import SyncToast from "@/components/SyncToast.vue";
 
 	const { isDark } = useTheme();
-	const { isSignedIn, isReady, user, tryRestoreSession, signIn, signOut } = useGoogleAuth();
+	const { isSignedIn, isReady, isConfigured, user, tryRestoreSession, signIn, signOut } = useGoogleAuth();
 	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, lastSyncMessage, saveToCloud, loadFromCloud, setAutoSync, dismissMessage } = useNotesSync();
 	const showSyncMenu = ref(false);
 	const authTimedOut = ref(false);
@@ -64,62 +64,82 @@
 	});
 
 	onMounted(() => {
-		readyTimeout = setTimeout(() => {
-			if (!isReady.value) {
-				authTimedOut.value = true;
-			}
-		}, 6000);
+		if (isConfigured.value) {
+			readyTimeout = setTimeout(() => {
+				if (!isReady.value) {
+					authTimedOut.value = true;
+				}
+			}, 6000);
+		}
 		tryRestoreSession();
+	});
+
+	onBeforeUnmount(() => {
+		if (readyTimeout) {
+			clearTimeout(readyTimeout);
+		}
 	});
 </script>
 <template>
 	<BApp>
-		<div class="position-absolute top-0 end-0 mt-1 me-1">
+		<div class="d-none position-absolute top-0 end-0 mt-1 me-1" aria-hidden="true">
 			<i class="bi" :class="{ 'bi-moon-stars-fill': isDark, 'bi-sun-fill': !isDark }"></i>
 		</div>
 		<nav class="navbar navbar-expand bg-body-tertiary border-bottom mb-4">
 			<div class="container">
 				<RouterLink to="/notes" class="navbar-brand fw-semibold">QuickPad</RouterLink>
 				<div class="d-flex align-items-center gap-2">
-					<template v-if="isReady">
+					<template v-if="!isConfigured">
+						<!-- Sync not configured — keep UI quiet so the app works in local-only mode -->
+					</template>
+					<template v-else-if="isReady">
 						<template v-if="isSignedIn">
 							<div class="position-relative">
-								<button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" @click="toggleSyncMenu" :disabled="isSyncing" title="Google Drive Sync">
+								<button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" @click="toggleSyncMenu" :disabled="isSyncing" :title="syncError ? `Sync error: ${syncError}` : 'Google Drive Sync'" aria-label="Google Drive Sync">
 									<span v-if="isSyncing" class="spinner-border spinner-border-sm" role="status"></span>
-									<span v-else-if="syncError" class="sync-icon text-warning" title="Sync error">&#9888;</span>
+									<span v-else-if="syncError" class="sync-icon text-warning">&#9888;</span>
 									<span v-else-if="lastSyncedAt" class="sync-icon text-success">&#10003;</span>
 									<span v-else class="sync-icon">&#9729;</span>
 									<span class="d-none d-md-inline">{{ user?.name ?? "Sync" }}</span>
 								</button>
-								<div v-if="showSyncMenu" class="dropdown-menu show sync-dropdown" style="z-index: 1050">
-									<div class="dropdown-header text-muted small px-3 py-1">{{ user?.email }}</div>
+								<div v-if="showSyncMenu" class="dropdown-menu show sync-dropdown">
+									<div class="dropdown-header text-muted small px-3 py-1 text-truncate">{{ user?.email }}</div>
 									<div class="dropdown-divider"></div>
-									<button class="dropdown-item sync-dropdown-item d-flex align-items-center gap-2" @click="handleToggleAutoSync">
-										<input type="checkbox" :checked="autoSyncEnabled" class="form-check-input m-0" @click.stop="handleToggleAutoSync"/>
+									<label class="dropdown-item sync-dropdown-item d-flex align-items-center gap-2 mb-0">
+										<input type="checkbox" :checked="autoSyncEnabled" class="form-check-input m-0" @change="handleToggleAutoSync"/>
 										<span>Auto-sync</span>
-									</button>
+									</label>
 									<div class="dropdown-divider"></div>
-									<button class="dropdown-item sync-dropdown-item" @click="handleSave">&#9650; Save to Drive</button>
-									<button class="dropdown-item sync-dropdown-item" @click="handleLoad">&#9660; Load from Drive</button>
+									<button class="dropdown-item sync-dropdown-item" @click="handleSave" :disabled="isSyncing">
+										<i class="bi bi-cloud-upload me-2" aria-hidden="true"></i>
+										Save to Drive
+									</button>
+									<button class="dropdown-item sync-dropdown-item" @click="handleLoad" :disabled="isSyncing">
+										<i class="bi bi-cloud-download me-2" aria-hidden="true"></i>
+										Load from Drive
+									</button>
 									<div v-if="lastSyncedLabel" class="dropdown-header text-muted small px-3 py-1">Last synced: {{ lastSyncedLabel }}</div>
 									<div class="dropdown-divider"></div>
-									<button class="dropdown-item sync-dropdown-item text-danger" @click="handleSignOut">Sign out</button>
+									<button class="dropdown-item sync-dropdown-item text-danger" @click="handleSignOut">
+										<i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>
+										Sign out
+									</button>
 								</div>
 							</div>
-							<div v-if="showSyncMenu" class="position-fixed top-0 start-0 w-100 h-100" style="z-index: 1040" @click="closeSyncMenu"></div>
+							<div v-if="showSyncMenu" class="sync-backdrop" @click="closeSyncMenu"></div>
 						</template>
-						<button v-else class="btn btn-outline-primary btn-sm" @click="signIn">
-							<i class="bi bi-google"></i>
+						<button v-else class="btn btn-outline-primary btn-sm" @click="signIn" aria-label="Sign in with Google">
+							<i class="bi bi-google" aria-hidden="true"></i>
 							<span class="d-none d-sm-inline ms-1">Sign in with Google</span>
 							<span class="d-sm-none ms-1">Sign in</span>
 						</button>
 					</template>
 					<template v-else>
 						<button v-if="authTimedOut" class="btn btn-outline-secondary btn-sm" disabled title="Google Sign-In library could not be loaded">
-							<i class="bi bi-cloud-slash"></i>
+							<i class="bi bi-cloud-slash" aria-hidden="true"></i>
 							<span class="d-none d-sm-inline ms-1">Sign-in unavailable</span>
 						</button>
-						<button v-else class="btn btn-outline-secondary btn-sm" disabled>
+						<button v-else class="btn btn-outline-secondary btn-sm" disabled aria-label="Initialising Google Sign-In">
 							<span class="spinner-border spinner-border-sm" role="status"></span>
 						</button>
 					</template>
@@ -142,15 +162,26 @@
 	}
 	.sync-dropdown {
 		position: absolute;
-		top: 0;
+		top: calc(100% + 0.25rem);
 		right: 0;
-		margin-top: 0.25rem;
-		min-width: 220px;
+		min-width: 240px;
+		max-width: calc(100vw - 1rem);
+		z-index: 1050;
 	}
 	.sync-dropdown-item {
 		min-height: 44px;
 		display: flex;
 		align-items: center;
+		white-space: normal;
+	}
+	.sync-dropdown-item:disabled {
+		opacity: 0.6;
+	}
+	.sync-backdrop {
+		position: fixed;
+		inset: 0;
+		z-index: 1040;
+		background: transparent;
 	}
 	@media (max-width: 575.98px) {
 		.sync-dropdown {
@@ -158,8 +189,9 @@
 			left: 0.5rem;
 			right: 0.5rem;
 			top: auto;
-			bottom: 0.5rem;
+			bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
 			min-width: auto;
+			max-width: none;
 			border-radius: 0.75rem;
 			box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15);
 		}

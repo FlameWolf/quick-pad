@@ -14,7 +14,7 @@ function handleChange(e: MediaQueryListEvent) {
 }
 
 export function useTheme() {
-	if (!isListening.value === true) {
+	if (!isListening.value) {
 		applyTheme(isDark.value);
 		mediaQuery.addEventListener("change", handleChange);
 		isListening.value = true;

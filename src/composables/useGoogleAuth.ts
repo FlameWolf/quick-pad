@@ -1,18 +1,51 @@
 import { emptyString } from "@/library";
-import { ref, readonly } from "vue";
+import { ref, readonly, computed } from "vue";
 
 let tokenClient: any | null = null;
 let tokenExpiresAt = 0;
-const CLIENT_ID = import.meta.env.VITE_GOOG_OAUTH_CLIENT_ID;
+let gsiReadyPromise: Promise<boolean> | null = null;
+const CLIENT_ID = import.meta.env.VITE_GOOG_OAUTH_CLIENT_ID ?? emptyString;
 const SCOPES = "https://www.googleapis.com/auth/drive.appdata openid email profile";
 const SESSION_KEY = "google_session_hint";
+const GSI_WAIT_MS = 6000;
 const accessToken = ref<string | null>(null);
 const user = ref<{ email: string; name: string } | null>(null);
 const isReady = ref(false);
 const isSignedIn = ref(false);
 
+function waitForGoogleIdentity(): Promise<boolean> {
+	if (gsiReadyPromise) {
+		return gsiReadyPromise;
+	}
+	gsiReadyPromise = new Promise(resolve => {
+		if (typeof google !== "undefined" && google?.accounts?.oauth2) {
+			resolve(true);
+			return;
+		}
+		const start = Date.now();
+		const interval = setInterval(() => {
+			if (typeof google !== "undefined" && google?.accounts?.oauth2) {
+				clearInterval(interval);
+				resolve(true);
+			} else if (Date.now() - start > GSI_WAIT_MS) {
+				clearInterval(interval);
+				resolve(false);
+			}
+		}, 100);
+	});
+	return gsiReadyPromise;
+}
+
 export function useGoogleAuth() {
-	function initClient() {
+	const isConfigured = computed(() => Boolean(CLIENT_ID));
+
+	function initClient(): boolean {
+		if (tokenClient) {
+			return true;
+		}
+		if (!CLIENT_ID || typeof google === "undefined" || !google?.accounts?.oauth2) {
+			return false;
+		}
 		tokenClient = google.accounts.oauth2.initTokenClient({
 			client_id: CLIENT_ID,
 			scope: SCOPES,
@@ -30,17 +63,19 @@ export function useGoogleAuth() {
 				isReady.value = true;
 			}
 		});
+		return true;
 	}
 
 	async function tryRestoreSession() {
 		if (isReady.value) {
 			return;
 		}
-		try {
-			if (!tokenClient) {
-				initClient();
-			}
-		} catch {
+		if (!CLIENT_ID) {
+			isReady.value = true;
+			return;
+		}
+		const loaded = await waitForGoogleIdentity();
+		if (!loaded || !initClient()) {
 			isReady.value = true;
 			return;
 		}
@@ -56,24 +91,39 @@ export function useGoogleAuth() {
 				clearTimeout(timeout);
 				originalCallback(response);
 			};
-			tokenClient!.requestAccessToken({ prompt: emptyString });
+			try {
+				tokenClient!.requestAccessToken({ prompt: emptyString });
+			} catch {
+				clearTimeout(timeout);
+				isReady.value = true;
+			}
 		} else {
 			isReady.value = true;
 		}
 	}
 
-	function signIn() {
-		if (!tokenClient) {
-			initClient();
+	async function signIn() {
+		if (!CLIENT_ID) {
+			return;
 		}
-		tokenClient!.requestAccessToken({ prompt: "consent" });
+		const loaded = await waitForGoogleIdentity();
+		if (!loaded || !initClient()) {
+			return;
+		}
+		try {
+			tokenClient!.requestAccessToken({ prompt: "consent" });
+		} catch {
+			console.log("Consent popup blocked or GSI not ready");
+		}
 	}
 
 	function signOut() {
-		if (accessToken.value) {
+		if (accessToken.value && typeof google !== "undefined" && google?.accounts?.oauth2) {
 			google.accounts.oauth2.revoke(accessToken.value, () => {
 				clearSession();
 			});
+		} else {
+			clearSession();
 		}
 	}
 
@@ -86,21 +136,32 @@ export function useGoogleAuth() {
 	}
 
 	async function fetchUserInfo(token: string) {
-		const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-			headers: {
-				Authorization: `Bearer ${token}`
+		try {
+			const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+				headers: {
+					Authorization: `Bearer ${token}`
+				}
+			});
+			if (!res.ok) {
+				return;
 			}
-		});
-		const data = await res.json();
-		user.value = {
-			email: data.email,
-			name: data.name
-		};
+			const data = await res.json();
+			user.value = {
+				email: data.email,
+				name: data.name
+			};
+		} catch {
+			// Network failure — leave user null, auth state stays signed in
+		}
 	}
 
 	async function getValidToken(): Promise<string> {
 		if (accessToken.value && Date.now() < tokenExpiresAt - 60_000) {
 			return accessToken.value;
+		}
+		const loaded = await waitForGoogleIdentity();
+		if (!loaded || !initClient()) {
+			throw new Error("Google Sign-In is unavailable");
 		}
 		return new Promise((resolve, reject) => {
 			const original = tokenClient!.callback;
@@ -122,6 +183,7 @@ export function useGoogleAuth() {
 		user: readonly(user),
 		isReady: readonly(isReady),
 		isSignedIn: readonly(isSignedIn),
+		isConfigured,
 		tryRestoreSession,
 		signIn,
 		signOut,
