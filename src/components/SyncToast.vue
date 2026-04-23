@@ -26,7 +26,7 @@
 			<div class="toast-notification" :class="type">
 				<span class="toast-icon">{{ type === "success" ? "&#10003;" : "&#9888;" }}</span>
 				<span class="toast-text">{{ message }}</span>
-				<button class="toast-close" @click="$emit('dismiss')">&times;</button>
+				<button class="btn-close" @click="$emit('dismiss')"></button>
 			</div>
 		</div>
 	</Transition>
@@ -65,19 +65,6 @@
 	}
 	.toast-text {
 		flex: 1;
-	}
-	.toast-close {
-		background: none;
-		border: none;
-		font-size: 1.25rem;
-		line-height: 1;
-		cursor: pointer;
-		color: inherit;
-		opacity: 0.6;
-		padding: 0 0.25rem;
-	}
-	.toast-close:hover {
-		opacity: 1;
 	}
 	.toast-slide-enter-active,
 	.toast-slide-leave-active {
