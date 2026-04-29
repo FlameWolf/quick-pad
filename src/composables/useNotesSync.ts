@@ -15,7 +15,11 @@ const isSyncing = ref(false);
 const lastSyncedAt = ref<Date | null>(loadLastSynced());
 const syncError = ref<string | null>(null);
 const autoSyncEnabled = ref<boolean>(loadAutoSync());
-const lastSyncMessage = ref<{ text: string; type: "success" | "error" } | null>(null);
+const lastSyncMessage = ref<{
+	text: string;
+	type: "success" | "error";
+	timeStamp: number;
+} | null>(null);
 
 function loadLastSynced(): Date | null {
 	const raw = localStorage.getItem(LAST_SYNCED_KEY);
@@ -51,10 +55,18 @@ export function useNotesSync() {
 			const now = new Date();
 			lastSyncedAt.value = now;
 			persistLastSynced(now);
-			lastSyncMessage.value = { text: "Notes saved to Drive", type: "success" };
+			lastSyncMessage.value = {
+				text: "Notes saved to Drive",
+				type: "success",
+				timeStamp: Date.now()
+			};
 		} catch (e: any) {
 			syncError.value = e?.message ?? "Failed to save";
-			lastSyncMessage.value = { text: `Sync failed: ${syncError.value}`, type: "error" };
+			lastSyncMessage.value = {
+				text: `Sync failed: ${syncError.value}`,
+				type: "error",
+				timeStamp: Date.now()
+			};
 		} finally {
 			isSyncing.value = false;
 		}
@@ -71,13 +83,25 @@ export function useNotesSync() {
 				const now = new Date();
 				lastSyncedAt.value = now;
 				persistLastSynced(now);
-				lastSyncMessage.value = { text: "Notes loaded from Drive", type: "success" };
+				lastSyncMessage.value = {
+					text: "Notes loaded from Drive",
+					type: "success",
+					timeStamp: Date.now()
+				};
 			} else {
-				lastSyncMessage.value = { text: "No notes found on Drive", type: "success" };
+				lastSyncMessage.value = {
+					text: "No notes found on Drive",
+					type: "success",
+					timeStamp: Date.now()
+				};
 			}
 		} catch (e: any) {
 			syncError.value = e?.message ?? "Failed to load";
-			lastSyncMessage.value = { text: `Sync failed: ${syncError.value}`, type: "error" };
+			lastSyncMessage.value = {
+				text: `Sync failed: ${syncError.value}`,
+				type: "error",
+				timeStamp: Date.now()
+			};
 		} finally {
 			isSyncing.value = false;
 		}

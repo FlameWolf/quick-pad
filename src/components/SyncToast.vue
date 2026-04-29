@@ -5,13 +5,14 @@
 		message: string;
 		type: "success" | "error";
 		visible: boolean;
+		timeStamp: number;
 	}>();
 	const emit = defineEmits<{
 		dismiss: [];
 	}>();
 
 	watch(
-		() => props.visible,
+		() => props.timeStamp,
 		val => {
 			if (val && props.type === "success") {
 				setTimeout(() => emit("dismiss"), 3000);

@@ -149,7 +149,7 @@
 		<main class="container pb-4">
 			<RouterView/>
 		</main>
-		<SyncToast v-if="lastSyncMessage" :message="lastSyncMessage.text" :type="lastSyncMessage.type" :visible="!!lastSyncMessage" @dismiss="dismissMessage"/>
+		<SyncToast v-if="lastSyncMessage" :message="lastSyncMessage.text" :type="lastSyncMessage.type" :visible="!!lastSyncMessage" :timeStamp="lastSyncMessage.timeStamp" @dismiss="dismissMessage"/>
 	</BApp>
 </template>
 <style>
