@@ -22,7 +22,6 @@
 		bottom: 0;
 		left: 0;
 		right: 0;
-		z-index: 1030;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;

@@ -122,7 +122,6 @@
 		width: 1.25rem;
 		height: 1.25rem;
 		cursor: pointer;
-		z-index: 1;
 	}
 	.card-text {
 		display: -webkit-box;

@@ -166,7 +166,6 @@
 		right: 0;
 		min-width: 240px;
 		max-width: calc(100vw - 1rem);
-		z-index: 1050;
 	}
 	.sync-dropdown-item {
 		min-height: 44px;
@@ -180,7 +179,6 @@
 	.sync-backdrop {
 		position: fixed;
 		inset: 0;
-		z-index: 1040;
 		background: transparent;
 	}
 	@media (max-width: 575.98px) {

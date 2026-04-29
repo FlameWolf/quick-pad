@@ -37,7 +37,7 @@
 		position: fixed;
 		bottom: 1.5rem;
 		right: 1.5rem;
-		z-index: 2000;
+		pointer-events: all;
 	}
 	.toast-notification {
 		display: flex;
