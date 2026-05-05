@@ -2,6 +2,7 @@
 	import { useNotesStore } from "@/stores/notes";
 	import { useFileIO } from "@/composables/useFileIO";
 	import { useNoteSelection } from "@/composables/useNoteSelection";
+	import { useNoteSort, type SortField } from "@/composables/useNoteSort";
 	import { computed } from "vue";
 	import { emptyString } from "@/library";
 	import SelectionActionBar from "@/components/SelectionActionBar.vue";
@@ -10,8 +11,14 @@
 	const noteStore = useNotesStore();
 	const { importFiles, exportNotes, exportAllNotes } = useFileIO();
 	const { isSelectionMode, selectedCount, enterSelectionMode, exitSelectionMode, toggleSelection, isSelected, selectAll, clearSelection } = useNoteSelection();
+	const { sortBy, sortDirection, setSortBy, toggleSortDirection, getSortedNotes } = useNoteSort();
 	const hasNotes = computed(() => noteStore.notes.length > 0);
 	const allSelected = computed(() => noteStore.notes.length > 0 && selectedCount.value === noteStore.notes.length);
+	const sortedNotes = computed(() => getSortedNotes(noteStore.notes));
+
+	function onSortFieldChange(e: Event) {
+		setSortBy((e.target as HTMLSelectElement).value as SortField);
+	}
 
 	function formatDate(date?: Date): string {
 		if (!date) {
@@ -46,8 +53,8 @@
 	<div v-if="!hasNotes" class="empty-state text-center py-5">
 		<div class="text-muted mb-3">
 			<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
-				<path d="M5 0h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2 2 2 0 0 1-2 2H3a2 2 0 0 1-2-2h1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1H1a2 2 0 0 1 2-2h8a2 2 0 0 0 2-2V2a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1H3a2 2 0 0 1 2-2z"/>
-				<path d="M1 6v-.5a.5.5 0 0 1 1 0V6h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0V9h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1z"/>
+				<path d="M5 0h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2 2 2 0 0 1-2 2H3a2 2 0 0 1-2-2h1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1H1a2 2 0 0 1 2-2h8a2 2 0 0 0 2-2V2a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1H3a2 2 0 0 1 2-2z" />
+				<path d="M1 6v-.5a.5.5 0 0 1 1 0V6h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0V9h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1z" />
 			</svg>
 		</div>
 		<p class="text-muted mb-3">No notes yet</p>
@@ -63,6 +70,18 @@
 				<button class="btn btn-outline-secondary btn-sm" @click="exitSelectionMode">Cancel</button>
 			</template>
 			<template v-else>
+				<div class="d-flex gap-1 align-items-center sort-controls">
+					<label for="sort-by-select" class="form-label text-muted small mb-0 me-1">Sort:</label>
+					<select id="sort-by-select" class="form-select form-select-sm sort-select" :value="sortBy" @change="onSortFieldChange" aria-label="Sort notes by">
+						<option value="modifiedAt">Updated</option>
+						<option value="createdAt">Created</option>
+						<option value="title">Title</option>
+						<option value="characterCount">Characters</option>
+					</select>
+					<button class="btn btn-outline-secondary btn-sm" @click="toggleSortDirection" :aria-label="sortDirection === 'asc' ? 'Sort ascending, click to switch to descending' : 'Sort descending, click to switch to ascending'" :title="sortDirection === 'asc' ? 'Ascending' : 'Descending'">
+						<i class="bi" :class="sortDirection === 'asc' ? 'bi-sort-up' : 'bi-sort-down'" aria-hidden="true"></i>
+					</button>
+				</div>
 				<button class="btn btn-outline-secondary btn-sm" @click="enterSelectionMode">Select</button>
 				<button class="btn btn-outline-secondary btn-sm" @click="importFiles">Import</button>
 				<button class="btn btn-outline-secondary btn-sm" @click="exportAllNotes">Export All</button>
@@ -74,16 +93,16 @@
 					<span class="fs-1 text-muted">+</span>
 				</div>
 			</RouterLink>
-			<RouterLink v-for="note in noteStore.notes" :key="note.id" :to="`/notes/${note.id}`" class="card note-card text-decoration-none" :class="{ selected: isSelectionMode && isSelected(note.id) }" @click="(e: MouseEvent) => onTileClick(e, note.id)">
+			<RouterLink v-for="note in sortedNotes" :key="note.id" :to="`/notes/${note.id}`" class="card note-card text-decoration-none" :class="{ selected: isSelectionMode && isSelected(note.id) }" @click="(e: MouseEvent) => onTileClick(e, note.id)">
 				<div class="card-body d-flex flex-column position-relative">
-					<input v-if="isSelectionMode" type="checkbox" class="form-check-input selection-checkbox" :checked="isSelected(note.id)" @click.stop.prevent="toggleSelection(note.id)"/>
+					<input v-if="isSelectionMode" type="checkbox" class="form-check-input selection-checkbox" :checked="isSelected(note.id)" @click.stop.prevent="toggleSelection(note.id)" />
 					<h6 class="card-title text-truncate mb-1">{{ note.title }}</h6>
 					<small class="text-muted mb-2">{{ formatDate(note.modifiedAt ?? note.createdAt) }}</small>
 					<p class="card-text text-muted small flex-grow-1 overflow-hidden">{{ note.summary }}</p>
 				</div>
 			</RouterLink>
 		</div>
-		<SelectionActionBar v-if="isSelectionMode && selectedCount > 0" :selected-count="selectedCount" @export="handleExportSelected" @cancel="exitSelectionMode"/>
+		<SelectionActionBar v-if="isSelectionMode && selectedCount > 0" :selected-count="selectedCount" @export="handleExportSelected" @cancel="exitSelectionMode" />
 	</div>
 </template>
 
@@ -92,6 +111,12 @@
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 		gap: 0.75rem;
+	}
+	.sort-controls {
+		margin-right: auto;
+	}
+	.sort-select {
+		width: auto;
 	}
 	.note-card {
 		height: 160px;
