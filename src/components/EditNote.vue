@@ -72,8 +72,8 @@
 		} else if (existingNote.value) {
 			existingNote.value.update(title, content);
 			store.updateNote(existingNote.value);
-			isEditing.value = false;
 		}
+		isEditing.value = false;
 	}
 
 	function deleteNote() {
