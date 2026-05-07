@@ -4,10 +4,10 @@ const DRIVE_API = "https://www.googleapis.com/drive/v3/files";
 const UPLOAD_API = "https://www.googleapis.com/upload/drive/v3/files";
 
 export function useGoogleDrive() {
-	const { getValidToken } = useGoogleAuth();
+	const { getAccessToken } = useGoogleAuth();
 
 	async function headers() {
-		const token = await getValidToken();
+		const token = await getAccessToken();
 		return { Authorization: `Bearer ${token}` };
 	}
 

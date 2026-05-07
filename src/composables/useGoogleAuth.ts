@@ -38,11 +38,12 @@ function loadStoredUser(): { email: string; name: string } | null {
 	try {
 		const parsed = JSON.parse(raw);
 		if (parsed && typeof parsed.email === "string" && typeof parsed.name === "string") {
-			return { email: parsed.email, name: parsed.name };
+			return {
+				email: parsed.email,
+				name: parsed.name
+			};
 		}
-	} catch {
-		// fall through
-	}
+	} catch {}
 	return null;
 }
 
@@ -172,12 +173,10 @@ export function useGoogleAuth() {
 				email: data.email,
 				name: data.name
 			};
-		} catch {
-			// Network failure — leave user null, auth state stays signed in
-		}
+		} catch {}
 	}
 
-	async function getValidToken(): Promise<string> {
+	async function getAccessToken(): Promise<string> {
 		if (accessToken.value && Date.now() < tokenExpiresAt - TOKEN_REFRESH_BUFFER_MS) {
 			return accessToken.value;
 		}
@@ -201,7 +200,6 @@ export function useGoogleAuth() {
 	}
 
 	return {
-		accessToken: readonly(accessToken),
 		user: readonly(user),
 		isReady: readonly(isReady),
 		isSignedIn: readonly(isSignedIn),
@@ -209,6 +207,6 @@ export function useGoogleAuth() {
 		tryRestoreSession,
 		signIn,
 		signOut,
-		getValidToken
+		getAccessToken
 	};
 }
