@@ -85,7 +85,7 @@ export function useGoogleAuth() {
 			scope: SCOPES,
 			callback: async (response: any) => {
 				if (response.error) {
-					clearSession();
+					clearSession(user.value !== null);
 					isReady.value = true;
 					return;
 				}
@@ -93,8 +93,10 @@ export function useGoogleAuth() {
 				tokenExpiresAt = Date.now() + response.expires_in * 1000;
 				localStorage.setItem(SESSION_KEY, "true");
 				persistAuthState(response.access_token, tokenExpiresAt);
-				await fetchUserInfo(response.access_token);
-				persistUserInfo(user.value);
+				if (!user.value) {
+					await fetchUserInfo(response.access_token);
+					persistUserInfo(user.value);
+				}
 				isSignedIn.value = true;
 				isReady.value = true;
 			}
@@ -113,10 +115,14 @@ export function useGoogleAuth() {
 		const storedToken = localStorage.getItem(TOKEN_KEY);
 		const storedExpiryRaw = localStorage.getItem(EXPIRY_KEY);
 		const storedExpiry = storedExpiryRaw ? Number(storedExpiryRaw) : 0;
+		const storedUser = loadStoredUser();
 		if (storedToken && storedExpiry && Date.now() < storedExpiry - TOKEN_REFRESH_BUFFER_MS) {
 			accessToken.value = storedToken;
 			tokenExpiresAt = storedExpiry;
-			user.value = loadStoredUser();
+			user.value = storedUser;
+			isSignedIn.value = true;
+		} else if (storedUser) {
+			user.value = storedUser;
 			isSignedIn.value = true;
 		}
 		isReady.value = true;
@@ -147,15 +153,17 @@ export function useGoogleAuth() {
 		}
 	}
 
-	function clearSession() {
+	function clearSession(keepUser = false) {
 		accessToken.value = null;
-		user.value = null;
-		isSignedIn.value = false;
 		tokenExpiresAt = 0;
-		localStorage.removeItem(SESSION_KEY);
 		localStorage.removeItem(TOKEN_KEY);
 		localStorage.removeItem(EXPIRY_KEY);
-		localStorage.removeItem(USER_KEY);
+		if (!keepUser) {
+			user.value = null;
+			isSignedIn.value = false;
+			localStorage.removeItem(SESSION_KEY);
+			localStorage.removeItem(USER_KEY);
+		}
 	}
 
 	async function fetchUserInfo(token: string) {
@@ -195,7 +203,11 @@ export function useGoogleAuth() {
 					resolve(response.access_token);
 				}
 			};
-			tokenClient!.requestAccessToken({ prompt: emptyString });
+			const params: { prompt: string; hint?: string } = { prompt: emptyString };
+			if (user.value?.email) {
+				params.hint = user.value.email;
+			}
+			tokenClient!.requestAccessToken(params);
 		});
 	}
 
