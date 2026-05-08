@@ -48,7 +48,7 @@
 		border-radius: 0.5rem;
 		font-size: 0.875rem;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-		max-width: 360px;
+		max-width: calc(100vw - 4rem);
 	}
 	.toast-notification.success {
 		background-color: var(--bs-success-bg-subtle, #d1e7dd);

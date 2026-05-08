@@ -144,7 +144,7 @@
 
 <style>
 	.edit-note {
-		max-width: 800px;
+		max-width: calc(100vw - 2rem);
 		margin: 0 auto;
 	}
 	.note-content {

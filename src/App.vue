@@ -156,6 +156,9 @@
 	body {
 		min-height: 100vh;
 	}
+	.container {
+		max-width: calc(100vw - 1rem);
+	}
 	.sync-icon {
 		font-size: 0.875rem;
 		line-height: 1;
@@ -164,8 +167,6 @@
 		position: absolute;
 		top: calc(100% + 0.25rem);
 		right: 0;
-		min-width: 240px;
-		max-width: calc(100vw - 1rem);
 	}
 	.sync-dropdown-item {
 		min-height: 44px;
@@ -181,7 +182,7 @@
 		inset: 0;
 		background: transparent;
 	}
-	@media (max-width: 575.98px) {
+	@media (max-width: 576px) {
 		.sync-dropdown {
 			position: fixed !important;
 			left: 0.5rem;
