@@ -6,10 +6,11 @@
 	import { computed } from "vue";
 	import { emptyString } from "@/library";
 	import SelectionActionBar from "@/components/SelectionActionBar.vue";
+	import SyncToast from "@/components/SyncToast.vue";
 	import type { UUID } from "crypto";
 
 	const noteStore = useNotesStore();
-	const { importFiles, exportNotes, exportAllNotes } = useFileIO();
+	const { importFiles, importErrors, dismissErrors, exportNotes, exportAllNotes } = useFileIO();
 	const { isSelectionMode, selectedCount, enterSelectionMode, exitSelectionMode, toggleSelection, isSelected, selectAll, clearSelection } = useNoteSelection();
 	const { sortBy, sortDirection, setSortBy, toggleSortDirection, getSortedNotes } = useNoteSort();
 	const hasNotes = computed(() => noteStore.notes.length > 0);
@@ -25,6 +26,10 @@
 			return emptyString;
 		}
 		return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+	}
+
+	function formatImportErrors(): string {
+		return [`Import failed for the following file`, importErrors.value?.length === 1 ? emptyString : "s", ":<hr/>", `<ul>${importErrors.value?.map(err => `<li>${err.fileName}: ${err.message}</li>`).join(emptyString)}</ul>`].join(emptyString);
 	}
 
 	function onTileClick(e: Event, noteId: UUID) {
@@ -104,6 +109,7 @@
 		</div>
 		<SelectionActionBar v-if="isSelectionMode && selectedCount > 0" :selected-count="selectedCount" @export="handleExportSelected" @cancel="exitSelectionMode"/>
 	</div>
+	<SyncToast v-if="importErrors?.length" :message="formatImportErrors()" type="error" :visible="!!importErrors.length" :timeStamp="Date.now()" @dismiss="dismissErrors"/>
 </template>
 
 <style>

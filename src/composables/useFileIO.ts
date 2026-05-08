@@ -1,7 +1,13 @@
-import JSZip from "jszip";
+import { ref } from "vue";
 import { useNotesStore } from "@/stores/notes";
 import { NoteModel } from "@/models/NoteModel";
-import { emptyString } from "@/library";
+import { emptyString, isTextFile } from "@/library";
+import JSZip from "jszip";
+
+const importErrors = ref<Array<{
+	fileName: string;
+	message: string;
+}> | void>([]);
 
 function triggerDownload(blob: Blob, filename: string) {
 	const url = URL.createObjectURL(blob);
@@ -28,7 +34,6 @@ export function useFileIO() {
 			const input = document.createElement("input");
 			input.type = "file";
 			input.multiple = true;
-			input.accept = ".txt,text/plain";
 			input.addEventListener("change", async () => {
 				const files = input.files;
 				if (!files || files.length === 0) {
@@ -37,16 +42,34 @@ export function useFileIO() {
 				}
 				let count = 0;
 				for (const file of files) {
-					const content = await file.text();
-					const title = file.name.replace(/\.txt$/i, emptyString) || "Untitled";
-					const note = new NoteModel(title, content);
-					store.addNote(note);
-					count++;
+					if (!(await isTextFile(file))) {
+						importErrors.value?.push({
+							fileName: file.name,
+							message: "Unsupported file type"
+						});
+						continue;
+					}
+					try {
+						const content = await file.text();
+						const title = file.name.replace(/\.txt$/i, emptyString) || "Untitled";
+						const note = new NoteModel(title, content);
+						store.addNote(note);
+						count++;
+					} catch (err) {
+						importErrors.value?.push({
+							fileName: file.name,
+							message: "Failed to read file"
+						});
+					}
 				}
 				resolve(count);
 			});
 			input.click();
 		});
+	}
+
+	function dismissErrors() {
+		importErrors.value = [];
 	}
 
 	function exportNote(note: NoteModel) {
@@ -78,5 +101,12 @@ export function useFileIO() {
 		await exportNotes(store.getAllNotes());
 	}
 
-	return { importFiles, exportNote, exportNotes, exportAllNotes };
+	return {
+		importFiles,
+		importErrors,
+		dismissErrors,
+		exportNote,
+		exportNotes,
+		exportAllNotes
+	};
 }
