@@ -27,7 +27,7 @@
 			<div class="toast-notification" :class="type">
 				<span class="toast-icon">{{ type === "success" ? "&#10003;" : "&#9888;" }}</span>
 				<span class="toast-text" v-html="message"></span>
-				<button class="btn-close" @click="$emit('dismiss')"></button>
+				<button class="btn-close align-self-start ms-auto" @click="$emit('dismiss')"></button>
 			</div>
 		</div>
 	</Transition>
@@ -48,7 +48,6 @@
 		border-radius: 0.5rem;
 		font-size: 0.875rem;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-		max-width: calc(100vw - 4rem);
 	}
 	.toast-notification.success {
 		background-color: var(--bs-success-bg-subtle, #d1e7dd);
