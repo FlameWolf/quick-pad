@@ -272,6 +272,11 @@
 					<input v-if="isSelectionMode" type="checkbox" class="form-check-input selection-checkbox" :checked="isSelected(note.id)" @click.stop.prevent="toggleSelection(note.id)"/>
 					<h6 class="card-title text-truncate mb-1">{{ note.title }}</h6>
 					<small class="text-muted mb-2">{{ formatDate(note.modifiedAt ?? note.createdAt) }}</small>
+					<div class="d-flex gap-2 flex-wrap small">
+						<div class="badge text-bg-secondary" v-if="note?.sentenceCount">{{ note?.sentenceCount }} sentences</div>
+						<div class="badge text-bg-secondary" v-if="note?.wordCount">{{ note?.wordCount }} words</div>
+						<div class="badge text-bg-secondary" v-if="note?.characterCount">{{ note?.characterCount }} characters</div>
+					</div>
 					<p class="card-text text-muted small flex-grow-1 overflow-hidden">{{ note.summary }}</p>
 				</div>
 			</RouterLink>
@@ -284,7 +289,7 @@
 <style>
 	.notes-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+		grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
 		gap: 0.75rem;
 	}
 	.sort-controls {
@@ -294,15 +299,12 @@
 		width: auto;
 	}
 	.note-card {
-		height: 160px;
-		transition:
-			box-shadow 0.15s ease,
-			transform 0.15s ease;
+		height: 12rem;
+		transition: box-shadow 0.15s ease;
 		overflow: hidden;
 	}
 	.note-card:hover {
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-		transform: translateY(-2px);
+		box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
 	}
 	.new-note-card {
 		border-style: dashed;

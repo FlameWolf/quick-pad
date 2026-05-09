@@ -36,10 +36,10 @@
 		justify-content: space-between;
 		gap: 0.75rem;
 		padding: 0.75rem 1rem;
-		padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+		padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0));
 		background-color: var(--bs-body-bg);
-		border-top: 1px solid var(--bs-border-color);
-		box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+		border-top: 1pt solid var(--bs-border-color);
+		box-shadow: 0 -0 0.5rem rgba(0, 0, 0, 0.1);
 		flex-wrap: wrap;
 	}
 </style>

@@ -17,7 +17,7 @@
 		<h3>{{ note?.title ?? emptyString }}</h3>
 		<p>{{ note?.content ?? emptyString }}</p>
 	</div>
-	<div class="d-flex gap-2">
+	<div class="d-flex gap-2 flex-wrap">
 		<div class="badge text-bg-secondary" v-if="note?.sentenceCount">{{ note?.sentenceCount }} sentences</div>
 		<div class="badge text-bg-secondary" v-if="note?.wordCount">{{ note?.wordCount }} words</div>
 		<div class="badge text-bg-secondary" v-if="note?.characterCount">{{ note?.characterCount }} characters</div>

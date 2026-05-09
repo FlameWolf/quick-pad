@@ -274,7 +274,7 @@
 		line-height: 1.7;
 	}
 	.note-textarea {
-		min-height: 300px;
+		min-height: 18.75rem;
 		resize: vertical;
 		line-height: 1.7;
 	}

@@ -47,17 +47,17 @@
 		padding: 0.75rem 1rem;
 		border-radius: 0.5rem;
 		font-size: 0.875rem;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+		box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.15);
 	}
 	.toast-notification.success {
 		background-color: var(--bs-success-bg-subtle, #d1e7dd);
 		color: var(--bs-success-text-emphasis, #0a3622);
-		border: 1px solid var(--bs-success-border-subtle, #a3cfbb);
+		border: 1pt solid var(--bs-success-border-subtle, #a3cfbb);
 	}
 	.toast-notification.error {
 		background-color: var(--bs-danger-bg-subtle, #f8d7da);
 		color: var(--bs-danger-text-emphasis, #58151c);
-		border: 1px solid var(--bs-danger-border-subtle, #f1aeb5);
+		border: 1pt solid var(--bs-danger-border-subtle, #f1aeb5);
 	}
 	.toast-icon {
 		font-size: 1rem;

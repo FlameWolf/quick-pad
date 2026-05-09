@@ -184,7 +184,7 @@
 		right: 0;
 	}
 	.sync-dropdown-item {
-		min-height: 44px;
+		min-height: 2.5rem;
 		display: flex;
 		align-items: center;
 		white-space: normal;
@@ -196,18 +196,5 @@
 		position: fixed;
 		inset: 0;
 		background: transparent;
-	}
-	@media (max-width: 576px) {
-		.sync-dropdown {
-			position: fixed !important;
-			left: 0.5rem;
-			right: 0.5rem;
-			top: auto;
-			bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
-			min-width: auto;
-			max-width: none;
-			border-radius: 0.75rem;
-			box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15);
-		}
 	}
 </style>
