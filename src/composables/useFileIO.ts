@@ -98,7 +98,7 @@ export function useFileIO() {
 	}
 
 	async function exportAllNotes() {
-		await exportNotes(store.getAllNotes());
+		await exportNotes(store.activeNotes);
 	}
 
 	return {

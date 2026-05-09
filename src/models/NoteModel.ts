@@ -7,6 +7,8 @@ export interface NoteJSON {
 	content: string;
 	createdAt: string;
 	modifiedAt?: string;
+	archivedAt?: string;
+	deletedAt?: string;
 }
 
 export class NoteModel {
@@ -15,6 +17,8 @@ export class NoteModel {
 	content: string;
 	createdAt: Date;
 	modifiedAt?: Date;
+	archivedAt?: Date;
+	deletedAt?: Date;
 
 	constructor(title: string, content: string) {
 		this.id = crypto.randomUUID();
@@ -29,13 +33,35 @@ export class NoteModel {
 		this.modifiedAt = new Date();
 	}
 
+	archive() {
+		this.archivedAt = new Date();
+		this.modifiedAt = this.archivedAt;
+	}
+
+	unarchive() {
+		this.archivedAt = undefined;
+		this.modifiedAt = new Date();
+	}
+
+	trash() {
+		this.deletedAt = new Date();
+		this.modifiedAt = this.deletedAt;
+	}
+
+	restore() {
+		this.deletedAt = undefined;
+		this.modifiedAt = new Date();
+	}
+
 	toJSON(): NoteJSON {
 		return {
 			id: this.id,
 			title: this.title,
 			content: this.content,
 			createdAt: this.createdAt.toISOString(),
-			modifiedAt: this.modifiedAt?.toISOString()
+			modifiedAt: this.modifiedAt?.toISOString(),
+			archivedAt: this.archivedAt?.toISOString(),
+			deletedAt: this.deletedAt?.toISOString()
 		};
 	}
 
@@ -44,6 +70,8 @@ export class NoteModel {
 		note.id = data.id as UUID;
 		note.createdAt = new Date(data.createdAt);
 		note.modifiedAt = data.modifiedAt ? new Date(data.modifiedAt) : undefined;
+		note.archivedAt = data.archivedAt ? new Date(data.archivedAt) : undefined;
+		note.deletedAt = data.deletedAt ? new Date(data.deletedAt) : undefined;
 		return note;
 	}
 

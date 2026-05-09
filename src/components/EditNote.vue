@@ -1,8 +1,10 @@
 <script setup lang="ts">
-	import { ref, computed, watch, onBeforeUnmount } from "vue";
-	import { useRouter, useRoute } from "vue-router";
+	import { ref, computed, onBeforeUnmount, onMounted } from "vue";
+	import { useRouter, useRoute, onBeforeRouteLeave } from "vue-router";
 	import { useNotesStore } from "@/stores/notes";
 	import { useUndoRedo } from "@/composables/useUndoRedo";
+	import { useConfirmDialog } from "@/composables/useConfirmDialog";
+	import { useNotesSync } from "@/composables/useNotesSync";
 	import { NoteModel } from "@/models/NoteModel";
 	import { useFileIO } from "@/composables/useFileIO";
 	import { getSentenceCount, getWordCount, getCharacterCount, emptyString } from "@/library";
@@ -14,17 +16,41 @@
 	const route = useRoute();
 	const store = useNotesStore();
 	const { exportNote } = useFileIO();
+	const { confirm } = useConfirmDialog();
+	const { requestSync } = useNotesSync();
 	const isCreateMode = computed(() => route.path === "/notes/new");
 	const existingNote = computed(() => (props.id && !isCreateMode.value ? store.getNote(props.id) : undefined));
 	const isEditing = ref(isCreateMode.value);
 	const editTitle = ref(existingNote.value?.title ?? emptyString);
 	const editContent = ref(existingNote.value?.content ?? emptyString);
-	const confirmingDelete = ref(false);
 	const undoRedo = useUndoRedo(editContent.value);
 	const displayContent = computed(() => (isEditing.value ? editContent.value : (existingNote.value?.content ?? "")));
 	const sentenceCount = computed(() => getSentenceCount(displayContent.value));
 	const wordCount = computed(() => getWordCount(displayContent.value));
 	const characterCount = computed(() => getCharacterCount(displayContent.value));
+	const isArchived = computed(() => !!existingNote.value?.archivedAt && !existingNote.value?.deletedAt);
+	const isTrashed = computed(() => !!existingNote.value?.deletedAt);
+	const backRoute = computed(() => {
+		if (isTrashed.value) {
+			return "/notes/trash";
+		}
+		if (isArchived.value) {
+			return "/notes/archive";
+		}
+		return "/notes";
+	});
+	const hasUnsavedChanges = computed(() => {
+		if (!isEditing.value) {
+			return false;
+		}
+		if (isCreateMode.value) {
+			return editTitle.value.trim().length > 0 || editContent.value.length > 0;
+		}
+		if (!existingNote.value) {
+			return false;
+		}
+		return editTitle.value !== existingNote.value.title || editContent.value !== existingNote.value.content;
+	});
 
 	function onContentInput(e: Event) {
 		const value = (e.target as HTMLTextAreaElement).value;
@@ -52,8 +78,25 @@
 		isEditing.value = true;
 	}
 
-	function cancelEditing() {
+	async function confirmDiscardChanges(): Promise<boolean> {
+		return confirm({
+			title: "Discard unsaved changes?",
+			message: "You have unsaved changes that will be lost if you leave this note.",
+			confirmText: "Discard",
+			cancelText: "Keep editing",
+			variant: "danger"
+		});
+	}
+
+	async function cancelEditing() {
+		if (hasUnsavedChanges.value) {
+			const ok = await confirmDiscardChanges();
+			if (!ok) {
+				return;
+			}
+		}
 		if (isCreateMode.value) {
+			isEditing.value = false;
 			router.push("/notes");
 		} else {
 			isEditing.value = false;
@@ -68,27 +111,83 @@
 		if (isCreateMode.value) {
 			const note = new NoteModel(title, content);
 			store.addNote(note);
+			isEditing.value = false;
+			requestSync();
 			router.push(`/notes/${note.id}`);
-		} else if (existingNote.value) {
+			return;
+		}
+		if (existingNote.value) {
 			existingNote.value.update(title, content);
 			store.updateNote(existingNote.value);
+			requestSync();
 		}
 		isEditing.value = false;
 	}
 
-	function deleteNote() {
-		if (!confirmingDelete.value) {
-			confirmingDelete.value = true;
+	async function deleteNote() {
+		if (!existingNote.value) {
 			return;
 		}
-		if (existingNote.value) {
-			store.removeNote(existingNote.value.id);
-			router.push("/notes");
+		const returnTo = backRoute.value;
+		const ok = await confirm({
+			title: "Move note to Trash?",
+			message: "This note will be moved to Trash. You can restore it within 30 days.",
+			confirmText: "Move to Trash",
+			cancelText: "Cancel",
+			variant: "danger"
+		});
+		if (!ok) {
+			return;
 		}
+		store.trashNote(existingNote.value.id);
+		requestSync();
+		router.push(returnTo);
 	}
 
-	function cancelDelete() {
-		confirmingDelete.value = false;
+	function archiveNote() {
+		if (!existingNote.value) {
+			return;
+		}
+		store.archiveNote(existingNote.value.id);
+		requestSync();
+		router.push("/notes");
+	}
+
+	function unarchiveNote() {
+		if (!existingNote.value) {
+			return;
+		}
+		store.unarchiveNote(existingNote.value.id);
+		requestSync();
+		router.push("/notes/archive");
+	}
+
+	function restoreNote() {
+		if (!existingNote.value) {
+			return;
+		}
+		store.restoreFromTrash(existingNote.value.id);
+		requestSync();
+		router.push("/notes/trash");
+	}
+
+	async function permanentlyDeleteNote() {
+		if (!existingNote.value) {
+			return;
+		}
+		const ok = await confirm({
+			title: "Permanently delete note?",
+			message: "This note will be permanently deleted. This action cannot be undone.",
+			confirmText: "Delete Permanently",
+			cancelText: "Cancel",
+			variant: "danger"
+		});
+		if (!ok) {
+			return;
+		}
+		store.permanentlyDelete(existingNote.value.id);
+		requestSync();
+		router.push("/notes/trash");
 	}
 
 	function formatDate(date?: Date): string {
@@ -98,23 +197,45 @@
 		return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 	}
 
+	function onBeforeUnload(e: BeforeUnloadEvent) {
+		if (hasUnsavedChanges.value) {
+			e.preventDefault();
+			e.returnValue = "";
+		}
+	}
+
+	onMounted(() => {
+		window.addEventListener("beforeunload", onBeforeUnload);
+	});
+
 	onBeforeUnmount(() => {
 		if (debounceTimer) clearTimeout(debounceTimer);
+		window.removeEventListener("beforeunload", onBeforeUnload);
+	});
+
+	onBeforeRouteLeave(async () => {
+		if (!hasUnsavedChanges.value) {
+			return true;
+		}
+		return await confirmDiscardChanges();
 	});
 </script>
 
 <template>
 	<div class="edit-note">
 		<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-			<RouterLink to="/notes" class="btn btn-outline-secondary btn-sm" aria-label="Back to notes">&larr; Back</RouterLink>
-			<div class="d-flex flex-wrap gap-2" v-if="!isCreateMode && !isEditing">
+			<RouterLink :to="backRoute" class="btn btn-outline-secondary btn-sm" aria-label="Back to notes">&larr; Back</RouterLink>
+			<div class="d-flex flex-wrap gap-2" v-if="!isCreateMode && !isEditing && isTrashed">
+				<button class="btn btn-outline-primary btn-sm" @click="restoreNote">Restore</button>
+				<button class="btn btn-outline-secondary btn-sm" v-if="existingNote" @click="exportNote(existingNote)">Export</button>
+				<button class="btn btn-outline-danger btn-sm" @click="permanentlyDeleteNote">Delete Permanently</button>
+			</div>
+			<div class="d-flex flex-wrap gap-2" v-else-if="!isCreateMode && !isEditing">
 				<button class="btn btn-outline-primary btn-sm" @click="startEditing">Edit</button>
 				<button class="btn btn-outline-secondary btn-sm" v-if="existingNote" @click="exportNote(existingNote)">Export</button>
-				<button v-if="!confirmingDelete" class="btn btn-outline-danger btn-sm" @click="deleteNote">Delete</button>
-				<template v-if="confirmingDelete">
-					<button class="btn btn-danger btn-sm" @click="deleteNote">Confirm Delete</button>
-					<button class="btn btn-outline-secondary btn-sm" @click="cancelDelete">Cancel</button>
-				</template>
+				<button class="btn btn-outline-secondary btn-sm" v-if="isArchived" @click="unarchiveNote">Unarchive</button>
+				<button class="btn btn-outline-secondary btn-sm" v-else @click="archiveNote">Archive</button>
+				<button class="btn btn-outline-danger btn-sm" @click="deleteNote">Delete</button>
 			</div>
 			<div class="d-flex flex-wrap gap-2" v-if="isEditing">
 				<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canUndo.value" @click="doUndo" title="Undo" aria-label="Undo">&#x21A9;</button>

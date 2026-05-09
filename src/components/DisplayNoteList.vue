@@ -3,19 +3,80 @@
 	import { useFileIO } from "@/composables/useFileIO";
 	import { useNoteSelection } from "@/composables/useNoteSelection";
 	import { useNoteSort, type SortField } from "@/composables/useNoteSort";
-	import { computed } from "vue";
+	import { useConfirmDialog } from "@/composables/useConfirmDialog";
+	import { useNotesSync } from "@/composables/useNotesSync";
+	import { computed, onMounted, watch } from "vue";
 	import { emptyString } from "@/library";
-	import SelectionActionBar from "@/components/SelectionActionBar.vue";
+	import SelectionActionBar, { type SelectionAction } from "@/components/SelectionActionBar.vue";
 	import SyncToast from "@/components/SyncToast.vue";
 	import type { UUID } from "crypto";
+
+	type View = "active" | "archived" | "trash";
+
+	const props = defineProps<{ view?: View }>();
+	const view = computed<View>(() => props.view ?? "active");
 
 	const noteStore = useNotesStore();
 	const { importFiles, importErrors, dismissErrors, exportNotes, exportAllNotes } = useFileIO();
 	const { isSelectionMode, selectedCount, enterSelectionMode, exitSelectionMode, toggleSelection, isSelected, selectAll, clearSelection } = useNoteSelection();
 	const { sortBy, sortDirection, setSortBy, toggleSortDirection, getSortedNotes } = useNoteSort();
-	const hasNotes = computed(() => noteStore.notes.length > 0);
-	const allSelected = computed(() => noteStore.notes.length > 0 && selectedCount.value === noteStore.notes.length);
-	const sortedNotes = computed(() => getSortedNotes(noteStore.notes));
+	const { confirm } = useConfirmDialog();
+	const { requestSync } = useNotesSync();
+
+	const sourceNotes = computed(() => {
+		if (view.value === "archived") {
+			return noteStore.archivedNotes;
+		}
+		if (view.value === "trash") {
+			return noteStore.trashedNotes;
+		}
+		return noteStore.activeNotes;
+	});
+
+	const sortedNotes = computed(() => getSortedNotes(sourceNotes.value));
+	const hasNotes = computed(() => sourceNotes.value.length > 0);
+	const allSelected = computed(() => sourceNotes.value.length > 0 && selectedCount.value === sourceNotes.value.length);
+
+	const pageTitle = computed(() => {
+		if (view.value === "archived") {
+			return "Archived";
+		}
+		if (view.value === "trash") {
+			return "Trash";
+		}
+		return "Notes";
+	});
+
+	const emptyMessage = computed(() => {
+		if (view.value === "archived") {
+			return "No archived notes";
+		}
+		if (view.value === "trash") {
+			return "Trash is empty";
+		}
+		return "No notes yet";
+	});
+
+	const selectionActions = computed<SelectionAction[]>(() => {
+		if (view.value === "archived") {
+			return [
+				{ key: "export", label: "Export Selected", variant: "primary" },
+				{ key: "unarchive", label: "Unarchive Selected", variant: "outline-primary" },
+				{ key: "trash", label: "Delete Selected", variant: "outline-danger" }
+			];
+		}
+		if (view.value === "trash") {
+			return [
+				{ key: "restore", label: "Restore Selected", variant: "outline-primary" },
+				{ key: "permanent", label: "Delete Permanently", variant: "outline-danger" }
+			];
+		}
+		return [
+			{ key: "export", label: "Export Selected", variant: "primary" },
+			{ key: "archive", label: "Archive Selected", variant: "outline-primary" },
+			{ key: "trash", label: "Delete Selected", variant: "outline-danger" }
+		];
+	});
 
 	function onSortFieldChange(e: Event) {
 		setSortBy((e.target as HTMLSelectElement).value as SortField);
@@ -43,18 +104,113 @@
 		if (allSelected.value) {
 			clearSelection();
 		} else {
-			selectAll(noteStore.notes.map(n => n.id));
+			selectAll(sourceNotes.value.map(n => n.id));
 		}
 	}
 
-	async function handleExportSelected() {
-		const selected = noteStore.notes.filter(n => isSelected(n.id));
-		await exportNotes(selected);
-		exitSelectionMode();
+	function getSelectedIds(): UUID[] {
+		return sourceNotes.value.filter(n => isSelected(n.id)).map(n => n.id);
 	}
+
+	async function handleSelectionAction(key: string) {
+		const ids = getSelectedIds();
+		if (ids.length === 0) {
+			return;
+		}
+		const noun = ids.length === 1 ? "note" : "notes";
+		switch (key) {
+			case "export": {
+				const selected = sourceNotes.value.filter(n => isSelected(n.id));
+				await exportNotes(selected);
+				exitSelectionMode();
+				break;
+			}
+			case "archive": {
+				noteStore.archiveMultiple(ids);
+				requestSync();
+				exitSelectionMode();
+				break;
+			}
+			case "unarchive": {
+				noteStore.unarchiveMultiple(ids);
+				requestSync();
+				exitSelectionMode();
+				break;
+			}
+			case "trash": {
+				const ok = await confirm({
+					title: `Move ${ids.length} ${noun} to Trash?`,
+					message: `${ids.length === 1 ? "This note" : "These notes"} can be restored from Trash within 30 days.`,
+					confirmText: "Move to Trash",
+					cancelText: "Cancel",
+					variant: "danger"
+				});
+				if (!ok) {
+					return;
+				}
+				noteStore.trashMultiple(ids);
+				requestSync();
+				exitSelectionMode();
+				break;
+			}
+			case "restore": {
+				noteStore.restoreFromTrashMultiple(ids);
+				requestSync();
+				exitSelectionMode();
+				break;
+			}
+			case "permanent": {
+				const ok = await confirm({
+					title: `Permanently delete ${ids.length} ${noun}?`,
+					message: "This action cannot be undone.",
+					confirmText: "Delete Permanently",
+					cancelText: "Cancel",
+					variant: "danger"
+				});
+				if (!ok) {
+					return;
+				}
+				noteStore.permanentlyDeleteMultiple(ids);
+				requestSync();
+				exitSelectionMode();
+				break;
+			}
+		}
+	}
+
+	async function handleEmptyTrash() {
+		const count = noteStore.trashedNotes.length;
+		if (count === 0) {
+			return;
+		}
+		const ok = await confirm({
+			title: "Empty Trash?",
+			message: `${count} ${count === 1 ? "note" : "notes"} will be permanently deleted. This cannot be undone.`,
+			confirmText: "Empty Trash",
+			cancelText: "Cancel",
+			variant: "danger"
+		});
+		if (!ok) {
+			return;
+		}
+		noteStore.permanentlyDeleteMultiple(noteStore.trashedNotes.map(n => n.id));
+		requestSync();
+	}
+
+	onMounted(() => {
+		exitSelectionMode();
+	});
+
+	watch(view, () => {
+		exitSelectionMode();
+	});
 </script>
 
 <template>
+	<div v-if="view !== 'active'" class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+		<h2 class="mb-0">{{ pageTitle }}</h2>
+		<RouterLink to="/notes" class="btn btn-outline-secondary btn-sm">&larr; Back to Notes</RouterLink>
+	</div>
 	<div v-if="!hasNotes" class="empty-state text-center py-5">
 		<div class="text-muted mb-3">
 			<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
@@ -62,10 +218,16 @@
 				<path d="M1 6v-.5a.5.5 0 0 1 1 0V6h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0V9h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1z"/>
 			</svg>
 		</div>
-		<p class="text-muted mb-3">No notes yet</p>
-		<div class="d-flex gap-2 justify-content-center">
-			<RouterLink to="/notes/new" class="btn btn-primary">Create your first note</RouterLink>
-			<button class="btn btn-outline-secondary" @click="importFiles">Import from files</button>
+		<p class="text-muted mb-3">{{ emptyMessage }}</p>
+		<div v-if="view === 'active'" class="d-flex flex-column gap-2 align-items-center">
+			<div class="d-flex gap-2 justify-content-center flex-wrap">
+				<RouterLink to="/notes/new" class="btn btn-primary">Create your first note</RouterLink>
+				<button class="btn btn-outline-secondary" @click="importFiles">Import from files</button>
+			</div>
+			<div class="d-flex gap-3 justify-content-center flex-wrap">
+				<RouterLink to="/notes/archive" class="btn btn-link btn-sm text-decoration-none"> <i class="bi bi-archive me-1" aria-hidden="true"></i>Archived </RouterLink>
+				<RouterLink to="/notes/trash" class="btn btn-link btn-sm text-decoration-none"> <i class="bi bi-trash me-1" aria-hidden="true"></i>Trash </RouterLink>
+			</div>
 		</div>
 	</div>
 	<div v-else>
@@ -88,12 +250,19 @@
 					</button>
 				</div>
 				<button class="btn btn-outline-secondary btn-sm" @click="enterSelectionMode">Select</button>
-				<button class="btn btn-outline-secondary btn-sm" @click="importFiles">Import</button>
-				<button class="btn btn-outline-secondary btn-sm" @click="exportAllNotes">Export All</button>
+				<template v-if="view === 'active'">
+					<button class="btn btn-outline-secondary btn-sm" @click="importFiles">Import</button>
+					<button class="btn btn-outline-secondary btn-sm" @click="exportAllNotes">Export All</button>
+					<RouterLink to="/notes/archive" class="btn btn-outline-secondary btn-sm"> <i class="bi bi-archive me-1" aria-hidden="true"></i>Archived </RouterLink>
+					<RouterLink to="/notes/trash" class="btn btn-outline-secondary btn-sm"> <i class="bi bi-trash me-1" aria-hidden="true"></i>Trash </RouterLink>
+				</template>
+				<template v-if="view === 'trash'">
+					<button class="btn btn-outline-danger btn-sm" @click="handleEmptyTrash"><i class="bi bi-trash me-1" aria-hidden="true"></i>Empty Trash</button>
+				</template>
 			</template>
 		</div>
 		<div class="notes-grid">
-			<RouterLink v-if="!isSelectionMode" to="/notes/new" class="card note-card new-note-card text-decoration-none">
+			<RouterLink v-if="view === 'active' && !isSelectionMode" to="/notes/new" class="card note-card new-note-card text-decoration-none">
 				<div class="card-body d-flex align-items-center justify-content-center">
 					<span class="fs-1 text-muted">+</span>
 				</div>
@@ -107,7 +276,7 @@
 				</div>
 			</RouterLink>
 		</div>
-		<SelectionActionBar v-if="isSelectionMode && selectedCount > 0" :selected-count="selectedCount" @export="handleExportSelected" @cancel="exitSelectionMode"/>
+		<SelectionActionBar v-if="isSelectionMode && selectedCount > 0" :selected-count="selectedCount" :actions="selectionActions" @action="handleSelectionAction" @cancel="exitSelectionMode"/>
 	</div>
 	<SyncToast v-if="importErrors?.length" :message="formatImportErrors()" type="error" :visible="!!importErrors.length" :timeStamp="Date.now()" @dismiss="dismissErrors"/>
 </template>

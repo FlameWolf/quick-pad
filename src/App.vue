@@ -3,15 +3,18 @@
 	import "bootstrap-icons/font/bootstrap-icons.min.css";
 	import { BApp } from "bootstrap-vue-next/components";
 	import { RouterView } from "vue-router";
-	import { computed, onMounted, onBeforeUnmount, ref } from "vue";
+	import { computed, onMounted, onBeforeUnmount, ref, watch } from "vue";
 	import { useTheme } from "@/composables/useTheme";
 	import { useGoogleAuth } from "@/composables/useGoogleAuth";
 	import { useNotesSync } from "@/composables/useNotesSync";
+	import { useNotesStore } from "@/stores/notes";
 	import SyncToast from "@/components/SyncToast.vue";
+	import ConfirmDialog from "@/components/ConfirmDialog.vue";
 
 	const { isDark } = useTheme();
 	const { isSignedIn, isReady, isConfigured, user, tryRestoreSession, signIn, signOut } = useGoogleAuth();
 	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, lastSyncMessage, saveToCloud, loadFromCloud, setAutoSync, dismissMessage } = useNotesSync();
+	const notesStore = useNotesStore();
 	const showSyncMenu = ref(false);
 	const authTimedOut = ref(false);
 	let readyTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -63,7 +66,18 @@
 		return lastSyncedAt.value.toLocaleDateString();
 	});
 
+	watch(
+		isSignedIn,
+		signedIn => {
+			if (signedIn && autoSyncEnabled.value) {
+				saveToCloud();
+			}
+		},
+		{ immediate: true }
+	);
+
 	onMounted(() => {
+		notesStore.purgeExpiredTrash();
 		if (isConfigured.value) {
 			readyTimeout = setTimeout(() => {
 				if (!isReady.value) {
@@ -150,6 +164,7 @@
 			<RouterView/>
 		</main>
 		<SyncToast v-if="lastSyncMessage" :message="lastSyncMessage.text" :type="lastSyncMessage.type" :visible="!!lastSyncMessage" :timeStamp="lastSyncMessage.timeStamp" @dismiss="dismissMessage"/>
+		<ConfirmDialog/>
 	</BApp>
 </template>
 <style>

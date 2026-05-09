@@ -1,4 +1,4 @@
-import { ref, readonly, watch } from "vue";
+import { ref, readonly } from "vue";
 import { useGoogleDrive } from "./useGoogleDrive";
 import { useGoogleAuth } from "./useGoogleAuth";
 import { useNotesStore } from "@/stores/notes";
@@ -6,7 +6,6 @@ import { NoteModel } from "@/models/NoteModel";
 import type { NoteJSON } from "@/models/NoteModel";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-let watcherStop: (() => void) | null = null;
 const SYNC_FILENAME = "quick-pad-notes.json";
 const LAST_SYNCED_KEY = "quick-pad-last-synced";
 const AUTO_SYNC_KEY = "quick-pad-auto-sync";
@@ -39,15 +38,50 @@ function persistLastSynced(date: Date) {
 	localStorage.setItem(LAST_SYNCED_KEY, date.toISOString());
 }
 
+function noteEffectiveTime(note: NoteModel): number {
+	return (note.modifiedAt ?? note.createdAt).getTime();
+}
+
+export function mergeNotesByModifiedAt(local: ReadonlyArray<NoteModel>, remote: ReadonlyArray<NoteModel>): NoteModel[] {
+	const merged = new Map<string, NoteModel>();
+	for (const note of local) {
+		merged.set(note.id, note);
+	}
+	for (const remoteNote of remote) {
+		const localNote = merged.get(remoteNote.id);
+		if (!localNote) {
+			merged.set(remoteNote.id, remoteNote);
+			continue;
+		}
+		if (noteEffectiveTime(remoteNote) > noteEffectiveTime(localNote)) {
+			merged.set(remoteNote.id, remoteNote);
+		}
+	}
+	return Array.from(merged.values());
+}
+
 export function useNotesSync() {
 	const { readJSON, writeJSON } = useGoogleDrive();
 	const { isSignedIn } = useGoogleAuth();
+
+	async function readRemoteNotes(): Promise<NoteModel[]> {
+		const data = await readJSON<NoteJSON[]>(SYNC_FILENAME);
+		if (data && Array.isArray(data)) {
+			return data.map(NoteModel.fromJSON);
+		}
+		return [];
+	}
 
 	async function saveToCloud(): Promise<void> {
 		const store = useNotesStore();
 		isSyncing.value = true;
 		syncError.value = null;
 		try {
+			store.purgeExpiredTrash();
+			const remoteNotes = await readRemoteNotes();
+			const merged = mergeNotesByModifiedAt(store.notes, remoteNotes);
+			store.replaceAllNotes(merged);
+			store.purgeExpiredTrash();
 			await writeJSON(
 				SYNC_FILENAME,
 				store.notes.map(n => n.toJSON())
@@ -77,24 +111,27 @@ export function useNotesSync() {
 		isSyncing.value = true;
 		syncError.value = null;
 		try {
-			const data = await readJSON<NoteJSON[]>(SYNC_FILENAME);
-			if (data && Array.isArray(data)) {
-				store.replaceAllNotes(data.map(NoteModel.fromJSON));
-				const now = new Date();
-				lastSyncedAt.value = now;
-				persistLastSynced(now);
-				lastSyncMessage.value = {
-					text: "Notes loaded from Drive",
-					type: "success",
-					timeStamp: Date.now()
-				};
-			} else {
+			store.purgeExpiredTrash();
+			const remoteNotes = await readRemoteNotes();
+			if (remoteNotes.length === 0 && store.notes.length === 0) {
 				lastSyncMessage.value = {
 					text: "No notes found on Drive",
 					type: "success",
 					timeStamp: Date.now()
 				};
+				return;
 			}
+			const merged = mergeNotesByModifiedAt(store.notes, remoteNotes);
+			store.replaceAllNotes(merged);
+			store.purgeExpiredTrash();
+			const now = new Date();
+			lastSyncedAt.value = now;
+			persistLastSynced(now);
+			lastSyncMessage.value = {
+				text: remoteNotes.length === 0 ? "No notes found on Drive" : "Notes loaded from Drive",
+				type: "success",
+				timeStamp: Date.now()
+			};
 		} catch (e: any) {
 			syncError.value = e?.message ?? "Failed to load";
 			lastSyncMessage.value = {
@@ -107,62 +144,31 @@ export function useNotesSync() {
 		}
 	}
 
+	function requestSync() {
+		if (!isSignedIn.value || !autoSyncEnabled.value) {
+			return;
+		}
+		if (debounceTimer) {
+			clearTimeout(debounceTimer);
+		}
+		debounceTimer = setTimeout(() => {
+			debounceTimer = null;
+			saveToCloud();
+		}, DEBOUNCE_MS);
+	}
+
 	function setAutoSync(enabled: boolean) {
 		autoSyncEnabled.value = enabled;
 		persistAutoSync(enabled);
-		if (enabled && isSignedIn.value) {
-			startAutoSync();
-		} else {
-			stopAutoSync();
-		}
-	}
-
-	function startAutoSync() {
-		if (watcherStop) {
-			return;
-		}
-		const store = useNotesStore();
-		watcherStop = watch(
-			() => store.notes,
-			() => {
-				if (!isSignedIn.value || !autoSyncEnabled.value) {
-					return;
-				}
-				if (debounceTimer) clearTimeout(debounceTimer);
-				debounceTimer = setTimeout(() => {
-					saveToCloud();
-				}, DEBOUNCE_MS);
-			},
-			{ deep: true }
-		);
-	}
-
-	function stopAutoSync() {
-		if (debounceTimer) {
+		if (!enabled && debounceTimer) {
 			clearTimeout(debounceTimer);
 			debounceTimer = null;
-		}
-		if (watcherStop) {
-			watcherStop();
-			watcherStop = null;
 		}
 	}
 
 	function dismissMessage() {
 		lastSyncMessage.value = null;
 	}
-
-	watch(
-		isSignedIn,
-		signedIn => {
-			if (signedIn && autoSyncEnabled.value) {
-				startAutoSync();
-			} else {
-				stopAutoSync();
-			}
-		},
-		{ immediate: true }
-	);
 
 	return {
 		isSyncing: readonly(isSyncing),
@@ -172,6 +178,7 @@ export function useNotesSync() {
 		lastSyncMessage: readonly(lastSyncMessage),
 		saveToCloud,
 		loadFromCloud,
+		requestSync,
 		setAutoSync,
 		dismissMessage
 	};
