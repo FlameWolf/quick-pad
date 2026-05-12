@@ -118,7 +118,7 @@
 				<RouterLink to="/notes" class="navbar-brand">QuickPad</RouterLink>
 				<div class="me-auto position-relative">
 					<input type="text" class="form-control pe-5" placeholder="Search" ref="search-text" @input="applySearch"/>
-					<button v-if="isSearchMode" class="btn-close position-absolute top-50 end-0 translate-middle-y me-2" @click="clearSearch"></button>
+					<button v-if="isSearchMode" class="btn-close small position-absolute top-50 end-0 translate-middle-y me-2" @click="clearSearch"></button>
 				</div>
 				<div class="d-flex align-items-center gap-2 ms-2">
 					<template v-if="!isConfigured">
