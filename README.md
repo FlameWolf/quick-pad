@@ -8,7 +8,7 @@ QuickPad keeps your notes in your browser, works without an Internet connection,
 
 ### Notes
 
-- Create, view, edit, archive, and delete plain-text notes from a tile-based dashboard.
+- Create, view, search, edit, archive, and delete plain-text notes from a tile-based dashboard.
 - Each tile shows the title, last-updated date, and a short summary preview.
 - Live sentence, word, and character counts (Unicode-aware via `Intl.Segmenter`) while reading or editing.
 - Per-note undo / redo history while editing (debounced, up to 100 steps).
