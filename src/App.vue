@@ -8,7 +8,7 @@
 	import { useGoogleAuth } from "@/composables/useGoogleAuth";
 	import { useNotesSync } from "@/composables/useNotesSync";
 	import { useNotesStore } from "@/stores/notes";
-	import SyncToast from "@/components/SyncToast.vue";
+	import Toast from "@/components/Toast.vue";
 	import ConfirmDialog from "@/components/ConfirmDialog.vue";
 	import { emptyString } from "@/library";
 
@@ -181,7 +181,7 @@
 		<main class="container pb-4">
 			<RouterView/>
 		</main>
-		<SyncToast v-if="lastSyncMessage" :message="lastSyncMessage.text" :type="lastSyncMessage.type" :visible="!!lastSyncMessage" :timeStamp="lastSyncMessage.timeStamp" @dismiss="dismissMessage"/>
+		<Toast v-if="lastSyncMessage" :message="lastSyncMessage.text" :type="lastSyncMessage.type" :visible="!!lastSyncMessage" :timeStamp="lastSyncMessage.timeStamp" @dismiss="dismissMessage"/>
 		<ConfirmDialog/>
 	</BApp>
 </template>

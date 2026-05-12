@@ -1,6 +1,7 @@
 <script setup lang="ts">
-	import { watch } from "vue";
+	import { onMounted, watch } from "vue";
 
+	let dismissTimeout: NodeJS.Timeout | null = null;
 	const props = defineProps<{
 		message: string;
 		type: "success" | "error";
@@ -11,14 +12,30 @@
 		dismiss: [];
 	}>();
 
+	function clearDismissTimeout() {
+		if (dismissTimeout) {
+			clearTimeout(dismissTimeout);
+			dismissTimeout = null;
+		}
+	}
+
+	function resetDismissTimeout() {
+		clearDismissTimeout();
+		dismissTimeout = setTimeout(() => emit("dismiss"), 5000);
+	}
+
 	watch(
 		() => props.timeStamp,
 		val => {
-			if (val && props.type === "success") {
-				setTimeout(() => emit("dismiss"), 3000);
+			if (val) {
+				resetDismissTimeout();
 			}
 		}
 	);
+
+	onMounted(() => {
+		resetDismissTimeout();
+	});
 </script>
 
 <template>

@@ -8,7 +8,7 @@
 	import { computed, onMounted, watch } from "vue";
 	import { emptyString } from "@/library";
 	import SelectionActionBar, { type SelectionAction } from "@/components/SelectionActionBar.vue";
-	import SyncToast from "@/components/SyncToast.vue";
+	import Toast from "@/components/Toast.vue";
 	import type { UUID } from "crypto";
 
 	type View = "active" | "archived" | "trash";
@@ -288,7 +288,7 @@
 		</div>
 		<SelectionActionBar v-if="isSelectionMode && selectedCount > 0" :selected-count="selectedCount" :actions="selectionActions" @action="handleSelectionAction" @cancel="exitSelectionMode"/>
 	</div>
-	<SyncToast v-if="importErrors?.length" :message="formatImportErrors()" type="error" :visible="!!importErrors.length" :timeStamp="Date.now()" @dismiss="dismissErrors"/>
+	<Toast v-if="importErrors?.length" :message="formatImportErrors()" type="error" :visible="!!importErrors.length" :timeStamp="Date.now()" @dismiss="dismissErrors"/>
 </template>
 
 <style>
