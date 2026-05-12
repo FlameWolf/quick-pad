@@ -4,6 +4,7 @@ import { useGoogleAuth } from "./useGoogleAuth";
 import { useNotesStore } from "@/stores/notes";
 import { NoteModel } from "@/models/NoteModel";
 import type { NoteJSON } from "@/models/NoteModel";
+import type { UUID } from "crypto";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 const SYNC_FILENAME = "quick-pad-notes.json";
@@ -72,13 +73,13 @@ export function useNotesSync() {
 		return [];
 	}
 
-	async function saveToCloud(): Promise<void> {
+	async function saveToCloud(purged: Array<UUID> | undefined = undefined): Promise<void> {
 		const store = useNotesStore();
 		isSyncing.value = true;
 		syncError.value = null;
 		try {
 			store.purgeExpiredTrash();
-			const remoteNotes = await readRemoteNotes();
+			const remoteNotes = (await readRemoteNotes()).filter(note => !purged?.includes(note.id));
 			const merged = mergeNotesByModifiedAt(store.notes, remoteNotes);
 			store.replaceAllNotes(merged);
 			store.purgeExpiredTrash();
@@ -144,7 +145,7 @@ export function useNotesSync() {
 		}
 	}
 
-	function requestSync() {
+	function requestSync(purged: Array<UUID> | undefined = undefined) {
 		if (!isSignedIn.value || !autoSyncEnabled.value) {
 			return;
 		}
@@ -153,7 +154,7 @@ export function useNotesSync() {
 		}
 		debounceTimer = setTimeout(() => {
 			debounceTimer = null;
-			saveToCloud();
+			saveToCloud(purged);
 		}, DEBOUNCE_MS);
 	}
 

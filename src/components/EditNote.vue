@@ -185,8 +185,9 @@
 		if (!ok) {
 			return;
 		}
-		store.permanentlyDelete(existingNote.value.id);
-		requestSync();
+		const idToPurge = existingNote.value.id;
+		store.permanentlyDelete(idToPurge);
+		requestSync([idToPurge]);
 		router.push("/notes/trash");
 	}
 

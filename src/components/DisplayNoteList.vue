@@ -175,7 +175,7 @@
 					return;
 				}
 				notesStore.permanentlyDeleteMultiple(ids);
-				requestSync();
+				requestSync(ids);
 				exitSelectionMode();
 				break;
 			}
@@ -197,8 +197,9 @@
 		if (!ok) {
 			return;
 		}
-		notesStore.permanentlyDeleteMultiple(notesStore.trashedNotes.map(n => n.id));
-		requestSync();
+		const idsToPurge = notesStore.trashedNotes.map(n => n.id);
+		notesStore.permanentlyDeleteMultiple(idsToPurge);
+		requestSync(idsToPurge);
 	}
 
 	onMounted(() => {
