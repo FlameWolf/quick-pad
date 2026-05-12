@@ -3,21 +3,35 @@
 	import "bootstrap-icons/font/bootstrap-icons.min.css";
 	import { BApp } from "bootstrap-vue-next/components";
 	import { RouterView } from "vue-router";
-	import { computed, onMounted, onBeforeUnmount, ref, watch } from "vue";
+	import { computed, onMounted, onBeforeUnmount, ref, watch, useTemplateRef } from "vue";
 	import { useTheme } from "@/composables/useTheme";
 	import { useGoogleAuth } from "@/composables/useGoogleAuth";
 	import { useNotesSync } from "@/composables/useNotesSync";
 	import { useNotesStore } from "@/stores/notes";
 	import SyncToast from "@/components/SyncToast.vue";
 	import ConfirmDialog from "@/components/ConfirmDialog.vue";
+	import { emptyString } from "@/library";
 
+	let readyTimeout: ReturnType<typeof setTimeout> | null = null;
 	const { isDark } = useTheme();
 	const { isSignedIn, isReady, isConfigured, user, tryRestoreSession, signIn, signOut } = useGoogleAuth();
 	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, lastSyncMessage, saveToCloud, loadFromCloud, setAutoSync, dismissMessage } = useNotesSync();
 	const notesStore = useNotesStore();
+	const searchText = useTemplateRef("search-text");
 	const showSyncMenu = ref(false);
 	const authTimedOut = ref(false);
-	let readyTimeout: ReturnType<typeof setTimeout> | null = null;
+	const isSearchMode = computed(() => !!notesStore.searchText);
+
+	function applySearch() {
+		notesStore.searchText = searchText.value?.value?.trim() ?? emptyString;
+	}
+
+	function clearSearch() {
+		if (searchText.value) {
+			searchText.value.value = emptyString;
+			applySearch();
+		}
+	}
 
 	function toggleSyncMenu() {
 		showSyncMenu.value = !showSyncMenu.value;
@@ -101,8 +115,12 @@
 		</div>
 		<nav class="navbar navbar-expand bg-body-tertiary border-bottom mb-4">
 			<div class="container">
-				<RouterLink to="/notes" class="navbar-brand fw-semibold">QuickPad</RouterLink>
-				<div class="d-flex align-items-center gap-2">
+				<RouterLink to="/notes" class="navbar-brand">QuickPad</RouterLink>
+				<div class="me-auto position-relative">
+					<input type="text" class="form-control pe-5" placeholder="Search" ref="search-text" @input="applySearch"/>
+					<button v-if="isSearchMode" class="btn-close position-absolute top-50 end-0 translate-middle-y me-2" @click="clearSearch"></button>
+				</div>
+				<div class="d-flex align-items-center gap-2 ms-2">
 					<template v-if="!isConfigured">
 						<!-- Sync not configured — keep UI quiet so the app works in local-only mode -->
 					</template>
@@ -126,27 +144,27 @@
 									<div class="dropdown-divider"></div>
 									<button class="dropdown-item sync-dropdown-item" @click="handleSave" :disabled="isSyncing">
 										<i class="bi bi-cloud-upload me-2" aria-hidden="true"></i>
-										Save to Drive
+										<span>Save to Drive</span>
 									</button>
 									<button class="dropdown-item sync-dropdown-item" @click="handleLoad" :disabled="isSyncing">
 										<i class="bi bi-cloud-download me-2" aria-hidden="true"></i>
-										Load from Drive
+										<span>Load from Drive</span>
 									</button>
 									<div v-if="lastSyncedLabel" class="dropdown-header text-muted small px-3 py-1">Last synced: {{ lastSyncedLabel }}</div>
 									<div class="dropdown-divider"></div>
 									<button class="dropdown-item sync-dropdown-item text-danger" @click="handleSignOut">
 										<i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>
-										Sign out
+										<span>Sign out</span>
 									</button>
 								</div>
 							</div>
 							<div v-if="showSyncMenu" class="sync-backdrop" @click="closeSyncMenu"></div>
 						</template>
-						<button v-else class="btn btn-outline-primary btn-sm" @click="signIn" aria-label="Sign in with Google">
-							<i class="bi bi-google" aria-hidden="true"></i>
-							<span class="d-none d-sm-inline ms-1">Sign in with Google</span>
-							<span class="d-sm-none ms-1">Sign in</span>
-						</button>
+						<template v-else>
+							<button class="btn btn-outline-primary btn-sm" @click="signIn" aria-label="Sign in with Google">
+								<i class="bi bi-google" aria-hidden="true"></i>
+							</button>
+						</template>
 					</template>
 					<template v-else>
 						<button v-if="authTimedOut" class="btn btn-outline-secondary btn-sm" disabled title="Google Sign-In library could not be loaded">

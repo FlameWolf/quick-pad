@@ -3,6 +3,7 @@ import { defineStore } from "pinia";
 import { NoteModel } from "@/models/NoteModel";
 import type { NoteJSON } from "@/models/NoteModel";
 import type { UUID } from "crypto";
+import { emptyString } from "@/library";
 
 const STORAGE_KEY = "quick-pad-notes";
 const TRASH_RETENTION_DAYS = 30;
@@ -23,11 +24,11 @@ function loadFromStorage(): NoteModel[] {
 
 export const useNotesStore = defineStore("notes", () => {
 	const notes = ref<NoteModel[]>(loadFromStorage());
-
-	const activeNotes = computed(() => notes.value.filter(note => !note.archivedAt && !note.deletedAt));
-	const archivedNotes = computed(() => notes.value.filter(note => note.archivedAt && !note.deletedAt));
-	const trashedNotes = computed(() => notes.value.filter(note => note.deletedAt));
-	const noteCount = computed(() => activeNotes.value.length);
+	const searchText = ref<string>(emptyString);
+	const searchResults = computed(() => (searchText.value.trim() ? notes.value.filter(note => note.title.includes(searchText.value) || note.content.includes(searchText.value)) : notes.value));
+	const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt));
+	const archivedNotes = computed(() => searchResults.value.filter(note => note.archivedAt && !note.deletedAt));
+	const trashedNotes = computed(() => searchResults.value.filter(note => note.deletedAt));
 
 	watch(
 		notes,
@@ -124,28 +125,16 @@ export const useNotesStore = defineStore("notes", () => {
 		return before - notes.value.length;
 	}
 
-	function removeNote(id: UUID) {
-		trashNote(id);
-	}
-
-	function getAllNotes() {
-		return notes.value;
-	}
-
-	function removeAllNotes() {
-		notes.value = [];
-	}
-
 	function replaceAllNotes(newNotes: NoteModel[]) {
 		notes.value = newNotes;
 	}
 
 	return {
 		notes,
+		searchText,
 		activeNotes,
 		archivedNotes,
 		trashedNotes,
-		noteCount,
 		addNote,
 		updateNote,
 		getNote,
@@ -160,9 +149,6 @@ export const useNotesStore = defineStore("notes", () => {
 		permanentlyDelete,
 		permanentlyDeleteMultiple,
 		purgeExpiredTrash,
-		removeNote,
-		getAllNotes,
-		removeAllNotes,
 		replaceAllNotes
 	};
 });

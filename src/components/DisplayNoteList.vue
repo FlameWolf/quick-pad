@@ -15,22 +15,22 @@
 
 	const props = defineProps<{ view?: View }>();
 	const view = computed<View>(() => props.view ?? "active");
-
-	const noteStore = useNotesStore();
+	const notesStore = useNotesStore();
 	const { importFiles, importErrors, dismissErrors, exportNotes, exportAllNotes } = useFileIO();
 	const { isSelectionMode, selectedCount, enterSelectionMode, exitSelectionMode, toggleSelection, isSelected, selectAll, clearSelection } = useNoteSelection();
 	const { sortBy, sortDirection, setSortBy, toggleSortDirection, getSortedNotes } = useNoteSort();
 	const { confirm } = useConfirmDialog();
 	const { requestSync } = useNotesSync();
+	const isSearchMode = computed(() => !!notesStore.searchText);
 
 	const sourceNotes = computed(() => {
 		if (view.value === "archived") {
-			return noteStore.archivedNotes;
+			return notesStore.archivedNotes;
 		}
 		if (view.value === "trash") {
-			return noteStore.trashedNotes;
+			return notesStore.trashedNotes;
 		}
-		return noteStore.activeNotes;
+		return notesStore.activeNotes;
 	});
 
 	const sortedNotes = computed(() => getSortedNotes(sourceNotes.value));
@@ -48,13 +48,17 @@
 	});
 
 	const emptyMessage = computed(() => {
-		if (view.value === "archived") {
-			return "No archived notes";
+		if (isSearchMode.value) {
+			return `No results found for "${notesStore.searchText}"`;
 		}
-		if (view.value === "trash") {
-			return "Trash is empty";
+		switch (view.value) {
+			case "archived":
+				return "No archived notes";
+			case "trash":
+				return "Trash is empty";
+			default:
+				return "No notes yet";
 		}
-		return "No notes yet";
 	});
 
 	const selectionActions = computed<SelectionAction[]>(() => {
@@ -126,13 +130,13 @@
 				break;
 			}
 			case "archive": {
-				noteStore.archiveMultiple(ids);
+				notesStore.archiveMultiple(ids);
 				requestSync();
 				exitSelectionMode();
 				break;
 			}
 			case "unarchive": {
-				noteStore.unarchiveMultiple(ids);
+				notesStore.unarchiveMultiple(ids);
 				requestSync();
 				exitSelectionMode();
 				break;
@@ -148,13 +152,13 @@
 				if (!ok) {
 					return;
 				}
-				noteStore.trashMultiple(ids);
+				notesStore.trashMultiple(ids);
 				requestSync();
 				exitSelectionMode();
 				break;
 			}
 			case "restore": {
-				noteStore.restoreFromTrashMultiple(ids);
+				notesStore.restoreFromTrashMultiple(ids);
 				requestSync();
 				exitSelectionMode();
 				break;
@@ -170,7 +174,7 @@
 				if (!ok) {
 					return;
 				}
-				noteStore.permanentlyDeleteMultiple(ids);
+				notesStore.permanentlyDeleteMultiple(ids);
 				requestSync();
 				exitSelectionMode();
 				break;
@@ -179,7 +183,7 @@
 	}
 
 	async function handleEmptyTrash() {
-		const count = noteStore.trashedNotes.length;
+		const count = notesStore.trashedNotes.length;
 		if (count === 0) {
 			return;
 		}
@@ -193,7 +197,7 @@
 		if (!ok) {
 			return;
 		}
-		noteStore.permanentlyDeleteMultiple(noteStore.trashedNotes.map(n => n.id));
+		notesStore.permanentlyDeleteMultiple(notesStore.trashedNotes.map(n => n.id));
 		requestSync();
 	}
 
@@ -219,9 +223,9 @@
 			</svg>
 		</div>
 		<p class="text-muted mb-3">{{ emptyMessage }}</p>
-		<div v-if="view === 'active'" class="d-flex flex-column gap-2 align-items-center">
+		<div v-if="view === 'active' && !isSearchMode" class="d-flex flex-column gap-2 align-items-center">
 			<div class="d-flex gap-2 justify-content-center flex-wrap">
-				<RouterLink to="/notes/new" class="btn btn-primary">Create your first note</RouterLink>
+				<RouterLink to="/notes/new" class="btn btn-primary">Create a note</RouterLink>
 				<button class="btn btn-outline-secondary" @click="importFiles">Import from files</button>
 			</div>
 			<div class="d-flex gap-3 justify-content-center flex-wrap">
