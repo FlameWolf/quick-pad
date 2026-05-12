@@ -191,6 +191,7 @@
 	}
 	.container {
 		max-width: calc(100vw - 1rem);
+		padding: unset;
 	}
 	.sync-icon {
 		font-size: 0.875rem;
