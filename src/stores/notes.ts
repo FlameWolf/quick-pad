@@ -3,7 +3,7 @@ import { defineStore } from "pinia";
 import { NoteModel } from "@/models/NoteModel";
 import type { NoteJSON } from "@/models/NoteModel";
 import type { UUID } from "crypto";
-import { emptyString } from "@/library";
+import { contains, emptyString } from "@/library";
 
 const STORAGE_KEY = "quick-pad-notes";
 const TRASH_RETENTION_DAYS = 30;
@@ -25,7 +25,7 @@ function loadFromStorage(): NoteModel[] {
 export const useNotesStore = defineStore("notes", () => {
 	const notes = ref<NoteModel[]>(loadFromStorage());
 	const searchText = ref<string>(emptyString);
-	const searchResults = computed(() => (searchText.value.trim() ? notes.value.filter(note => note.title.includes(searchText.value) || note.content.includes(searchText.value)) : notes.value));
+	const searchResults = computed(() => (searchText.value.trim() ? notes.value.filter(note => contains(note.title, searchText.value) || contains(note.content, searchText.value)) : notes.value));
 	const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt));
 	const archivedNotes = computed(() => searchResults.value.filter(note => note.archivedAt && !note.deletedAt));
 	const trashedNotes = computed(() => searchResults.value.filter(note => note.deletedAt));

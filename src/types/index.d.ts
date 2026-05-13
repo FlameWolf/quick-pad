@@ -1,5 +1,8 @@
 declare namespace globalThis {
 	declare const google: any;
+	interface RegExpConstructor {
+		escape: (value: string) => string;
+	}
 }
 
 declare module "crypto" {

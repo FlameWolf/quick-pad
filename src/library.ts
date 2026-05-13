@@ -17,7 +17,9 @@ export const getWordCount = (text: string): number => {
 export const getCharacterCount = (text: string): number => {
 	return Array.from(characterSegmenter.segment(text)).length;
 };
-
+export const contains = (text: string, search: string): boolean => {
+	return new RegExp(RegExp.escape(search), "i").test(text);
+};
 export const isTextFile = (function () {
 	const MAGIC_NUMBERS: Array<{ fileType: string; sig: Array<number> }> = [
 		{
