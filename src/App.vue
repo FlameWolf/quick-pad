@@ -113,7 +113,7 @@
 		<div class="d-none position-absolute top-0 end-0 mt-1 me-1" aria-hidden="true">
 			<i class="bi" :class="{ 'bi-moon-stars-fill': isDark, 'bi-sun-fill': !isDark }"></i>
 		</div>
-		<nav class="navbar navbar-expand bg-body-tertiary border-bottom mb-4">
+		<nav class="navbar navbar-expand bg-body-tertiary border-bottom px-2 mb-4">
 			<div class="container">
 				<RouterLink to="/notes" class="navbar-brand">QuickPad</RouterLink>
 				<div class="me-auto position-relative">
@@ -178,7 +178,7 @@
 				</div>
 			</div>
 		</nav>
-		<main class="container pb-4">
+		<main class="container px-2 pb-4">
 			<RouterView/>
 		</main>
 		<Toast v-if="lastSyncMessage" :message="lastSyncMessage.text" :type="lastSyncMessage.type" :visible="!!lastSyncMessage" :timeStamp="lastSyncMessage.timeStamp" @dismiss="dismissMessage"/>
@@ -190,7 +190,7 @@
 		min-height: 100vh;
 	}
 	.container {
-		max-width: calc(100vw - 1rem);
+		max-width: unset;
 		padding: unset;
 	}
 	.sync-icon {
