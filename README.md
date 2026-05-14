@@ -17,7 +17,7 @@ QuickPad keeps your notes in your browser, works without an Internet connection,
 
 ### Organisation
 
-- Sort notes by **Updated**, **Created**, **Title**, or **Characters**, ascending or descending.
+- Sort notes by **Updated**, **Created**, **Title**, or **Sentence/Word/Character Count**, ascending or descending.
 - Sort field and direction are remembered between sessions.
 - Multi-select mode: tap **Select**, pick notes (or **Select All**), then bulk-export, archive, trash, restore, or delete.
 - Selected count and per-view actions are shown in a sticky selection action bar.
