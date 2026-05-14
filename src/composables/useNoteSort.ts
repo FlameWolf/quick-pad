@@ -1,7 +1,7 @@
 import { ref, readonly } from "vue";
 import type { NoteModel } from "@/models/NoteModel";
 
-export type SortField = "createdAt" | "modifiedAt" | "title" | "characterCount";
+export type SortField = "createdAt" | "modifiedAt" | "title" | "sentenceCount" | "wordCount" | "characterCount";
 export type SortDirection = "asc" | "desc";
 
 const SORT_BY_KEY = "quick-pad-sort-by";
@@ -33,6 +33,10 @@ function compareNotes(a: NoteModel, b: NoteModel, field: SortField): number {
 			const bTime = (b.modifiedAt ?? b.createdAt).getTime();
 			return aTime - bTime;
 		}
+		case "sentenceCount":
+			return a.sentenceCount - b.sentenceCount;
+		case "wordCount":
+			return a.wordCount - b.wordCount;
 		case "characterCount":
 			return a.characterCount - b.characterCount;
 	}

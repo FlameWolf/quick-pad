@@ -248,6 +248,8 @@
 						<option value="modifiedAt">Updated</option>
 						<option value="createdAt">Created</option>
 						<option value="title">Title</option>
+						<option value="sentenceCount">Sentences</option>
+						<option value="wordCount">Words</option>
 						<option value="characterCount">Characters</option>
 					</select>
 					<button class="btn btn-outline-secondary btn-sm" @click="toggleSortDirection" :aria-label="sortDirection === 'asc' ? 'Sort ascending, click to switch to descending' : 'Sort descending, click to switch to ascending'" :title="sortDirection === 'asc' ? 'Ascending' : 'Descending'">
