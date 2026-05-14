@@ -253,7 +253,7 @@
 			<div class="note-content">{{ existingNote.content }}</div>
 		</template>
 		<template v-if="isEditing">
-			<input v-model="editTitle" type="text" class="form-control form-control-lg mb-3" placeholder="Note title"/>
+			<input v-model="editTitle" type="text" class="form-control form-control-lg mb-3" placeholder="Title"/>
 			<textarea :value="editContent" @input="onContentInput" class="form-control note-textarea" placeholder="Start writing..." rows="12"></textarea>
 		</template>
 		<div class="d-flex flex-wrap gap-2 mt-3" v-if="displayContent">
