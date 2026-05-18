@@ -261,8 +261,12 @@
 				<button class="btn btn-outline-danger btn-sm" @click="deleteNote">Delete</button>
 			</div>
 			<div class="d-flex flex-wrap gap-2" v-if="isEditing">
-				<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canUndo.value" @click="doUndo" title="Undo" aria-label="Undo">&#x21A9;</button>
-				<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canRedo.value" @click="doRedo" title="Redo" aria-label="Redo">&#x21AA;</button>
+				<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canUndo.value" @click="doUndo" title="Undo" aria-label="Undo">
+					<i class="bi bi-arrow-90deg-left"></i>
+				</button>
+				<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canRedo.value" @click="doRedo" title="Redo" aria-label="Redo">
+					<i class="bi bi-arrow-90deg-right"></i>
+				</button>
 				<button class="btn btn-primary btn-sm" @click="saveNote">Save</button>
 				<button class="btn btn-outline-secondary btn-sm" @click="cancelEditing">Cancel</button>
 			</div>
