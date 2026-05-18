@@ -125,25 +125,36 @@
 <template>
 	<BApp>
 		<nav class="navbar navbar-expand bg-body-tertiary border-bottom px-2 mb-4">
-			<div class="container">
+			<div class="container gap-2">
 				<RouterLink to="/notes" class="navbar-brand">QuickPad</RouterLink>
 				<div class="me-auto position-relative">
 					<input type="text" class="form-control pe-5" placeholder="Search" ref="search-text" @input="applySearch"/>
 					<button v-if="isSearchMode" class="btn-close small position-absolute top-50 end-0 translate-middle-y me-2" @click="clearSearch"></button>
 				</div>
-				<div class="d-flex align-items-center gap-2 ms-2">
+				<div class="d-flex align-items-center gap-2">
 					<template v-if="!isConfigured">
 						<!-- Sync not configured — keep UI quiet so the app works in local-only mode -->
 					</template>
 					<template v-else-if="isReady">
 						<template v-if="isSignedIn">
 							<div class="position-relative">
-								<button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" @click="toggleSyncMenu" :disabled="isSyncing" :title="syncError ? `Sync error: ${syncError}` : 'Google Drive Sync'" aria-label="Google Drive Sync">
-									<span v-if="isSyncing" class="spinner-border spinner-border-sm" role="status"></span>
-									<span v-else-if="syncError" class="sync-icon text-warning">&#9888;</span>
-									<span v-else-if="lastSyncedAt" class="sync-icon text-success">&#10003;</span>
-									<span v-else class="sync-icon">&#9729;</span>
-									<span class="d-none d-md-inline">{{ user?.name ?? "Sync" }}</span>
+								<button class="d-flex flex-nowrap btn btn-outline-secondary btn-sm" @click="toggleSyncMenu" :disabled="isSyncing" :title="syncError ? `Sync error: ${syncError}` : 'Google Drive Sync'" aria-label="Google Drive Sync">
+									<span v-if="isSyncing">
+										<i class="spinner-border spinner-border-sm" role="status"></i>
+									</span>
+									<span v-else-if="syncError" class="text-warning">
+										<i class="bi bi-exclamation-triangle"></i>
+									</span>
+									<span v-else-if="lastSyncedAt" class="text-success">
+										<i class="bi bi-check2"></i>
+									</span>
+									<span v-else>
+										<i class="bi bi-cloud"></i>
+									</span>
+									<span class="d-none d-md-inline">
+										<span>&#xA0;</span>
+										<span>{{ user?.name ?? "Sync" }}</span>
+									</span>
 								</button>
 								<div v-if="showSyncMenu" class="dropdown-menu show sync-dropdown">
 									<div class="dropdown-header text-muted small px-3 py-1 text-truncate">{{ user?.email }}</div>
@@ -214,10 +225,6 @@
 	.container {
 		max-width: unset;
 		padding: unset;
-	}
-	.sync-icon {
-		font-size: 0.875rem;
-		line-height: 1;
 	}
 	.sync-dropdown {
 		position: absolute;
