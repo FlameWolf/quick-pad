@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { ref, computed, onBeforeUnmount, onMounted } from "vue";
+	import { ref, computed, onBeforeUnmount, onMounted, watch, useTemplateRef, type Ref } from "vue";
 	import { useRouter, useRoute, onBeforeRouteLeave } from "vue-router";
 	import { useNotesStore } from "@/stores/notes";
 	import { useUndoRedo } from "@/composables/useUndoRedo";
@@ -23,6 +23,7 @@
 	const isEditing = ref(isCreateMode.value);
 	const editTitle = ref(existingNote.value?.title ?? emptyString);
 	const editContent = ref(existingNote.value?.content ?? emptyString);
+	const editTextArea = useTemplateRef("edit-text-area");
 	const undoRedo = useUndoRedo(editContent.value);
 	const displayContent = computed(() => (isEditing.value ? editContent.value : (existingNote.value?.content ?? "")));
 	const sentenceCount = computed(() => getSentenceCount(displayContent.value));
@@ -52,10 +53,20 @@
 		return editTitle.value !== existingNote.value.title || editContent.value !== existingNote.value.content;
 	});
 
+	function adjustTextAreaHeight() {
+		if (isEditing.value) {
+			const editor = editTextArea.value!;
+			editor.style.setProperty("height", "auto");
+			editor.style.setProperty("height", `calc(${editor.scrollHeight}px + 1rem)`);
+		}
+	}
+
 	function onContentInput(e: Event) {
 		const value = (e.target as HTMLTextAreaElement).value;
 		editContent.value = value;
-		if (debounceTimer) clearTimeout(debounceTimer);
+		if (debounceTimer) {
+			clearTimeout(debounceTimer);
+		}
 		debounceTimer = setTimeout(() => {
 			undoRedo.push(value);
 		}, 300);
@@ -76,6 +87,7 @@
 		editContent.value = existingNote.value?.content ?? emptyString;
 		undoRedo.push(editContent.value);
 		isEditing.value = true;
+		setTimeout(adjustTextAreaHeight);
 	}
 
 	async function confirmDiscardChanges(): Promise<boolean> {
@@ -201,7 +213,6 @@
 	function onBeforeUnload(e: BeforeUnloadEvent) {
 		if (hasUnsavedChanges.value) {
 			e.preventDefault();
-			e.returnValue = "";
 		}
 	}
 
@@ -210,7 +221,9 @@
 	});
 
 	onBeforeUnmount(() => {
-		if (debounceTimer) clearTimeout(debounceTimer);
+		if (debounceTimer) {
+			clearTimeout(debounceTimer);
+		}
 		window.removeEventListener("beforeunload", onBeforeUnload);
 	});
 
@@ -220,6 +233,8 @@
 		}
 		return await confirmDiscardChanges();
 	});
+
+	watch(() => editContent.value, adjustTextAreaHeight);
 </script>
 
 <template>
@@ -247,14 +262,12 @@
 		</div>
 		<template v-if="!isEditing && existingNote">
 			<h2 class="mb-3">{{ existingNote.title }}</h2>
-			<div class="text-muted small mb-3" v-if="existingNote.modifiedAt || existingNote.createdAt">
-				{{ existingNote.modifiedAt ? `Modified ${formatDate(existingNote.modifiedAt)}` : `Created ${formatDate(existingNote.createdAt)}` }}
-			</div>
+			<div class="text-muted small mb-3" v-if="existingNote.modifiedAt || existingNote.createdAt">{{ existingNote.modifiedAt ? `Modified ${formatDate(existingNote.modifiedAt)}` : `Created ${formatDate(existingNote.createdAt)}` }}</div>
 			<div class="note-content">{{ existingNote.content }}</div>
 		</template>
 		<template v-if="isEditing">
-			<input v-model="editTitle" type="text" class="form-control form-control-lg mb-3" placeholder="Title"/>
-			<textarea :value="editContent" @input="onContentInput" class="form-control note-textarea" placeholder="Start writing..." rows="12"></textarea>
+			<input v-model="editTitle" type="text" class="form-control form-control-lg mb-3" placeholder="Title" />
+			<textarea ref="edit-text-area" :value="editContent" @input="onContentInput" class="form-control note-textarea" placeholder="Start writing..." rows="12"></textarea>
 		</template>
 		<div class="d-flex flex-wrap gap-2 mt-3" v-if="displayContent">
 			<span class="badge text-bg-secondary" v-if="sentenceCount">{{ sentenceCount }} sentences</span>
