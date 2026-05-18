@@ -56,8 +56,13 @@
 	function adjustTextAreaHeight() {
 		if (isEditing.value) {
 			const editor = editTextArea.value!;
-			editor.style.setProperty("height", "auto");
-			editor.style.setProperty("height", `calc(${editor.scrollHeight}px + 1rem)`);
+			const editorParent = editor.parentElement!;
+			const editorClone = editor.cloneNode() as HTMLTextAreaElement;
+			editorClone.classList.add("d-hidden");
+			editorClone.style.setProperty("height", "auto");
+			editorParent.appendChild(editorClone);
+			editor.style.setProperty("height", `calc(${editorClone.scrollHeight}px + 1.5rem)`);
+			editorParent.removeChild(editorClone);
 		}
 	}
 
@@ -218,12 +223,14 @@
 
 	onMounted(() => {
 		window.addEventListener("beforeunload", onBeforeUnload);
+		window.addEventListener("resize", adjustTextAreaHeight);
 	});
 
 	onBeforeUnmount(() => {
 		if (debounceTimer) {
 			clearTimeout(debounceTimer);
 		}
+		window.removeEventListener("resize", adjustTextAreaHeight);
 		window.removeEventListener("beforeunload", onBeforeUnload);
 	});
 
