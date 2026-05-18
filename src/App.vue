@@ -126,7 +126,9 @@
 	<BApp>
 		<nav class="navbar navbar-expand bg-body-tertiary border-bottom px-2 mb-4">
 			<div class="container gap-2">
-				<RouterLink to="/notes" class="navbar-brand">QuickPad</RouterLink>
+				<RouterLink to="/notes" class="navbar-brand">
+					<img class="logo" src="/logo.svg" alt="QuickPad Logo"/>
+				</RouterLink>
 				<div class="me-auto position-relative">
 					<input type="text" class="form-control pe-5" placeholder="Search" ref="search-text" @input="applySearch"/>
 					<button v-if="isSearchMode" class="btn-close small position-absolute top-50 end-0 translate-middle-y me-2" @click="clearSearch"></button>
@@ -225,6 +227,10 @@
 	.container {
 		max-width: unset;
 		padding: unset;
+	}
+	.logo {
+		height: 1.5rem;
+		filter: invert(0.5);
 	}
 	.sync-dropdown {
 		position: absolute;
