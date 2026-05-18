@@ -13,7 +13,7 @@
 	import { emptyString } from "@/library";
 
 	let readyTimeout: ReturnType<typeof setTimeout> | null = null;
-	const { isDark } = useTheme();
+	const { isDark, applyTheme } = useTheme();
 	const { isSignedIn, isReady, isConfigured, user, tryRestoreSession, signIn, signOut } = useGoogleAuth();
 	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, lastSyncMessage, saveToCloud, loadFromCloud, setAutoSync, dismissMessage } = useNotesSync();
 	const notesStore = useNotesStore();
@@ -21,6 +21,11 @@
 	const showSyncMenu = ref(false);
 	const authTimedOut = ref(false);
 	const isSearchMode = computed(() => !!notesStore.searchText);
+
+	function toggleTheme() {
+		isDark.value = !isDark.value;
+		applyTheme(isDark.value);
+	}
 
 	function applySearch() {
 		notesStore.searchText = searchText.value?.value?.trim() ?? emptyString;
@@ -119,14 +124,11 @@
 </script>
 <template>
 	<BApp>
-		<div class="d-none position-absolute top-0 end-0 mt-1 me-1" aria-hidden="true">
-			<i class="bi" :class="{ 'bi-moon-stars-fill': isDark, 'bi-sun-fill': !isDark }"></i>
-		</div>
 		<nav class="navbar navbar-expand bg-body-tertiary border-bottom px-2 mb-4">
 			<div class="container">
 				<RouterLink to="/notes" class="navbar-brand">QuickPad</RouterLink>
 				<div class="me-auto position-relative">
-					<input type="text" class="form-control pe-5" placeholder="Search" ref="search-text" @input="applySearch" />
+					<input type="text" class="form-control pe-5" placeholder="Search" ref="search-text" @input="applySearch"/>
 					<button v-if="isSearchMode" class="btn-close small position-absolute top-50 end-0 translate-middle-y me-2" @click="clearSearch"></button>
 				</div>
 				<div class="d-flex align-items-center gap-2 ms-2">
@@ -147,7 +149,7 @@
 									<div class="dropdown-header text-muted small px-3 py-1 text-truncate">{{ user?.email }}</div>
 									<div class="dropdown-divider"></div>
 									<label class="dropdown-item sync-dropdown-item d-flex align-items-center gap-2 mb-0">
-										<input type="checkbox" :checked="autoSyncEnabled" class="form-check-input m-0" @change="handleToggleAutoSync" />
+										<input type="checkbox" :checked="autoSyncEnabled" class="form-check-input m-0" @change="handleToggleAutoSync"/>
 										<span>Auto-sync</span>
 									</label>
 									<div class="dropdown-divider"></div>
@@ -184,11 +186,14 @@
 							<span class="spinner-border spinner-border-sm" role="status"></span>
 						</button>
 					</template>
+					<button class="btn btn-secondary btn-sm">
+						<i class="bi" :class="{ 'bi-moon-stars-fill': isDark, 'bi-sun-fill': !isDark }" @click="toggleTheme"></i>
+					</button>
 				</div>
 			</div>
 		</nav>
 		<main class="container px-2 pb-4">
-			<RouterView />
+			<RouterView/>
 			<div class="d-flex flex-column gap-1 position-fixed bottom-0 end-0 opacity-75 mb-2 me-2">
 				<button class="btn btn-secondary btn-sm" @click="scrollToPosition(`top`)">
 					<i class="bi bi-chevron-up"></i>
@@ -198,8 +203,8 @@
 				</button>
 			</div>
 		</main>
-		<Toast v-if="lastSyncMessage" :message="lastSyncMessage.text" :type="lastSyncMessage.type" :visible="!!lastSyncMessage" :timeStamp="lastSyncMessage.timeStamp" @dismiss="dismissMessage" />
-		<ConfirmDialog />
+		<Toast v-if="lastSyncMessage" :message="lastSyncMessage.text" :type="lastSyncMessage.type" :visible="!!lastSyncMessage" :timeStamp="lastSyncMessage.timeStamp" @dismiss="dismissMessage"/>
+		<ConfirmDialog/>
 	</BApp>
 </template>
 <style>

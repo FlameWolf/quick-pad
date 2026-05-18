@@ -1,4 +1,4 @@
-import { ref, readonly } from "vue";
+import { ref } from "vue";
 
 const isListening = ref(false);
 const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -21,6 +21,7 @@ export function useTheme() {
 	}
 
 	return {
-		isDark: readonly(isDark)
+		isDark,
+		applyTheme
 	};
 }

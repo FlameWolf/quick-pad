@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { ref, computed, onBeforeUnmount, onMounted, watch, useTemplateRef, type Ref } from "vue";
+	import { ref, computed, onBeforeUnmount, onMounted, watch, useTemplateRef } from "vue";
 	import { useRouter, useRoute, onBeforeRouteLeave } from "vue-router";
 	import { useNotesStore } from "@/stores/notes";
 	import { useUndoRedo } from "@/composables/useUndoRedo";
@@ -266,7 +266,7 @@
 			<div class="note-content">{{ existingNote.content }}</div>
 		</template>
 		<template v-if="isEditing">
-			<input v-model="editTitle" type="text" class="form-control form-control-lg mb-3" placeholder="Title" />
+			<input v-model="editTitle" type="text" class="form-control form-control-lg mb-3" placeholder="Title"/>
 			<textarea ref="edit-text-area" :value="editContent" @input="onContentInput" class="form-control note-textarea" placeholder="Start writing..." rows="12"></textarea>
 		</template>
 		<div class="d-flex flex-wrap gap-2 mt-3" v-if="displayContent">
