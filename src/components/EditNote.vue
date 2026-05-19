@@ -8,10 +8,9 @@
 	import { NoteModel } from "@/models/NoteModel";
 	import { useFileIO } from "@/composables/useFileIO";
 	import { IconArrowBackUp, IconArrowForwardUp } from "@tabler/icons-vue";
-	import { getSentenceCount, getWordCount, getCharacterCount, emptyString } from "@/library";
+	import { getSentenceCount, getWordCount, getCharacterCount, emptyString, debounce } from "@/library";
 	import type { UUID } from "crypto";
 
-	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 	const props = defineProps<{ id?: UUID }>();
 	const router = useRouter();
 	const route = useRoute();
@@ -64,21 +63,19 @@
 			const editorClone = editor.cloneNode() as HTMLTextAreaElement;
 			editorClone.classList.add("d-hidden");
 			editorClone.style.setProperty("height", "auto");
+			editorClone.value = editContent.value;
 			editorParent.appendChild(editorClone);
 			editor.style.setProperty("height", `calc(${editorClone.scrollHeight}px + 0.5rem)`);
 			editorParent.removeChild(editorClone);
 		}
 	}
 
+	const debouncedPushUndo = debounce((value: string) => undoRedo.push(value), 300);
+
 	function onContentInput(e: Event) {
 		const value = (e.target as HTMLTextAreaElement).value;
 		editContent.value = value;
-		if (debounceTimer) {
-			clearTimeout(debounceTimer);
-		}
-		debounceTimer = setTimeout(() => {
-			undoRedo.push(value);
-		}, 300);
+		debouncedPushUndo(value);
 	}
 
 	function doUndo() {
@@ -231,9 +228,7 @@
 	});
 
 	onBeforeUnmount(() => {
-		if (debounceTimer) {
-			clearTimeout(debounceTimer);
-		}
+		debouncedPushUndo.cancel();
 		window.removeEventListener("resize", adjustTextAreaHeight);
 		window.removeEventListener("beforeunload", onBeforeUnload);
 	});
@@ -266,10 +261,10 @@
 			</div>
 			<div class="d-flex flex-wrap gap-2" v-if="isEditing">
 				<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canUndo.value" @click="doUndo" title="Undo" aria-label="Undo">
-					<IconArrowBackUp stroke="3"/>
+					<IconArrowBackUp stroke="2"/>
 				</button>
 				<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canRedo.value" @click="doRedo" title="Redo" aria-label="Redo">
-					<IconArrowForwardUp stroke="3"/>
+					<IconArrowForwardUp stroke="2"/>
 				</button>
 				<button class="btn btn-primary btn-sm" @click="saveNote">Save</button>
 				<button class="btn btn-outline-secondary btn-sm" @click="cancelEditing">Cancel</button>
