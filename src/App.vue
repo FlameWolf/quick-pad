@@ -8,9 +8,10 @@
 	import { useGoogleAuth } from "@/composables/useGoogleAuth";
 	import { useNotesSync } from "@/composables/useNotesSync";
 	import { useNotesStore } from "@/stores/notes";
+	import { listViewRoutes } from "@/router";
+	import { debounce, emptyString } from "@/library";
 	import Toast from "@/components/Toast.vue";
 	import ConfirmDialog from "@/components/ConfirmDialog.vue";
-	import { debounce, emptyString } from "@/library";
 
 	let readyTimeout: ReturnType<typeof setTimeout> | null = null;
 	const { isDark, applyTheme } = useTheme();
@@ -129,7 +130,7 @@
 					<img class="logo" src="/logo.svg" alt="QuickPad Logo"/>
 				</RouterLink>
 				<div class="me-auto position-relative">
-					<input type="text" class="form-control pe-5" placeholder="Search" ref="search-input" @input="debouncedSearch"/>
+					<input type="text" class="form-control pe-5" placeholder="Search" ref="search-input" :disabled="!listViewRoutes.includes($route.path)" @input="debouncedSearch"/>
 					<button v-if="isSearchMode" class="btn-close small position-absolute top-50 end-0 translate-middle-y me-2" @click="clearSearch"></button>
 				</div>
 				<div class="d-flex align-items-center gap-2">

@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import DisplayNoteList from "@/components/DisplayNoteList.vue";
 import EditNote from "@/components/EditNote.vue";
 
-const listViewRoutes = ["/notes", "/notes/archive", "/notes/trash"];
+export const listViewRoutes = ["/notes", "/notes/archive", "/notes/trash"];
 const scrollPositions = new Map<string, number>();
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
