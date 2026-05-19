@@ -10,14 +10,14 @@
 	import { useNotesStore } from "@/stores/notes";
 	import Toast from "@/components/Toast.vue";
 	import ConfirmDialog from "@/components/ConfirmDialog.vue";
-	import { emptyString } from "@/library";
+	import { debounce, emptyString } from "@/library";
 
 	let readyTimeout: ReturnType<typeof setTimeout> | null = null;
 	const { isDark, applyTheme } = useTheme();
 	const { isSignedIn, isReady, isConfigured, user, tryRestoreSession, signIn, signOut } = useGoogleAuth();
 	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, lastSyncMessage, saveToCloud, loadFromCloud, setAutoSync, dismissMessage } = useNotesSync();
 	const notesStore = useNotesStore();
-	const searchText = useTemplateRef("search-text");
+	const searchInput = useTemplateRef("search-input");
 	const showSyncMenu = ref(false);
 	const authTimedOut = ref(false);
 	const isSearchMode = computed(() => !!notesStore.searchText);
@@ -27,15 +27,14 @@
 		applyTheme(isDark.value);
 	}
 
-	function applySearch() {
-		notesStore.searchText = searchText.value?.value?.trim() ?? emptyString;
-	}
+	const debouncedSearch = debounce(() => {
+		notesStore.searchText = searchInput.value?.value?.trim() ?? emptyString;
+	}, 300);
 
 	function clearSearch() {
-		if (searchText.value) {
-			searchText.value.value = emptyString;
-			applySearch();
-		}
+		debouncedSearch.cancel();
+		notesStore.searchText = emptyString;
+		searchInput.value!.value = emptyString;
 	}
 
 	function toggleSyncMenu() {
@@ -130,7 +129,7 @@
 					<img class="logo" src="/logo.svg" alt="QuickPad Logo"/>
 				</RouterLink>
 				<div class="me-auto position-relative">
-					<input type="text" class="form-control pe-5" placeholder="Search" ref="search-text" @input="applySearch"/>
+					<input type="text" class="form-control pe-5" placeholder="Search" ref="search-input" @input="debouncedSearch"/>
 					<button v-if="isSearchMode" class="btn-close small position-absolute top-50 end-0 translate-middle-y me-2" @click="clearSearch"></button>
 				</div>
 				<div class="d-flex align-items-center gap-2">
