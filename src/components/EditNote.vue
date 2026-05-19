@@ -54,6 +54,9 @@
 	});
 
 	function adjustTextAreaHeight() {
+		if (CSS.supports("field-sizing", "content")) {
+			return;
+		}
 		if (isEditing.value) {
 			const editor = editTextArea.value!;
 			const editorParent = editor.parentElement!;
@@ -61,7 +64,7 @@
 			editorClone.classList.add("d-hidden");
 			editorClone.style.setProperty("height", "auto");
 			editorParent.appendChild(editorClone);
-			editor.style.setProperty("height", `calc(${editorClone.scrollHeight}px + 1.5rem)`);
+			editor.style.setProperty("height", `calc(${editorClone.scrollHeight}px + 0.5rem)`);
 			editorParent.removeChild(editorClone);
 		}
 	}
@@ -299,8 +302,12 @@
 		line-height: 1.7;
 	}
 	.note-textarea {
+		line-height: 1.7;
+		field-sizing: content;
 		min-height: 18.75rem;
 		resize: vertical;
-		line-height: 1.7;
+	}
+	textarea.form-control {
+		min-height: 18.75rem;
 	}
 </style>
