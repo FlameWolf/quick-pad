@@ -7,6 +7,7 @@
 	import { useNotesSync } from "@/composables/useNotesSync";
 	import { NoteModel } from "@/models/NoteModel";
 	import { useFileIO } from "@/composables/useFileIO";
+	import { IconArrowBackUp, IconArrowForwardUp } from "@tabler/icons-vue";
 	import { getSentenceCount, getWordCount, getCharacterCount, emptyString } from "@/library";
 	import type { UUID } from "crypto";
 
@@ -265,10 +266,10 @@
 			</div>
 			<div class="d-flex flex-wrap gap-2" v-if="isEditing">
 				<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canUndo.value" @click="doUndo" title="Undo" aria-label="Undo">
-					<i class="bi bi-arrow-90deg-left"></i>
+					<IconArrowBackUp stroke="3"/>
 				</button>
 				<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canRedo.value" @click="doRedo" title="Redo" aria-label="Redo">
-					<i class="bi bi-arrow-90deg-right"></i>
+					<IconArrowForwardUp stroke="3"/>
 				</button>
 				<button class="btn btn-primary btn-sm" @click="saveNote">Save</button>
 				<button class="btn btn-outline-secondary btn-sm" @click="cancelEditing">Cancel</button>
