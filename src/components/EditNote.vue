@@ -246,7 +246,10 @@
 <template>
 	<div class="edit-note">
 		<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-			<RouterLink :to="backRoute" class="btn btn-outline-secondary btn-sm" aria-label="Back to notes">&larr; Back</RouterLink>
+			<RouterLink :to="backRoute" class="btn btn-outline-secondary btn-sm" aria-label="Back to notes">
+				<i class="bi bi-chevron-left"></i>
+				<span>&#xA0;Back</span>
+			</RouterLink>
 			<div class="d-flex flex-wrap gap-2" v-if="!isCreateMode && !isEditing && isTrashed">
 				<button class="btn btn-outline-primary btn-sm" @click="restoreNote">Restore</button>
 				<button class="btn btn-outline-secondary btn-sm" v-if="existingNote" @click="exportNote(existingNote)">Export</button>

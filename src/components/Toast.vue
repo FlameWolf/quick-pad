@@ -42,7 +42,10 @@
 	<Transition name="toast-slide">
 		<div v-if="visible" class="toast-container">
 			<div class="toast-notification" :class="type">
-				<span class="toast-icon">{{ type === "success" ? "&#10003;" : "&#9888;" }}</span>
+				<span class="toast-icon">
+					<i v-if="type === `success`" class="bi bi-check2"></i>
+					<i v-else class="bi bi-exclamation-triangle"></i>
+				</span>
 				<span class="toast-text" v-html="message"></span>
 				<button class="btn-close align-self-start ms-auto" @click="$emit('dismiss')"></button>
 			</div>

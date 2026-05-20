@@ -210,7 +210,10 @@
 <template>
 	<div v-if="view !== 'active'" class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
 		<h2 class="mb-0">{{ pageTitle }}</h2>
-		<RouterLink to="/notes" class="btn btn-outline-secondary btn-sm">&larr; Back to Notes</RouterLink>
+		<RouterLink to="/notes" class="btn btn-outline-secondary btn-sm">
+			<i class="bi bi-chevron-left"></i>
+			<span>&#xA0;Back to Notes</span>
+		</RouterLink>
 	</div>
 	<div v-if="!hasNotes" class="empty-state text-center py-5">
 		<div class="text-muted mb-3">
