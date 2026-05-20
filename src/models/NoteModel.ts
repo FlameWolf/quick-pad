@@ -35,12 +35,10 @@ export class NoteModel {
 
 	archive() {
 		this.archivedAt = new Date();
-		this.modifiedAt = this.archivedAt;
 	}
 
 	unarchive() {
 		this.archivedAt = undefined;
-		this.modifiedAt = new Date();
 	}
 
 	trash() {
