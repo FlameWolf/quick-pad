@@ -22,21 +22,19 @@
 	const { confirm } = useConfirmDialog();
 	const { requestSync } = useNotesSync();
 	const isSearchMode = computed(() => !!notesStore.searchText);
-
 	const sourceNotes = computed(() => {
-		if (view.value === "archived") {
-			return notesStore.archivedNotes;
+		switch (view.value) {
+			case "archived":
+				return notesStore.archivedNotes;
+			case "trash":
+				return notesStore.trashedNotes;
+			default:
+				return notesStore.activeNotes;
 		}
-		if (view.value === "trash") {
-			return notesStore.trashedNotes;
-		}
-		return notesStore.activeNotes;
 	});
-
 	const sortedNotes = computed(() => getSortedNotes(sourceNotes.value));
 	const hasNotes = computed(() => sourceNotes.value.length > 0);
 	const allSelected = computed(() => sourceNotes.value.length > 0 && selectedCount.value === sourceNotes.value.length);
-
 	const pageTitle = computed(() => {
 		if (view.value === "archived") {
 			return "Archived";
@@ -46,7 +44,6 @@
 		}
 		return "Notes";
 	});
-
 	const emptyMessage = computed(() => {
 		if (isSearchMode.value) {
 			return `No results found for "${notesStore.searchText}"`;
@@ -60,7 +57,6 @@
 				return "No notes yet";
 		}
 	});
-
 	const selectionActions = computed<SelectionAction[]>(() => {
 		if (view.value === "archived") {
 			return [

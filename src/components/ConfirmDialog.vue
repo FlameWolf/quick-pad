@@ -4,7 +4,7 @@
 
 	const { state, onConfirm, onCancel } = useConfirmDialog();
 
-	function onKeydown(e: KeyboardEvent) {
+	function onKeyDown(e: KeyboardEvent) {
 		if (!state.value.visible) {
 			return;
 		}
@@ -18,11 +18,11 @@
 	}
 
 	onMounted(() => {
-		window.addEventListener("keydown", onKeydown);
+		window.addEventListener("keydown", onKeyDown);
 	});
 
 	onBeforeUnmount(() => {
-		window.removeEventListener("keydown", onKeydown);
+		window.removeEventListener("keydown", onKeyDown);
 	});
 </script>
 
