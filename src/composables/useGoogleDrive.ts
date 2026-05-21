@@ -1,5 +1,10 @@
 import { useGoogleAuth } from "./useGoogleAuth";
 
+interface DriveFile {
+	id: string;
+	name: string;
+}
+
 const DRIVE_API = "https://www.googleapis.com/drive/v3/files";
 const UPLOAD_API = "https://www.googleapis.com/upload/drive/v3/files";
 
@@ -8,12 +13,44 @@ export function useGoogleDrive() {
 
 	async function headers() {
 		const token = await getAccessToken();
-		return { Authorization: `Bearer ${token}` };
+		return {
+			Authorization: `Bearer ${token}`
+		};
+	}
+
+	async function listFiles(namePrefix?: string): Promise<DriveFile[]> {
+		const baseQ = "'appDataFolder' in parents and trashed=false";
+		const files: DriveFile[] = [];
+		let pageToken: string | undefined;
+		do {
+			const params = new URLSearchParams({
+				spaces: "appDataFolder",
+				q: namePrefix ? `${baseQ} and name contains '${namePrefix}'` : baseQ,
+				fields: "files(id, name), nextPageToken",
+				pageSize: "1000"
+			});
+			if (pageToken) {
+				params.set("pageToken", pageToken);
+			}
+			const res = await fetch(`${DRIVE_API}?${params}`, {
+				headers: await headers()
+			});
+			const data = await res.json();
+			if (Array.isArray(data.files)) {
+				files.push(...data.files);
+			}
+			pageToken = data.nextPageToken;
+		} while (pageToken);
+		return namePrefix ? files.filter(f => f.name.startsWith(namePrefix)) : files;
 	}
 
 	async function findFile(name: string): Promise<string | null> {
-		const q = encodeURIComponent(`name='${name}' and 'appDataFolder' in parents and trashed=false`);
-		const res = await fetch(`${DRIVE_API}?spaces=appDataFolder&q=${q}&fields=files(id,name)`, {
+		const params = new URLSearchParams({
+			spaces: "appDataFolder",
+			q: encodeURIComponent(`name='${name}' and 'appDataFolder' in parents and trashed=false`),
+			fields: "files(id, name)"
+		});
+		const res = await fetch(`${DRIVE_API}?${params}`, {
 			headers: await headers()
 		});
 		const data = await res.json();
@@ -57,5 +94,21 @@ export function useGoogleDrive() {
 		}
 	}
 
-	return { findFile, readJSON, writeJSON };
+	async function deleteFileById(fileId: string): Promise<void> {
+		await fetch(`${DRIVE_API}/${fileId}`, {
+			method: "DELETE",
+			headers: await headers()
+		});
+	}
+
+	async function deleteFile(filename: string): Promise<boolean> {
+		const fileId = await findFile(filename);
+		if (!fileId) {
+			return false;
+		}
+		await deleteFileById(fileId);
+		return true;
+	}
+
+	return { listFiles, findFile, readJSON, writeJSON, deleteFile };
 }

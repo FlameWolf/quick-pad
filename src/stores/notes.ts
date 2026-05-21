@@ -1,9 +1,9 @@
 import { ref, computed } from "vue";
 import { defineStore } from "pinia";
 import { NoteModel } from "@/models/NoteModel";
+import { contains, emptyString } from "@/library";
 import type { NoteJSON } from "@/models/NoteModel";
 import type { UUID } from "crypto";
-import { contains, emptyString } from "@/library";
 
 const LEGACY_STORAGE_KEY = "quick-pad-notes";
 const STORAGE_KEY = "qp-note:";
@@ -190,6 +190,7 @@ export const useNotesStore = defineStore("notes", () => {
 		activeNotes,
 		archivedNotes,
 		trashedNotes,
+		fileNamePrefix: STORAGE_KEY,
 		addNote,
 		updateNote,
 		getNote,
