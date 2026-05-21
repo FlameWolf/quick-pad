@@ -1,16 +1,18 @@
-import { ref, computed, watch } from "vue";
+import { ref, computed } from "vue";
 import { defineStore } from "pinia";
 import { NoteModel } from "@/models/NoteModel";
 import type { NoteJSON } from "@/models/NoteModel";
 import type { UUID } from "crypto";
 import { contains, emptyString } from "@/library";
 
-const STORAGE_KEY = "quick-pad-notes";
+const LEGACY_STORAGE_KEY = "quick-pad-notes";
+const STORAGE_KEY = "qp-note:";
 const TRASH_RETENTION_DAYS = 30;
 const TRASH_RETENTION_MS = TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+const noteKey = (id: UUID) => `${STORAGE_KEY}${id}`;
 
-function loadFromStorage(): NoteModel[] {
-	const raw = localStorage.getItem(STORAGE_KEY);
+function migrateFromLegacy(): NoteModel[] {
+	const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
 	if (!raw) {
 		return [];
 	}
@@ -19,7 +21,33 @@ function loadFromStorage(): NoteModel[] {
 		return parsed.map(NoteModel.fromJSON);
 	} catch {
 		return [];
+	} finally {
+		localStorage.removeItem(LEGACY_STORAGE_KEY);
 	}
+}
+
+function loadFromStorage(): NoteModel[] {
+	const storedNotes: NoteModel[] = migrateFromLegacy();
+	for (let index = 0; index < localStorage.length; index++) {
+		const key = localStorage.key(index);
+		if (!key?.startsWith(STORAGE_KEY)) {
+			continue;
+		}
+		try {
+			storedNotes.push(NoteModel.fromJSON(JSON.parse(localStorage.getItem(key) as string)));
+		} catch {
+			void 0;
+		}
+	}
+	return storedNotes;
+}
+
+function persistNote(note: NoteModel) {
+	localStorage.setItem(noteKey(note.id), JSON.stringify(note.toJSON()));
+}
+
+function removeNote(id: UUID) {
+	localStorage.removeItem(noteKey(id));
 }
 
 export const useNotesStore = defineStore("notes", () => {
@@ -30,16 +58,9 @@ export const useNotesStore = defineStore("notes", () => {
 	const archivedNotes = computed(() => searchResults.value.filter(note => note.archivedAt && !note.deletedAt));
 	const trashedNotes = computed(() => searchResults.value.filter(note => note.deletedAt));
 
-	watch(
-		notes,
-		() => {
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(notes.value));
-		},
-		{ deep: true }
-	);
-
 	function addNote(note: NoteModel) {
 		notes.value.push(note);
+		persistNote(note);
 	}
 
 	function updateNote(updatedNote: Omit<NoteModel, "createdAt" | "modifiedAt">) {
@@ -50,6 +71,7 @@ export const useNotesStore = defineStore("notes", () => {
 			existingNote.content = updatedNote.content;
 			existingNote.modifiedAt = new Date();
 			notes.value[index] = existingNote;
+			persistNote(existingNote);
 		}
 	}
 
@@ -64,6 +86,7 @@ export const useNotesStore = defineStore("notes", () => {
 		}
 		const existing = notes.value[index] as NoteModel;
 		mutator(existing);
+		persistNote(existing);
 		notes.value[index] = existing;
 	}
 
@@ -72,6 +95,7 @@ export const useNotesStore = defineStore("notes", () => {
 		notes.value = notes.value.map(note => {
 			if (idSet.has(note.id)) {
 				mutator(note);
+				persistNote(note);
 			}
 			return note;
 		});
@@ -110,17 +134,34 @@ export const useNotesStore = defineStore("notes", () => {
 	}
 
 	function permanentlyDelete(id: UUID) {
-		notes.value = notes.value.filter(note => note.id !== id);
+		notes.value = notes.value.filter(note => {
+			if (note.id === id) {
+				removeNote(id);
+				return false;
+			}
+			return true;
+		});
 	}
 
 	function permanentlyDeleteMultiple(ids: ReadonlyArray<UUID>) {
 		const idSet = new Set<UUID>(ids);
-		notes.value = notes.value.filter(note => !idSet.has(note.id));
+		notes.value = notes.value.filter(note => {
+			if (idSet.has(note.id)) {
+				removeNote(note.id);
+				return false;
+			}
+			return true;
+		});
 	}
 
 	function purgeExpiredTrash() {
 		const cutoff = Date.now() - TRASH_RETENTION_MS;
 		const before = notes.value.length;
+		notes.value
+			.filter(note => note.deletedAt && note.deletedAt.getTime() < cutoff)
+			.forEach(purged => {
+				removeNote(purged.id);
+			});
 		notes.value = notes.value.filter(note => !note.deletedAt || note.deletedAt.getTime() >= cutoff);
 		return before - notes.value.length;
 	}
@@ -131,17 +172,16 @@ export const useNotesStore = defineStore("notes", () => {
 			1,
 			updatedNote
 		);
+		persistNote(updatedNote);
 	}
 
 	function replaceMultple(updatedNotes: NoteModel[]) {
-		if (updatedNotes.length === 0) {
-			return;
-		}
-		notes.value = notes.value.map(note => updatedNotes.find(updated => updated.id === note.id) ?? note);
+		updatedNotes.forEach(replaceNote);
 	}
 
 	function replaceAllNotes(newNotes: NoteModel[]) {
 		notes.value = newNotes;
+		newNotes.forEach(persistNote);
 	}
 
 	return {
