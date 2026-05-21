@@ -28,12 +28,12 @@
 		applyTheme(isDark.value);
 	}
 
-	const debouncedSearch = debounce(() => {
+	const doSearch = debounce(() => {
 		notesStore.searchText = searchInput.value?.value?.trim() ?? emptyString;
 	}, 300);
 
 	function clearSearch() {
-		debouncedSearch.cancel();
+		doSearch.cancel();
 		notesStore.searchText = emptyString;
 		searchInput.value!.value = emptyString;
 	}
@@ -130,7 +130,7 @@
 					<img class="logo" src="/logo.svg" alt="QuickPad Logo"/>
 				</RouterLink>
 				<div class="me-auto position-relative">
-					<input type="text" class="form-control pe-5" placeholder="Search" ref="search-input" :disabled="!listViewRoutes.includes($route.path)" @input="debouncedSearch"/>
+					<input type="text" class="form-control pe-5" placeholder="Search" ref="search-input" :disabled="!listViewRoutes.includes($route.path)" @input="doSearch"/>
 					<button v-if="isSearchMode" class="btn-close small position-absolute top-50 end-0 translate-middle-y me-2" @click="clearSearch"></button>
 				</div>
 				<div class="d-flex align-items-center gap-2">

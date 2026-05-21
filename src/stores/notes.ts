@@ -125,6 +125,21 @@ export const useNotesStore = defineStore("notes", () => {
 		return before - notes.value.length;
 	}
 
+	function replaceNote(updatedNote: NoteModel) {
+		notes.value.splice(
+			notes.value.findIndex(note => note.id === updatedNote.id),
+			1,
+			updatedNote
+		);
+	}
+
+	function replaceMultple(updatedNotes: NoteModel[]) {
+		if (updatedNotes.length === 0) {
+			return;
+		}
+		notes.value = notes.value.map(note => updatedNotes.find(updated => updated.id === note.id) ?? note);
+	}
+
 	function replaceAllNotes(newNotes: NoteModel[]) {
 		notes.value = newNotes;
 	}
@@ -149,6 +164,8 @@ export const useNotesStore = defineStore("notes", () => {
 		permanentlyDelete,
 		permanentlyDeleteMultiple,
 		purgeExpiredTrash,
+		replaceNote,
+		replaceMultple,
 		replaceAllNotes
 	};
 });

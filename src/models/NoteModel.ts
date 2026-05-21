@@ -19,6 +19,8 @@ export class NoteModel {
 	modifiedAt?: Date;
 	archivedAt?: Date;
 	deletedAt?: Date;
+	updatedInRemote?: boolean;
+	updatedInLocal?: boolean;
 
 	constructor(title: string, content: string) {
 		this.id = crypto.randomUUID();

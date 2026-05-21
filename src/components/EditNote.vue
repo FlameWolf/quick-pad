@@ -70,12 +70,12 @@
 		}
 	}
 
-	const debouncedPushUndo = debounce((value: string) => undoRedo.push(value), 300);
+	const pushUndo = debounce((value: string) => undoRedo.push(value), 300);
 
 	function onContentInput(e: Event) {
 		const value = (e.target as HTMLTextAreaElement).value;
 		editContent.value = value;
-		debouncedPushUndo(value);
+		pushUndo(value);
 	}
 
 	function doUndo() {
@@ -228,7 +228,7 @@
 	});
 
 	onBeforeUnmount(() => {
-		debouncedPushUndo.cancel();
+		pushUndo.cancel();
 		window.removeEventListener("resize", adjustTextAreaHeight);
 		window.removeEventListener("beforeunload", onBeforeUnload);
 	});
@@ -246,7 +246,7 @@
 <template>
 	<div class="edit-note">
 		<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-			<RouterLink :to="backRoute" class="btn btn-outline-secondary btn-sm" aria-label="Back to notes">
+			<RouterLink :to="backRoute" class="btn btn-secondary btn-sm" aria-label="Back to notes">
 				<i class="bi bi-chevron-left"></i>
 				<span>&#xA0;Back</span>
 			</RouterLink>
