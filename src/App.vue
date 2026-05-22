@@ -16,7 +16,7 @@
 	let readyTimeout: ReturnType<typeof setTimeout> | null = null;
 	const { isDark, applyTheme } = useTheme();
 	const { isSignedIn, isReady, isConfigured, user, tryRestoreSession, signIn, signOut } = useGoogleAuth();
-	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, lastSyncMessage, saveToCloud, loadFromCloud, setAutoSync, dismissMessage } = useNotesSync();
+	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, lastSyncMessage, saveToCloud, loadFromCloud, setAutoSync, dismissMessage, requestSync } = useNotesSync();
 	const notesStore = useNotesStore();
 	const searchInput = useTemplateRef("search-input");
 	const showSyncMenu = ref(false);
@@ -28,12 +28,12 @@
 		applyTheme(isDark.value);
 	}
 
-	const doSearch = debounce(() => {
+	const debouncedSearch = debounce(() => {
 		notesStore.searchText = searchInput.value?.value?.trim() ?? emptyString;
 	}, 300);
 
 	function clearSearch() {
-		doSearch.cancel();
+		debouncedSearch.cancel();
 		notesStore.searchText = emptyString;
 		searchInput.value!.value = emptyString;
 	}
@@ -96,16 +96,20 @@
 
 	watch(
 		isSignedIn,
-		signedIn => {
+		async signedIn => {
 			if (signedIn && autoSyncEnabled.value) {
-				saveToCloud();
+				await loadFromCloud();
+				await saveToCloud();
 			}
 		},
 		{ immediate: true }
 	);
 
 	onMounted(() => {
-		notesStore.purgeExpiredTrash();
+		const purgedIds = notesStore.purgeExpiredTrash();
+		if (purgedIds.length > 0) {
+			requestSync(purgedIds);
+		}
 		if (isConfigured.value) {
 			readyTimeout = setTimeout(() => {
 				if (!isReady.value) {
@@ -130,7 +134,7 @@
 					<img class="logo" src="/logo.svg" alt="QuickPad Logo"/>
 				</RouterLink>
 				<div class="me-auto position-relative">
-					<input type="text" class="form-control pe-5" placeholder="Search" ref="search-input" :disabled="!listViewRoutes.includes($route.path)" @input="doSearch"/>
+					<input type="text" class="form-control pe-5" placeholder="Search" ref="search-input" :disabled="!listViewRoutes.includes($route.path)" @input="debouncedSearch"/>
 					<button v-if="isSearchMode" class="btn-close small position-absolute top-50 end-0 translate-middle-y me-2" @click="clearSearch"></button>
 				</div>
 				<div class="d-flex align-items-center gap-2">

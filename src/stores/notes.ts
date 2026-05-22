@@ -54,9 +54,9 @@ export const useNotesStore = defineStore("notes", () => {
 	const notes = ref<NoteModel[]>(loadFromStorage());
 	const searchText = ref<string>(emptyString);
 	const searchResults = computed(() => (searchText.value.trim() ? notes.value.filter(note => contains(note.title, searchText.value) || contains(note.content, searchText.value)) : notes.value));
-	const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt));
-	const archivedNotes = computed(() => searchResults.value.filter(note => note.archivedAt && !note.deletedAt));
-	const trashedNotes = computed(() => searchResults.value.filter(note => note.deletedAt));
+	const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt && !note.purgedAt));
+	const archivedNotes = computed(() => searchResults.value.filter(note => note.archivedAt && !note.deletedAt && !note.purgedAt));
+	const trashedNotes = computed(() => searchResults.value.filter(note => note.deletedAt && !note.purgedAt));
 
 	function addNote(note: NoteModel) {
 		notes.value.push(note);
@@ -84,10 +84,10 @@ export const useNotesStore = defineStore("notes", () => {
 		if (index === -1) {
 			return;
 		}
-		const existing = notes.value[index] as NoteModel;
-		mutator(existing);
-		persistNote(existing);
-		notes.value[index] = existing;
+		const note = notes.value[index] as NoteModel;
+		mutator(note);
+		persistNote(note);
+		notes.value[index] = note;
 	}
 
 	function applyToMany(ids: ReadonlyArray<UUID>, mutator: (note: NoteModel) => void) {
@@ -134,48 +134,45 @@ export const useNotesStore = defineStore("notes", () => {
 	}
 
 	function permanentlyDelete(id: UUID) {
-		notes.value = notes.value.filter(note => {
-			if (note.id === id) {
-				removeNote(id);
-				return false;
-			}
-			return true;
-		});
+		applyToNote(id, note => note.purge());
 	}
 
 	function permanentlyDeleteMultiple(ids: ReadonlyArray<UUID>) {
-		const idSet = new Set<UUID>(ids);
-		notes.value = notes.value.filter(note => {
-			if (idSet.has(note.id)) {
-				removeNote(note.id);
-				return false;
-			}
-			return true;
-		});
+		applyToMany(ids, note => note.purge());
 	}
 
 	function purgeExpiredTrash() {
 		const cutoff = Date.now() - TRASH_RETENTION_MS;
-		const before = notes.value.length;
-		notes.value
-			.filter(note => note.deletedAt && note.deletedAt.getTime() < cutoff)
-			.forEach(purged => {
-				removeNote(purged.id);
+		const expiredIds = notes.value
+			.filter(note => {
+				const tombstoneTime = Math.max(note.deletedAt?.getTime() ?? 0, note.purgedAt?.getTime() ?? 0);
+				return tombstoneTime > 0 && tombstoneTime < cutoff;
+			})
+			.map(expired => {
+				removeNote(expired.id);
+				return expired.id;
 			});
-		notes.value = notes.value.filter(note => !note.deletedAt || note.deletedAt.getTime() >= cutoff);
-		return before - notes.value.length;
+		if (expiredIds.length > 0) {
+			const expiredSet = new Set<UUID>(expiredIds);
+			notes.value = notes.value.filter(note => !expiredSet.has(note.id));
+		}
+		return expiredIds;
 	}
 
 	function replaceNote(updatedNote: NoteModel) {
-		notes.value.splice(
-			notes.value.findIndex(note => note.id === updatedNote.id),
-			1,
-			updatedNote
-		);
+		const index = notes.value.findIndex(note => note.id === updatedNote.id);
+		switch (index) {
+			case -1:
+				notes.value.push(updatedNote);
+				break;
+			default:
+				notes.value.splice(index, 1, updatedNote);
+				break;
+		}
 		persistNote(updatedNote);
 	}
 
-	function replaceMultple(updatedNotes: NoteModel[]) {
+	function replaceMultiple(updatedNotes: NoteModel[]) {
 		updatedNotes.forEach(replaceNote);
 	}
 
@@ -206,7 +203,7 @@ export const useNotesStore = defineStore("notes", () => {
 		permanentlyDeleteMultiple,
 		purgeExpiredTrash,
 		replaceNote,
-		replaceMultple,
+		replaceMultiple,
 		replaceAllNotes
 	};
 });
