@@ -70,12 +70,12 @@
 		}
 	}
 
-	const pushUndo = debounce((value: string) => undoRedo.push(value), 300);
+	const debouncedPushUndo = debounce((value: string) => undoRedo.push(value), 300);
 
 	function onContentInput(e: Event) {
 		const value = (e.target as HTMLTextAreaElement).value;
 		editContent.value = value;
-		pushUndo(value);
+		debouncedPushUndo(value);
 	}
 
 	function doUndo() {
@@ -203,9 +203,8 @@
 		if (!ok) {
 			return;
 		}
-		const idToPurge = existingNote.value.id;
-		store.permanentlyDelete(idToPurge);
-		requestSync([idToPurge]);
+		store.permanentlyDelete(existingNote.value.id);
+		requestSync();
 		router.push("/notes/trash");
 	}
 
@@ -228,7 +227,7 @@
 	});
 
 	onBeforeUnmount(() => {
-		pushUndo.cancel();
+		debouncedPushUndo.cancel();
 		window.removeEventListener("resize", adjustTextAreaHeight);
 		window.removeEventListener("beforeunload", onBeforeUnload);
 	});

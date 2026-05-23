@@ -1,4 +1,4 @@
-import { getCharacterCount, getSentenceCount, getSummary, getWordCount } from "@/library";
+import { emptyString, getCharacterCount, getSentenceCount, getSummary, getWordCount } from "@/library";
 import type { UUID } from "crypto";
 
 export interface NoteJSON {
@@ -9,6 +9,8 @@ export interface NoteJSON {
 	modifiedAt?: string;
 	archivedAt?: string;
 	deletedAt?: string;
+	purgedAt?: string;
+	stateChangedAt?: string;
 }
 
 export class NoteModel {
@@ -19,8 +21,8 @@ export class NoteModel {
 	modifiedAt?: Date;
 	archivedAt?: Date;
 	deletedAt?: Date;
-	updatedInRemote?: boolean;
-	updatedInLocal?: boolean;
+	purgedAt?: Date;
+	stateChangedAt?: Date;
 
 	constructor(title: string, content: string) {
 		this.id = crypto.randomUUID();
@@ -36,21 +38,33 @@ export class NoteModel {
 	}
 
 	archive() {
-		this.archivedAt = new Date();
+		const now = new Date();
+		this.archivedAt = now;
+		this.stateChangedAt = now;
 	}
 
 	unarchive() {
 		this.archivedAt = undefined;
+		this.stateChangedAt = new Date();
 	}
 
 	trash() {
-		this.deletedAt = new Date();
-		this.modifiedAt = this.deletedAt;
+		const now = new Date();
+		this.deletedAt = now;
+		this.stateChangedAt = now;
 	}
 
 	restore() {
 		this.deletedAt = undefined;
-		this.modifiedAt = new Date();
+		this.stateChangedAt = new Date();
+	}
+
+	purge() {
+		const now = new Date();
+		this.purgedAt = now;
+		this.stateChangedAt = now;
+		this.title = emptyString;
+		this.content = emptyString;
 	}
 
 	toJSON(): NoteJSON {
@@ -61,7 +75,9 @@ export class NoteModel {
 			createdAt: this.createdAt.toISOString(),
 			modifiedAt: this.modifiedAt?.toISOString(),
 			archivedAt: this.archivedAt?.toISOString(),
-			deletedAt: this.deletedAt?.toISOString()
+			deletedAt: this.deletedAt?.toISOString(),
+			purgedAt: this.purgedAt?.toISOString(),
+			stateChangedAt: this.stateChangedAt?.toISOString()
 		};
 	}
 
@@ -72,6 +88,8 @@ export class NoteModel {
 		note.modifiedAt = data.modifiedAt ? new Date(data.modifiedAt) : undefined;
 		note.archivedAt = data.archivedAt ? new Date(data.archivedAt) : undefined;
 		note.deletedAt = data.deletedAt ? new Date(data.deletedAt) : undefined;
+		note.purgedAt = data.purgedAt ? new Date(data.purgedAt) : undefined;
+		note.stateChangedAt = data.stateChangedAt ? new Date(data.stateChangedAt) : undefined;
 		return note;
 	}
 

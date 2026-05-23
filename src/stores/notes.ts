@@ -1,16 +1,18 @@
-import { ref, computed, watch } from "vue";
+import { ref, computed } from "vue";
 import { defineStore } from "pinia";
 import { NoteModel } from "@/models/NoteModel";
+import { contains, emptyString } from "@/library";
 import type { NoteJSON } from "@/models/NoteModel";
 import type { UUID } from "crypto";
-import { contains, emptyString } from "@/library";
 
-const STORAGE_KEY = "quick-pad-notes";
+const LEGACY_STORAGE_KEY = "quick-pad-notes";
+const STORAGE_KEY = "qp-note:";
 const TRASH_RETENTION_DAYS = 30;
 const TRASH_RETENTION_MS = TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+const noteKey = (id: UUID) => `${STORAGE_KEY}${id}`;
 
-function loadFromStorage(): NoteModel[] {
-	const raw = localStorage.getItem(STORAGE_KEY);
+function migrateFromLegacy(): NoteModel[] {
+	const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
 	if (!raw) {
 		return [];
 	}
@@ -19,27 +21,46 @@ function loadFromStorage(): NoteModel[] {
 		return parsed.map(NoteModel.fromJSON);
 	} catch {
 		return [];
+	} finally {
+		localStorage.removeItem(LEGACY_STORAGE_KEY);
 	}
+}
+
+function loadFromStorage(): NoteModel[] {
+	const storedNotes: NoteModel[] = migrateFromLegacy();
+	for (let index = 0; index < localStorage.length; index++) {
+		const key = localStorage.key(index);
+		if (!key?.startsWith(STORAGE_KEY)) {
+			continue;
+		}
+		try {
+			storedNotes.push(NoteModel.fromJSON(JSON.parse(localStorage.getItem(key) as string)));
+		} catch {
+			void 0;
+		}
+	}
+	return storedNotes;
+}
+
+function persistNote(note: NoteModel) {
+	localStorage.setItem(noteKey(note.id), JSON.stringify(note.toJSON()));
+}
+
+function removeNote(id: UUID) {
+	localStorage.removeItem(noteKey(id));
 }
 
 export const useNotesStore = defineStore("notes", () => {
 	const notes = ref<NoteModel[]>(loadFromStorage());
 	const searchText = ref<string>(emptyString);
 	const searchResults = computed(() => (searchText.value.trim() ? notes.value.filter(note => contains(note.title, searchText.value) || contains(note.content, searchText.value)) : notes.value));
-	const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt));
-	const archivedNotes = computed(() => searchResults.value.filter(note => note.archivedAt && !note.deletedAt));
-	const trashedNotes = computed(() => searchResults.value.filter(note => note.deletedAt));
-
-	watch(
-		notes,
-		() => {
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(notes.value));
-		},
-		{ deep: true }
-	);
+	const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt && !note.purgedAt));
+	const archivedNotes = computed(() => searchResults.value.filter(note => note.archivedAt && !note.deletedAt && !note.purgedAt));
+	const trashedNotes = computed(() => searchResults.value.filter(note => note.deletedAt && !note.purgedAt));
 
 	function addNote(note: NoteModel) {
 		notes.value.push(note);
+		persistNote(note);
 	}
 
 	function updateNote(updatedNote: Omit<NoteModel, "createdAt" | "modifiedAt">) {
@@ -50,6 +71,7 @@ export const useNotesStore = defineStore("notes", () => {
 			existingNote.content = updatedNote.content;
 			existingNote.modifiedAt = new Date();
 			notes.value[index] = existingNote;
+			persistNote(existingNote);
 		}
 	}
 
@@ -62,9 +84,10 @@ export const useNotesStore = defineStore("notes", () => {
 		if (index === -1) {
 			return;
 		}
-		const existing = notes.value[index] as NoteModel;
-		mutator(existing);
-		notes.value[index] = existing;
+		const note = notes.value[index] as NoteModel;
+		mutator(note);
+		persistNote(note);
+		notes.value[index] = note;
 	}
 
 	function applyToMany(ids: ReadonlyArray<UUID>, mutator: (note: NoteModel) => void) {
@@ -72,6 +95,7 @@ export const useNotesStore = defineStore("notes", () => {
 		notes.value = notes.value.map(note => {
 			if (idSet.has(note.id)) {
 				mutator(note);
+				persistNote(note);
 			}
 			return note;
 		});
@@ -110,38 +134,51 @@ export const useNotesStore = defineStore("notes", () => {
 	}
 
 	function permanentlyDelete(id: UUID) {
-		notes.value = notes.value.filter(note => note.id !== id);
+		applyToNote(id, note => note.purge());
 	}
 
 	function permanentlyDeleteMultiple(ids: ReadonlyArray<UUID>) {
-		const idSet = new Set<UUID>(ids);
-		notes.value = notes.value.filter(note => !idSet.has(note.id));
+		applyToMany(ids, note => note.purge());
 	}
 
 	function purgeExpiredTrash() {
 		const cutoff = Date.now() - TRASH_RETENTION_MS;
-		const before = notes.value.length;
-		notes.value = notes.value.filter(note => !note.deletedAt || note.deletedAt.getTime() >= cutoff);
-		return before - notes.value.length;
+		const expiredIds = notes.value
+			.filter(note => {
+				const tombstoneTime = Math.max(note.deletedAt?.getTime() ?? 0, note.purgedAt?.getTime() ?? 0);
+				return tombstoneTime > 0 && tombstoneTime < cutoff;
+			})
+			.map(expired => {
+				removeNote(expired.id);
+				return expired.id;
+			});
+		if (expiredIds.length > 0) {
+			const expiredSet = new Set<UUID>(expiredIds);
+			notes.value = notes.value.filter(note => !expiredSet.has(note.id));
+		}
+		return expiredIds;
 	}
 
 	function replaceNote(updatedNote: NoteModel) {
-		notes.value.splice(
-			notes.value.findIndex(note => note.id === updatedNote.id),
-			1,
-			updatedNote
-		);
+		const index = notes.value.findIndex(note => note.id === updatedNote.id);
+		switch (index) {
+			case -1:
+				notes.value.push(updatedNote);
+				break;
+			default:
+				notes.value.splice(index, 1, updatedNote);
+				break;
+		}
+		persistNote(updatedNote);
 	}
 
-	function replaceMultple(updatedNotes: NoteModel[]) {
-		if (updatedNotes.length === 0) {
-			return;
-		}
-		notes.value = notes.value.map(note => updatedNotes.find(updated => updated.id === note.id) ?? note);
+	function replaceMultiple(updatedNotes: NoteModel[]) {
+		updatedNotes.forEach(replaceNote);
 	}
 
 	function replaceAllNotes(newNotes: NoteModel[]) {
 		notes.value = newNotes;
+		newNotes.forEach(persistNote);
 	}
 
 	return {
@@ -150,6 +187,7 @@ export const useNotesStore = defineStore("notes", () => {
 		activeNotes,
 		archivedNotes,
 		trashedNotes,
+		fileNamePrefix: STORAGE_KEY,
 		addNote,
 		updateNote,
 		getNote,
@@ -165,7 +203,7 @@ export const useNotesStore = defineStore("notes", () => {
 		permanentlyDeleteMultiple,
 		purgeExpiredTrash,
 		replaceNote,
-		replaceMultple,
+		replaceMultiple,
 		replaceAllNotes
 	};
 });
