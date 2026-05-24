@@ -2,7 +2,6 @@ import { ref, computed } from "vue";
 import { defineStore } from "pinia";
 import { NoteModel } from "@/models/NoteModel";
 import { contains, emptyString } from "@/library";
-import type { NoteJSON } from "@/models/NoteModel";
 import type { UUID } from "crypto";
 
 const LEGACY_STORAGE_KEY = "quick-pad-notes";
@@ -17,8 +16,7 @@ function migrateFromLegacy(): NoteModel[] {
 		return [];
 	}
 	try {
-		const parsed: NoteJSON[] = JSON.parse(raw);
-		return parsed.map(NoteModel.fromJSON);
+		return JSON.parse(raw).map(NoteModel.fromJSON);
 	} catch {
 		return [];
 	} finally {
@@ -90,7 +88,7 @@ export const useNotesStore = defineStore("notes", () => {
 		notes.value[index] = note;
 	}
 
-	function applyToMany(ids: ReadonlyArray<UUID>, mutator: (note: NoteModel) => void) {
+	function applyToMany(ids: ReadonlyArray<UUID> | Set<UUID>, mutator: (note: NoteModel) => void) {
 		const idSet = new Set<UUID>(ids);
 		notes.value = notes.value.map(note => {
 			if (idSet.has(note.id)) {
@@ -106,7 +104,8 @@ export const useNotesStore = defineStore("notes", () => {
 	}
 
 	function archiveMultiple(ids: ReadonlyArray<UUID>) {
-		applyToMany(ids, note => note.archive());
+		const idSet = new Set<UUID>(ids);
+		applyToMany(idSet, note => note.archive());
 	}
 
 	function unarchiveNote(id: UUID) {
@@ -114,7 +113,8 @@ export const useNotesStore = defineStore("notes", () => {
 	}
 
 	function unarchiveMultiple(ids: ReadonlyArray<UUID>) {
-		applyToMany(ids, note => note.unarchive());
+		const idSet = new Set<UUID>(ids);
+		applyToMany(idSet, note => note.unarchive());
 	}
 
 	function trashNote(id: UUID) {
@@ -122,7 +122,8 @@ export const useNotesStore = defineStore("notes", () => {
 	}
 
 	function trashMultiple(ids: ReadonlyArray<UUID>) {
-		applyToMany(ids, note => note.trash());
+		const idSet = new Set<UUID>(ids);
+		applyToMany(idSet, note => note.trash());
 	}
 
 	function restoreFromTrash(id: UUID) {
@@ -130,15 +131,19 @@ export const useNotesStore = defineStore("notes", () => {
 	}
 
 	function restoreFromTrashMultiple(ids: ReadonlyArray<UUID>) {
-		applyToMany(ids, note => note.restore());
+		const idSet = new Set<UUID>(ids);
+		applyToMany(idSet, note => note.restore());
 	}
 
 	function permanentlyDelete(id: UUID) {
 		applyToNote(id, note => note.purge());
+		removeNote(id);
 	}
 
 	function permanentlyDeleteMultiple(ids: ReadonlyArray<UUID>) {
-		applyToMany(ids, note => note.purge());
+		const idSet = new Set<UUID>(ids);
+		applyToMany(idSet, note => note.purge());
+		idSet.forEach(removeNote);
 	}
 
 	function purgeExpiredTrash() {
@@ -148,13 +153,11 @@ export const useNotesStore = defineStore("notes", () => {
 				const tombstoneTime = Math.max(note.deletedAt?.getTime() ?? 0, note.purgedAt?.getTime() ?? 0);
 				return tombstoneTime > 0 && tombstoneTime < cutoff;
 			})
-			.map(expired => {
-				removeNote(expired.id);
-				return expired.id;
-			});
+			.map(expired => expired.id);
 		if (expiredIds.length > 0) {
 			const expiredSet = new Set<UUID>(expiredIds);
 			notes.value = notes.value.filter(note => !expiredSet.has(note.id));
+			expiredSet.forEach(removeNote);
 		}
 		return expiredIds;
 	}

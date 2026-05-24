@@ -16,14 +16,14 @@ const DEBOUNCE_MS = 3000;
 const isSyncing = ref(false);
 const lastSyncedToLocalAt = ref<Date | null>(loadLastSyncedToLocal());
 const lastSyncedToCloudAt = ref<Date | null>(loadLastSyncedToCloud());
-const syncError = ref<string | null>(null);
 const autoSyncEnabled = ref<boolean>(loadAutoSync());
-const pendingPurges = loadPendingPurges();
 const lastSyncMessage = ref<{
 	text: string;
 	type: "success" | "error";
 	timeStamp: number;
 } | null>(null);
+const syncError = ref<string | null>(null);
+const pendingPurges = loadPendingPurges();
 
 function loadLastSyncedToLocal(): Date | null {
 	const raw = localStorage.getItem(LAST_SYNCED_TO_LOCAL_KEY);
@@ -171,9 +171,7 @@ export function useNotesSync() {
 		try {
 			const syncStartedAt = new Date();
 			await Promise.all(purgeSnapshot.map(getFileName).map(deleteFile));
-			for (const id of purgeSnapshot) {
-				pendingPurges.delete(id);
-			}
+			purgeSnapshot.forEach(id => pendingPurges.delete(id));
 			persistPendingPurges(pendingPurges);
 			const dirtyNotes = store.notes.filter(note => noteEffectiveTime(note) > (lastSyncedToCloudAt.value?.getTime() ?? 0));
 			const uploadResults = await Promise.all(dirtyNotes.map(uploadNote));
@@ -230,9 +228,7 @@ export function useNotesSync() {
 				}
 				persistPendingPurges(pendingPurges);
 				await Promise.all(expiredIds.map(getFileName).map(deleteFile));
-				for (const id of expiredIds) {
-					pendingPurges.delete(id);
-				}
+				expiredIds.forEach(id => pendingPurges.delete(id));
 				persistPendingPurges(pendingPurges);
 			}
 			lastSyncedToLocalAt.value = syncStartedAt;
@@ -255,10 +251,9 @@ export function useNotesSync() {
 	}
 
 	const debouncedFlush = debounce(() => {
-		if (!isSignedIn.value || !autoSyncEnabled.value) {
-			return;
+		if (isSignedIn.value && autoSyncEnabled.value) {
+			saveToCloud();
 		}
-		saveToCloud();
 	}, DEBOUNCE_MS);
 
 	const requestSync = Object.assign(
