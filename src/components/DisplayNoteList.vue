@@ -272,15 +272,15 @@
 					<span class="fs-1 text-muted">+</span>
 				</div>
 			</RouterLink>
-			<RouterLink v-for="note in sortedNotes" :key="note.id" :to="`/notes/${note.id}`" class="card note-card text-decoration-none" :class="{ selected: isSelectionMode && isSelected(note.id) }" @click="(e: MouseEvent) => onTileClick(e, note.id)">
+			<RouterLink v-for="note in sortedNotes" v-memo="[note.title, note.content, note.modifiedAt, note.archivedAt, note.deletedAt, note.purgedAt]" :key="note.id" :to="`/notes/${note.id}`" class="card note-card text-decoration-none" :class="{ selected: isSelectionMode && isSelected(note.id) }" @click="(e: MouseEvent) => onTileClick(e, note.id)">
 				<div class="card-body d-flex flex-column position-relative">
 					<input v-if="isSelectionMode" type="checkbox" class="form-check-input selection-checkbox" :checked="isSelected(note.id)" @click.stop.prevent="toggleSelection(note.id)"/>
 					<h6 class="card-title text-truncate mb-1">{{ note.title }}</h6>
 					<small class="text-muted mb-2">{{ formatDate(note.modifiedAt ?? note.createdAt) }}</small>
 					<div class="d-flex gap-2 flex-wrap small">
-						<div class="badge text-bg-secondary" v-if="note?.sentenceCount">{{ note?.sentenceCount }} sentences</div>
-						<div class="badge text-bg-secondary" v-if="note?.wordCount">{{ note?.wordCount }} words</div>
-						<div class="badge text-bg-secondary" v-if="note?.characterCount">{{ note?.characterCount }} characters</div>
+						<div class="badge text-bg-secondary" v-if="note.sentenceCount">{{ note.sentenceCount }} sentences</div>
+						<div class="badge text-bg-secondary" v-if="note.wordCount">{{ note.wordCount }} words</div>
+						<div class="badge text-bg-secondary" v-if="note.characterCount">{{ note.characterCount }} characters</div>
 					</div>
 					<p class="card-text text-muted small flex-grow-1 overflow-hidden">{{ note.summary }}</p>
 				</div>
