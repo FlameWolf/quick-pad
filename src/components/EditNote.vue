@@ -134,8 +134,7 @@
 			return;
 		}
 		if (existingNote.value) {
-			existingNote.value.update(title, content);
-			store.updateNote(existingNote.value);
+			store.updateNote({ id: existingNote.value.id, title, content });
 			requestSync();
 		}
 		isEditing.value = false;

@@ -61,13 +61,11 @@ export const useNotesStore = defineStore("notes", () => {
 		persistNote(note);
 	}
 
-	function updateNote(updatedNote: Omit<NoteModel, "createdAt" | "modifiedAt">) {
-		const index = notes.value.findIndex(note => note.id === updatedNote.id);
+	function updateNote(data: { id: UUID; title: string; content: string }) {
+		const index = notes.value.findIndex(note => note.id === data.id);
 		if (index !== -1) {
 			const existingNote = notes.value[index] as NoteModel;
-			existingNote.title = updatedNote.title;
-			existingNote.content = updatedNote.content;
-			existingNote.modifiedAt = new Date();
+			existingNote.update(data.title, data.content);
 			notes.value[index] = existingNote;
 			persistNote(existingNote);
 		}

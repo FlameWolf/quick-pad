@@ -23,18 +23,31 @@ export class NoteModel {
 	deletedAt?: Date;
 	purgedAt?: Date;
 	stateChangedAt?: Date;
+	summary!: string;
+	sentenceCount!: number;
+	wordCount!: number;
+	characterCount!: number;
 
 	constructor(title: string, content: string) {
 		this.id = crypto.randomUUID();
 		this.title = title;
 		this.content = content;
 		this.createdAt = new Date();
+		this.computeDerived();
+	}
+
+	computeDerived() {
+		this.summary = getSummary(this.content);
+		this.sentenceCount = getSentenceCount(this.content);
+		this.wordCount = getWordCount(this.content);
+		this.characterCount = getCharacterCount(this.content);
 	}
 
 	update(title: string, content: string) {
 		this.title = title;
 		this.content = content;
 		this.modifiedAt = new Date();
+		this.computeDerived();
 	}
 
 	archive() {
@@ -65,6 +78,7 @@ export class NoteModel {
 		this.stateChangedAt = now;
 		this.title = emptyString;
 		this.content = emptyString;
+		this.computeDerived();
 	}
 
 	toJSON(): NoteJSON {
@@ -91,21 +105,5 @@ export class NoteModel {
 		note.purgedAt = data.purgedAt ? new Date(data.purgedAt) : undefined;
 		note.stateChangedAt = data.stateChangedAt ? new Date(data.stateChangedAt) : undefined;
 		return note;
-	}
-
-	get summary(): string {
-		return getSummary(this.content);
-	}
-
-	get sentenceCount(): number {
-		return getSentenceCount(this.content);
-	}
-
-	get wordCount(): number {
-		return getWordCount(this.content);
-	}
-
-	get characterCount(): number {
-		return getCharacterCount(this.content);
 	}
 }
