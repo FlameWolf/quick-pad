@@ -150,7 +150,13 @@ export const useNotesStore = defineStore("notes", () => {
 		const cutoff = Date.now() - TRASH_RETENTION_MS;
 		const expiredIds = notes.value
 			.filter(note => {
-				const tombstoneTime = Math.max(note.deletedAt?.getTime() ?? 0, note.purgedAt?.getTime() ?? 0);
+				if (!note.deletedAt) {
+					return false;
+				}
+				if (note.purgedAt) {
+					return true;
+				}
+				const tombstoneTime = note.deletedAt.getTime();
 				return tombstoneTime > 0 && tombstoneTime < cutoff;
 			})
 			.map(expired => expired.id);
