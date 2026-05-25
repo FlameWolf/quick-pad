@@ -1,7 +1,9 @@
+import { ref } from "vue";
 import { createRouter, createWebHistory } from "vue-router";
 import DisplayNoteList from "@/components/DisplayNoteList.vue";
 import EditNote from "@/components/EditNote.vue";
 
+export const isNavigating = ref(false);
 export const listViewRoutes = ["/notes", "/notes/archive", "/notes/trash"];
 const scrollPositions = new Map<string, number>();
 const router = createRouter({
@@ -36,17 +38,19 @@ const router = createRouter({
 	]
 });
 router.beforeEach((_, from) => {
+	isNavigating.value = true;
 	const fromPath = from.path;
 	if (listViewRoutes.includes(fromPath)) {
-		scrollPositions.set(fromPath, globalThis.scrollY);
+		scrollPositions.set(fromPath, window.scrollY);
 	}
 });
 router.afterEach((to, _) => {
 	const toPath = to.path;
 	const scrollTop = (listViewRoutes.includes(toPath) && scrollPositions.get(toPath)) || 0;
 	setTimeout(() => {
-		globalThis.scrollTo(0, scrollTop);
+		window.scrollTo(0, scrollTop);
 	});
+	isNavigating.value = false;
 });
 
 export default router;
