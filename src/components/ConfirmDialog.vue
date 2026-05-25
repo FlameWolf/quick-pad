@@ -3,18 +3,17 @@
 	import { onBeforeUnmount, onMounted } from "vue";
 
 	const { state, onConfirm, onCancel } = useConfirmDialog();
+	const handlers: Record<string, (() => void) | undefined> = {
+		Escape: onCancel,
+		Enter: onConfirm
+	};
 
 	function onKeyDown(e: KeyboardEvent) {
-		if (!state.value.visible) {
+		if (!(e.key in handlers && state.value.visible)) {
 			return;
 		}
-		if (e.key === "Escape") {
-			e.preventDefault();
-			onCancel();
-		} else if (e.key === "Enter") {
-			e.preventDefault();
-			onConfirm();
-		}
+		e.preventDefault();
+		handlers[e.key]?.();
 	}
 
 	onMounted(() => {
