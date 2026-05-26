@@ -278,17 +278,17 @@
 					<span class="fs-1 text-muted">+</span>
 				</div>
 			</RouterLink>
-			<RouterLink v-for="note in sortedNotes" :key="note.id" :to="`/notes/${note.id}`" class="card note-card text-decoration-none" :class="{ selected: isSelectionMode && isSelected(note.id) }" @click="(e: MouseEvent) => onTileClick(e, note.id)">
-				<div class="card-body d-flex flex-column position-relative">
+			<RouterLink v-for="note in sortedNotes" :key="note.id" :to="`/notes/${note.id}`" class="card note-card text-decoration-none position-relative" :class="{ selected: isSelectionMode && isSelected(note.id) }" @click="(e: MouseEvent) => onTileClick(e, note.id)">
+				<div class="card-body d-flex flex-column">
 					<input v-if="isSelectionMode" type="checkbox" class="form-check-input selection-checkbox" :checked="isSelected(note.id)" @click.stop.prevent="toggleSelection(note.id)"/>
 					<h6 class="card-title text-truncate mb-1">{{ note.title }}</h6>
 					<small class="text-muted mb-2">{{ formatDate(note.modifiedAt ?? note.createdAt) }}</small>
-					<div class="d-flex gap-2 flex-wrap small">
-						<div class="badge text-bg-secondary" v-if="note.sentenceCount">{{ note.sentenceCount }} sentences</div>
-						<div class="badge text-bg-secondary" v-if="note.wordCount">{{ note.wordCount }} words</div>
-						<div class="badge text-bg-secondary" v-if="note.characterCount">{{ note.characterCount }} characters</div>
-					</div>
-					<p class="card-text text-muted small flex-grow-1 overflow-hidden">{{ note.summary }}</p>
+					<p class="card-text text-muted small overflow-hidden">{{ note.summary }}</p>
+				</div>
+				<div class="d-flex gap-1 bg-body small w-100 position-absolute bottom-0 px-2 py-2 border-top">
+					<div class="badge text-bg-secondary" v-if="note.sentenceCount">{{ note.sentenceCount }} sentences</div>
+					<div class="badge text-bg-secondary" v-if="note.wordCount">{{ note.wordCount }} words</div>
+					<div class="badge text-bg-secondary" v-if="note.characterCount">{{ note.characterCount }} characters</div>
 				</div>
 			</RouterLink>
 		</div>
@@ -335,11 +335,5 @@
 		width: 1.25rem;
 		height: 1.25rem;
 		cursor: pointer;
-	}
-	.card-text {
-		display: -webkit-box;
-		line-clamp: 3;
-		box-orient: vertical;
-		overflow: hidden;
 	}
 </style>
