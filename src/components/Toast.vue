@@ -41,7 +41,7 @@
 <template>
 	<Transition name="toast-slide">
 		<div v-if="visible" class="toast-container">
-			<div class="toast-notification" :class="type">
+			<div class="toast-notification rounded" :class="type">
 				<span class="toast-icon">
 					<i v-if="type === `success`" class="bi bi-check2"></i>
 					<i v-else class="bi bi-exclamation-triangle"></i>
@@ -65,9 +65,8 @@
 		align-items: center;
 		gap: 0.5rem;
 		padding: 0.75rem 1rem;
-		border-radius: 0.5rem;
 		font-size: 0.875rem;
-		box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.15);
+		filter: drop-shadow(0 0 0.75rem rgb(127, 127, 127));
 	}
 	.toast-notification.success {
 		background-color: var(--bs-success-bg-subtle, #d1e7dd);
