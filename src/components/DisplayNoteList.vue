@@ -233,6 +233,12 @@
 			</div>
 		</div>
 	</div>
+	<div v-else-if="notesStore.isLoading">
+		<div class="d-flex flex-column justify-content-center align-items-center">
+			<div class="spinner-border" aria-hidden="true"></div>
+			<div class="mt-3" role="status">Loading notes...</div>
+		</div>
+	</div>
 	<div v-else>
 		<div class="d-flex gap-2 mb-3 justify-content-end flex-wrap">
 			<template v-if="isSelectionMode">

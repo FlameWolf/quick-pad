@@ -1,4 +1,4 @@
-import { ref, computed } from "vue";
+import { ref, computed, readonly } from "vue";
 import { defineStore } from "pinia";
 import { NoteModel } from "@/models/NoteModel";
 import { contains, emptyString } from "@/library";
@@ -8,6 +8,7 @@ const LEGACY_STORAGE_KEY = "quick-pad-notes";
 const STORAGE_KEY = "qp-note:";
 const TRASH_RETENTION_DAYS = 30;
 const TRASH_RETENTION_MS = TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+const isLoading = ref(true);
 const noteKey = (id: UUID) => `${STORAGE_KEY}${id}`;
 
 function migrateFromLegacy(): NoteModel[] {
@@ -37,6 +38,7 @@ function loadFromStorage(): NoteModel[] {
 			void 0;
 		}
 	}
+	isLoading.value = false;
 	return storedNotes;
 }
 
@@ -194,6 +196,7 @@ export const useNotesStore = defineStore("notes", () => {
 		activeNotes,
 		archivedNotes,
 		trashedNotes,
+		isLoading: readonly(isLoading),
 		fileNamePrefix: STORAGE_KEY,
 		addNote,
 		updateNote,
