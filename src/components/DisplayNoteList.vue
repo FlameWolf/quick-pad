@@ -272,7 +272,7 @@
 					<span class="fs-1 text-muted">+</span>
 				</div>
 			</RouterLink>
-			<RouterLink v-for="note in sortedNotes" v-memo="[note.title, note.content, note.modifiedAt, note.archivedAt, note.deletedAt, note.purgedAt]" :key="note.id" :to="`/notes/${note.id}`" class="card note-card text-decoration-none" :class="{ selected: isSelectionMode && isSelected(note.id) }" @click="(e: MouseEvent) => onTileClick(e, note.id)">
+			<RouterLink v-for="note in sortedNotes" :key="note.id" :to="`/notes/${note.id}`" class="card note-card text-decoration-none" :class="{ selected: isSelectionMode && isSelected(note.id) }" @click="(e: MouseEvent) => onTileClick(e, note.id)">
 				<div class="card-body d-flex flex-column position-relative">
 					<input v-if="isSelectionMode" type="checkbox" class="form-check-input selection-checkbox" :checked="isSelected(note.id)" @click.stop.prevent="toggleSelection(note.id)"/>
 					<h6 class="card-title text-truncate mb-1">{{ note.title }}</h6>

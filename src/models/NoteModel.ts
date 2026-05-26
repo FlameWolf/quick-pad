@@ -11,6 +11,10 @@ export interface NoteJSON {
 	deletedAt?: string;
 	purgedAt?: string;
 	stateChangedAt?: string;
+	summary: string;
+	sentenceCount: number;
+	wordCount: number;
+	characterCount: number;
 }
 
 export class NoteModel {
@@ -36,7 +40,7 @@ export class NoteModel {
 		this.computeDerived();
 	}
 
-	computeDerived() {
+	async computeDerived() {
 		this.summary = getSummary(this.content);
 		this.sentenceCount = getSentenceCount(this.content);
 		this.wordCount = getWordCount(this.content);
@@ -91,7 +95,11 @@ export class NoteModel {
 			archivedAt: this.archivedAt?.toISOString(),
 			deletedAt: this.deletedAt?.toISOString(),
 			purgedAt: this.purgedAt?.toISOString(),
-			stateChangedAt: this.stateChangedAt?.toISOString()
+			stateChangedAt: this.stateChangedAt?.toISOString(),
+			summary: this.summary,
+			sentenceCount: this.sentenceCount,
+			wordCount: this.wordCount,
+			characterCount: this.characterCount
 		};
 	}
 
@@ -104,6 +112,15 @@ export class NoteModel {
 		note.deletedAt = data.deletedAt ? new Date(data.deletedAt) : undefined;
 		note.purgedAt = data.purgedAt ? new Date(data.purgedAt) : undefined;
 		note.stateChangedAt = data.stateChangedAt ? new Date(data.stateChangedAt) : undefined;
+		if (data.summary && data.sentenceCount && data.wordCount && data.characterCount) {
+			note.summary = data.summary;
+			note.sentenceCount = data.sentenceCount;
+			note.wordCount = data.wordCount;
+			note.characterCount = data.characterCount;
+		} else {
+			note.computeDerived();
+			note.stateChangedAt = new Date();
+		}
 		return note;
 	}
 }
