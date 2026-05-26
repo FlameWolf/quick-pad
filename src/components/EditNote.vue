@@ -8,6 +8,7 @@
 	import { NoteModel } from "@/models/NoteModel";
 	import { useFileIO } from "@/composables/useFileIO";
 	import { getSentenceCount, getWordCount, getCharacterCount, emptyString, debounce } from "@/library";
+	import Toast from "@/components/Toast.vue";
 	import type { UUID } from "crypto";
 
 	const props = defineProps<{ id?: UUID }>();
@@ -19,12 +20,20 @@
 	const { requestSync } = useNotesSync();
 	const isCreateMode = computed(() => route.path === "/notes/new");
 	const existingNote = computed(() => (props.id && !isCreateMode.value ? store.getNote(props.id) : undefined));
+	const isCopying = ref(false);
+	const copyResult = ref<{
+		status: "success" | "error";
+		message: string;
+	}>({
+		status: "success",
+		message: emptyString
+	});
 	const isEditing = ref(isCreateMode.value);
 	const editTitle = ref(existingNote.value?.title ?? emptyString);
 	const editContent = ref(existingNote.value?.content ?? emptyString);
 	const editTextArea = useTemplateRef("edit-text-area");
 	const undoRedo = useUndoRedo(editContent.value);
-	const displayContent = computed(() => (isEditing.value ? editContent.value : (existingNote.value?.content ?? "")));
+	const displayContent = computed(() => (isEditing.value ? editContent.value : (existingNote.value?.content ?? emptyString)));
 	const sentenceCount = computed(() => getSentenceCount(displayContent.value));
 	const wordCount = computed(() => getWordCount(displayContent.value));
 	const characterCount = computed(() => getCharacterCount(displayContent.value));
@@ -85,6 +94,24 @@
 	function doRedo() {
 		undoRedo.redo();
 		editContent.value = undoRedo.current.value;
+	}
+
+	function copyToClipboard() {
+		isCopying.value = true;
+		navigator.clipboard
+			.writeText(existingNote.value?.content as string)
+			.then(() => {
+				copyResult.value = {
+					status: "success",
+					message: "Copied to clipboard"
+				};
+			})
+			.catch(err => {
+				copyResult.value = {
+					status: "error",
+					message: `Failed to copy: ${(err as Error).message}`
+				};
+			});
 	}
 
 	function startEditing() {
@@ -248,16 +275,35 @@
 				<span>&#xA0;Back</span>
 			</RouterLink>
 			<div class="d-flex flex-wrap gap-2" v-if="!isCreateMode && !isEditing && isTrashed">
-				<button class="btn btn-outline-primary btn-sm" @click="restoreNote">Restore</button>
-				<button class="btn btn-outline-secondary btn-sm" v-if="existingNote" @click="exportNote(existingNote)">Export</button>
-				<button class="btn btn-outline-danger btn-sm" @click="permanentlyDeleteNote">Delete Permanently</button>
+				<button class="btn btn-outline-primary btn-sm" @click="restoreNote" title="Restore" aria-label="Restore">
+					<i class="bi bi-arrow-bar-up"></i>
+				</button>
+				<button class="btn btn-outline-secondary btn-sm" v-if="existingNote" @click="exportNote(existingNote)" title="Export" aria-label="Export">
+					<i class="bi bi-download"></i>
+				</button>
+				<button class="btn btn-outline-danger btn-sm" @click="permanentlyDeleteNote" title="Delete Permanently" aria-label="Delete Permanently">
+					<i class="bi bi-trash-fill"></i>
+				</button>
 			</div>
 			<div class="d-flex flex-wrap gap-2" v-else-if="!isCreateMode && !isEditing">
-				<button class="btn btn-outline-primary btn-sm" @click="startEditing">Edit</button>
-				<button class="btn btn-outline-secondary btn-sm" v-if="existingNote" @click="exportNote(existingNote)">Export</button>
-				<button class="btn btn-outline-secondary btn-sm" v-if="isArchived" @click="unarchiveNote">Unarchive</button>
-				<button class="btn btn-outline-secondary btn-sm" v-else @click="archiveNote">Archive</button>
-				<button class="btn btn-outline-danger btn-sm" @click="deleteNote">Delete</button>
+				<button class="btn btn-outline-primary btn-sm" @click="startEditing" title="Edit" aria-label="Edit">
+					<i class="bi bi-pen"></i>
+				</button>
+				<button class="btn btn-outline-secondary btn-sm" @click="copyToClipboard" title="Copy to clipboard" aria-label="Copy to clipboard">
+					<i class="bi bi-copy"></i>
+				</button>
+				<button class="btn btn-outline-secondary btn-sm" v-if="existingNote" @click="exportNote(existingNote)" title="Download" aria-label="Download">
+					<i class="bi bi-download"></i>
+				</button>
+				<button class="btn btn-outline-secondary btn-sm" v-if="isArchived" @click="unarchiveNote" title="Unarchive" aria-label="Unarchive">
+					<i class="bi bi-box-arrow-up"></i>
+				</button>
+				<button class="btn btn-outline-secondary btn-sm" v-else @click="archiveNote" title="Archive" aria-label="Archive">
+					<i class="bi bi-archive"></i>
+				</button>
+				<button class="btn btn-outline-danger btn-sm" @click="deleteNote" title="Delete" aria-label="Delete">
+					<i class="bi bi-trash"></i>
+				</button>
 			</div>
 			<div class="d-flex flex-wrap gap-2" v-if="isEditing">
 				<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canUndo.value" @click="doUndo" title="Undo" aria-label="Undo">
@@ -266,8 +312,12 @@
 				<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canRedo.value" @click="doRedo" title="Redo" aria-label="Redo">
 					<i class="bi bi-arrow-clockwise"></i>
 				</button>
-				<button class="btn btn-primary btn-sm" @click="saveNote">Save</button>
-				<button class="btn btn-outline-secondary btn-sm" @click="cancelEditing">Cancel</button>
+				<button class="btn btn-primary btn-sm" @click="saveNote" title="Save" aria-label="Save">
+					<i class="bi bi-floppy"></i>
+				</button>
+				<button class="btn btn-outline-secondary btn-sm" @click="cancelEditing" title="Cancel" aria-label="Cancel">
+					<i class="bi bi-x-lg"></i>
+				</button>
 			</div>
 		</div>
 		<template v-if="!isEditing && existingNote">
@@ -276,7 +326,7 @@
 			<div class="note-content">{{ existingNote.content }}</div>
 		</template>
 		<template v-if="isEditing">
-			<input v-model="editTitle" type="text" class="form-control form-control-lg mb-3" placeholder="Title"/>
+			<input v-model="editTitle" type="text" class="form-control form-control-lg mb-3" placeholder="Title" />
 			<textarea ref="edit-text-area" :value="editContent" @input="onContentInput" class="form-control note-textarea" placeholder="Start writing..." rows="12"></textarea>
 		</template>
 		<div class="d-flex flex-wrap gap-2 mt-3" v-if="displayContent">
@@ -285,6 +335,7 @@
 			<span class="badge text-bg-secondary" v-if="characterCount">{{ characterCount }} characters</span>
 		</div>
 	</div>
+	<Toast v-if="isCopying" :message="copyResult.message" :type="copyResult.status" :visible="isCopying" :timeStamp="Date.now()" @dismiss="isCopying = false" />
 </template>
 
 <style>
