@@ -40,7 +40,7 @@ export class NoteModel {
 		this.computeDerived();
 	}
 
-	async computeDerived() {
+	computeDerived() {
 		this.summary = getSummary(this.content);
 		this.sentenceCount = getSentenceCount(this.content);
 		this.wordCount = getWordCount(this.content);
