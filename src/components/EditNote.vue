@@ -228,8 +228,9 @@
 		if (!ok) {
 			return;
 		}
-		store.permanentlyDelete(existingNote.value.id);
-		requestSync();
+		const existingNoteId = existingNote.value.id;
+		store.permanentlyDelete(existingNoteId);
+		requestSync([existingNoteId]);
 		router.push("/notes/trash");
 	}
 

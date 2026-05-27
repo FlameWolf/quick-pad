@@ -136,13 +136,16 @@ export const useNotesStore = defineStore("notes", () => {
 	}
 
 	function permanentlyDelete(id: UUID) {
-		applyToNote(id, note => note.purge());
-		removeNote(id);
+		const index = notes.value.findIndex(note => note.id === id);
+		if (index !== -1) {
+			notes.value.splice(index, 1);
+			removeNote(id);
+		}
 	}
 
 	function permanentlyDeleteMultiple(ids: ReadonlyArray<UUID>) {
 		const idSet = new Set<UUID>(ids);
-		applyToMany(idSet, note => note.purge());
+		notes.value = notes.value.filter(note => !idSet.has(note.id));
 		idSet.forEach(removeNote);
 	}
 
@@ -161,9 +164,7 @@ export const useNotesStore = defineStore("notes", () => {
 			})
 			.map(expired => expired.id);
 		if (expiredIds.length > 0) {
-			const expiredSet = new Set<UUID>(expiredIds);
-			notes.value = notes.value.filter(note => !expiredSet.has(note.id));
-			expiredSet.forEach(removeNote);
+			permanentlyDeleteMultiple(expiredIds);
 		}
 		return expiredIds;
 	}

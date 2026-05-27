@@ -119,7 +119,6 @@ export class NoteModel {
 			note.characterCount = data.characterCount;
 		} else {
 			note.computeDerived();
-			note.stateChangedAt = new Date();
 		}
 		return note;
 	}
