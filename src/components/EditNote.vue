@@ -313,7 +313,7 @@
 				<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canRedo.value" @click="doRedo" title="Redo" aria-label="Redo">
 					<i class="bi bi-arrow-clockwise"></i>
 				</button>
-				<button class="btn btn-primary btn-sm" @click="saveNote" title="Save" aria-label="Save">
+				<button class="btn btn-primary btn-sm" :disabled="!hasUnsavedChanges" @click="saveNote" title="Save" aria-label="Save">
 					<i class="bi bi-floppy"></i>
 				</button>
 				<button class="btn btn-outline-secondary btn-sm" @click="cancelEditing" title="Cancel" aria-label="Cancel">
