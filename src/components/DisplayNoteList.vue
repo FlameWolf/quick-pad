@@ -215,7 +215,13 @@
 			<span>&#xA0;Back to Notes</span>
 		</RouterLink>
 	</div>
-	<div v-if="!hasNotes" class="empty-state text-center py-5">
+	<div v-if="notesStore.isLoading">
+		<div class="d-flex flex-column justify-content-center align-items-center">
+			<div class="spinner-border" aria-hidden="true"></div>
+			<div class="mt-3" role="status">Loading notes...</div>
+		</div>
+	</div>
+	<div v-else-if="!hasNotes" class="empty-state text-center py-5">
 		<div class="text-muted mb-3">
 			<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
 				<path d="M5 0h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2 2 2 0 0 1-2 2H3a2 2 0 0 1-2-2h1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1H1a2 2 0 0 1 2-2h8a2 2 0 0 0 2-2V2a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1H3a2 2 0 0 1 2-2z"/>
@@ -232,12 +238,6 @@
 				<RouterLink to="/notes/archive" class="btn btn-link btn-sm text-decoration-none"> <i class="bi bi-archive me-1" aria-hidden="true"></i>Archived </RouterLink>
 				<RouterLink to="/notes/trash" class="btn btn-link btn-sm text-decoration-none"> <i class="bi bi-trash me-1" aria-hidden="true"></i>Trash </RouterLink>
 			</div>
-		</div>
-	</div>
-	<div v-else-if="notesStore.isLoading">
-		<div class="d-flex flex-column justify-content-center align-items-center">
-			<div class="spinner-border" aria-hidden="true"></div>
-			<div class="mt-3" role="status">Loading notes...</div>
 		</div>
 	</div>
 	<div v-else>

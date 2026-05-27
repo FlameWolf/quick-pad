@@ -9,9 +9,10 @@ const STORAGE_KEY = "qp-note:";
 const TRASH_RETENTION_DAYS = 30;
 const TRASH_RETENTION_MS = TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000;
 const isLoading = ref(true);
+const notes = ref<NoteModel[]>([]);
 const noteKey = (id: UUID) => `${STORAGE_KEY}${id}`;
 
-function migrateFromLegacy(): NoteModel[] {
+async function migrateFromLegacy(): Promise<NoteModel[]> {
 	const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
 	if (!raw) {
 		return [];
@@ -25,8 +26,16 @@ function migrateFromLegacy(): NoteModel[] {
 	}
 }
 
-function loadFromStorage(): NoteModel[] {
-	const storedNotes: NoteModel[] = migrateFromLegacy();
+function persistNote(note: NoteModel) {
+	localStorage.setItem(noteKey(note.id), JSON.stringify(note.toJSON()));
+}
+
+function removeNote(id: UUID) {
+	localStorage.removeItem(noteKey(id));
+}
+
+setTimeout(async () => {
+	const storedNotes: NoteModel[] = await migrateFromLegacy();
 	for (let index = 0; index < localStorage.length; index++) {
 		const key = localStorage.key(index);
 		if (!key?.startsWith(STORAGE_KEY)) {
@@ -38,20 +47,11 @@ function loadFromStorage(): NoteModel[] {
 			void 0;
 		}
 	}
+	notes.value = storedNotes;
 	isLoading.value = false;
-	return storedNotes;
-}
-
-function persistNote(note: NoteModel) {
-	localStorage.setItem(noteKey(note.id), JSON.stringify(note.toJSON()));
-}
-
-function removeNote(id: UUID) {
-	localStorage.removeItem(noteKey(id));
-}
+});
 
 export const useNotesStore = defineStore("notes", () => {
-	const notes = ref<NoteModel[]>(loadFromStorage());
 	const searchText = ref<string>(emptyString);
 	const searchResults = computed(() => (searchText.value.trim() ? notes.value.filter(note => contains(note.title, searchText.value) || contains(note.content, searchText.value)) : notes.value));
 	const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt && !note.purgedAt));
