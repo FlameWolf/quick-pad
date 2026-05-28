@@ -3,7 +3,7 @@ import { useGoogleDrive } from "./useGoogleDrive";
 import { useGoogleAuth } from "./useGoogleAuth";
 import { useNotesStore } from "@/stores/notes";
 import { NoteModel } from "@/models/NoteModel";
-import { deleteKV, getKV, setKV } from "@/storage/db";
+import { getKV, setKV } from "@/storage/db";
 import { debounce, emptyString } from "@/library";
 import type { NoteJSON } from "@/models/NoteModel";
 import type { UUID } from "crypto";
@@ -12,7 +12,6 @@ const LEGACY_SYNC_FILENAME = "quick-pad-notes.json";
 const LAST_SYNCED_TO_LOCAL_KEY = "last-synced-to-local";
 const LAST_SYNCED_TO_CLOUD_KEY = "last-synced-to-cloud";
 const AUTO_SYNC_KEY = "auto-sync";
-const PENDING_PURGES_KEY = "pending-purges";
 const DEBOUNCE_MS = 3000;
 const isSyncing = ref(false);
 const lastSyncedToLocalAt = ref<Date | null>(null);
@@ -33,14 +32,6 @@ export async function hydrateSyncMetadata(): Promise<void> {
 	lastSyncedToLocalAt.value = storedLocal ? new Date(storedLocal) : null;
 	lastSyncedToCloudAt.value = storedCloud ? new Date(storedCloud) : null;
 	autoSyncEnabled.value = storedAutoSync === undefined ? true : storedAutoSync;
-	try {
-		const storedPurges = await getKV<UUID[]>(PENDING_PURGES_KEY);
-		if (Array.isArray(storedPurges)) {
-			storedPurges.forEach(Set.prototype.add, pendingPurges);
-		}
-	} catch {
-		void 0;
-	}
 }
 
 function persistAutoSync(val: boolean) {
@@ -53,14 +44,6 @@ function persistLastSyncedToLocal(date: Date) {
 
 function persistLastSyncedToCloud(date: Date) {
 	setKV(LAST_SYNCED_TO_CLOUD_KEY, date.toISOString());
-}
-
-function persistPendingPurges(set: Set<UUID>) {
-	if (set.size === 0) {
-		deleteKV(PENDING_PURGES_KEY);
-		return;
-	}
-	setKV(PENDING_PURGES_KEY, Array.from(set));
 }
 
 function noteEffectiveTime(note: NoteModel): number {
@@ -126,11 +109,9 @@ export function useNotesSync() {
 	async function purgeRemoteFiles(fileIdsToPurge: ReadonlyArray<UUID>) {
 		fileIdsToPurge.forEach(Set.prototype.add, pendingPurges);
 		if (pendingPurges.size > 0) {
-			persistPendingPurges(pendingPurges);
 			const purgeSnapshot = Array.from(pendingPurges);
 			await Promise.all(purgeSnapshot.map(getFileName).map(deleteFile));
 			purgeSnapshot.forEach(Set.prototype.delete, pendingPurges);
-			persistPendingPurges(pendingPurges);
 		}
 	}
 
@@ -244,10 +225,7 @@ export function useNotesSync() {
 	const requestSync = Object.assign(
 		function (purged: ReadonlyArray<UUID> = []) {
 			if (purged.length > 0) {
-				for (const id of purged) {
-					pendingPurges.add(id);
-				}
-				persistPendingPurges(pendingPurges);
+				purged.forEach(Set.prototype.add, pendingPurges);
 			}
 			debouncedFlush();
 		},
