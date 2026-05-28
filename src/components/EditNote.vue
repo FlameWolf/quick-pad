@@ -277,7 +277,7 @@
 			</RouterLink>
 			<div class="d-flex flex-wrap gap-2" v-if="!isCreateMode && !isEditing && isTrashed">
 				<button class="btn btn-outline-primary btn-sm" @click="restoreNote" title="Restore" aria-label="Restore">
-					<i class="bi bi-arrow-bar-up"></i>
+					<i class="bi bi-reply"></i>
 				</button>
 				<button class="btn btn-outline-secondary btn-sm" v-if="existingNote" @click="exportNote(existingNote)" title="Export" aria-label="Export">
 					<i class="bi bi-download"></i>
