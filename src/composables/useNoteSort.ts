@@ -12,11 +12,11 @@ const SORT_DIRECTIONS: ReadonlyArray<SortDirection> = ["asc", "desc"];
 const sortBy = ref<SortField>("modifiedAt");
 const sortDirection = ref<SortDirection>("desc");
 
-watch(sortBy, field => {
-	setKV(SORT_BY_KEY, field);
+watch(sortBy, async field => {
+	await setKV(SORT_BY_KEY, field);
 });
-watch(sortDirection, direction => {
-	setKV(SORT_DIRECTION_KEY, direction);
+watch(sortDirection, async direction => {
+	await setKV(SORT_DIRECTION_KEY, direction);
 });
 
 export async function hydrateSortPrefs(): Promise<void> {

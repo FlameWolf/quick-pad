@@ -1,6 +1,11 @@
-import { ref, readonly, computed } from "vue";
+import { ref, readonly, computed, toRaw } from "vue";
 import { deleteKV, getKV, setKV } from "@/storage/db";
 import { emptyString } from "@/library";
+
+type UserInfo = {
+	email: string;
+	name: string;
+};
 
 let tokenClient: any | null = null;
 let tokenExpiresAt = 0;
@@ -14,35 +19,38 @@ const USER_KEY = "google-user-info";
 const TOKEN_REFRESH_BUFFER_MS = 60_000;
 const GSI_WAIT_MS = 6000;
 const accessToken = ref<string | null>(null);
-const user = ref<{ email: string; name: string } | null>(null);
+const user = ref<UserInfo | null>(null);
 const isReady = ref(false);
 const isSignedIn = ref(false);
 
 let cachedToken: string | null = null;
 let cachedExpiry = 0;
-let cachedUser: { email: string; name: string } | null = null;
+let cachedUser: UserInfo | null = null;
 
 export async function hydrateAuthState(): Promise<void> {
 	cachedToken = (await getKV<string>(TOKEN_KEY)) ?? null;
 	cachedExpiry = (await getKV<number>(EXPIRY_KEY)) ?? 0;
-	const stored = await getKV<{ email: unknown; name: unknown }>(USER_KEY);
+	const stored = await getKV<UserInfo>(USER_KEY);
 	if (stored && typeof stored.email === "string" && typeof stored.name === "string") {
-		cachedUser = { email: stored.email, name: stored.name };
+		cachedUser = {
+			email: stored.email,
+			name: stored.name
+		};
 	} else {
 		cachedUser = null;
 	}
 }
 
-function persistAuthState(token: string, expiresAt: number) {
-	setKV(TOKEN_KEY, token);
-	setKV(EXPIRY_KEY, expiresAt);
+async function persistAuthState(token: string, expiresAt: number) {
+	await setKV(TOKEN_KEY, token);
+	await setKV(EXPIRY_KEY, expiresAt);
 }
 
-function persistUserInfo(info: { email: string; name: string } | null) {
+async function persistUserInfo(info: UserInfo | null) {
 	if (info) {
-		setKV(USER_KEY, info);
+		await setKV(USER_KEY, toRaw(info));
 	} else {
-		deleteKV(USER_KEY);
+		await deleteKV(USER_KEY);
 	}
 }
 
@@ -84,17 +92,17 @@ export function useGoogleAuth() {
 			scope: SCOPES,
 			callback: async (response: any) => {
 				if (response.error) {
-					clearSession(user.value !== null);
+					await clearSession(user.value !== null);
 					isReady.value = true;
 					return;
 				}
 				tokenExpiresAt = Date.now() + response.expires_in * 1000;
 				accessToken.value = response.access_token;
-				setKV(SESSION_KEY, true);
-				persistAuthState(response.access_token, tokenExpiresAt);
+				await setKV(SESSION_KEY, true);
+				await persistAuthState(response.access_token, tokenExpiresAt);
 				if (!user.value) {
 					await fetchUserInfo(response.access_token);
-					persistUserInfo(user.value);
+					await persistUserInfo(user.value);
 				}
 				isSignedIn.value = true;
 				isReady.value = true;
@@ -138,29 +146,29 @@ export function useGoogleAuth() {
 		}
 	}
 
-	function signOut() {
+	async function signOut() {
 		if (accessToken.value && typeof google !== "undefined" && google?.accounts?.oauth2) {
-			google.accounts.oauth2.revoke(accessToken.value, () => {
-				clearSession();
+			google.accounts.oauth2.revoke(accessToken.value, async () => {
+				await clearSession();
 			});
 		} else {
-			clearSession();
+			await clearSession();
 		}
 	}
 
-	function clearSession(keepUser = false) {
+	async function clearSession(keepUser = false) {
 		accessToken.value = null;
 		tokenExpiresAt = 0;
 		cachedToken = null;
 		cachedExpiry = 0;
-		deleteKV(TOKEN_KEY);
-		deleteKV(EXPIRY_KEY);
+		await deleteKV(TOKEN_KEY);
+		await deleteKV(EXPIRY_KEY);
 		if (!keepUser) {
 			user.value = null;
 			isSignedIn.value = false;
 			cachedUser = null;
-			deleteKV(SESSION_KEY);
-			deleteKV(USER_KEY);
+			await deleteKV(SESSION_KEY);
+			await deleteKV(USER_KEY);
 		}
 	}
 

@@ -55,13 +55,13 @@
 		await loadFromCloud();
 	}
 
-	function handleSignOut() {
+	async function handleSignOut() {
 		closeSyncMenu();
-		signOut();
+		await signOut();
 	}
 
-	function handleToggleAutoSync() {
-		setAutoSync(!autoSyncEnabled.value);
+	async function handleToggleAutoSync() {
+		await setAutoSync(!autoSyncEnabled.value);
 	}
 
 	function scrollToPosition(position: "top" | "bottom") {
