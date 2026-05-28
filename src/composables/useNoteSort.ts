@@ -1,4 +1,4 @@
-import { ref, readonly } from "vue";
+import { ref, readonly, watch } from "vue";
 import { getKV, setKV } from "@/storage/db";
 import type { NoteModel } from "@/models/NoteModel";
 
@@ -9,9 +9,15 @@ const SORT_BY_KEY = "sort-by";
 const SORT_DIRECTION_KEY = "sort-direction";
 const SORT_FIELDS: ReadonlyArray<SortField> = ["createdAt", "modifiedAt", "title", "characterCount"];
 const SORT_DIRECTIONS: ReadonlyArray<SortDirection> = ["asc", "desc"];
-
 const sortBy = ref<SortField>("modifiedAt");
 const sortDirection = ref<SortDirection>("desc");
+
+watch(sortBy, field => {
+	setKV(SORT_BY_KEY, field);
+});
+watch(sortDirection, direction => {
+	setKV(SORT_DIRECTION_KEY, direction);
+});
 
 export async function hydrateSortPrefs(): Promise<void> {
 	const storedBy = await getKV<string>(SORT_BY_KEY);
@@ -47,12 +53,10 @@ function compareNotes(a: NoteModel, b: NoteModel, field: SortField): number {
 export function useNoteSort() {
 	function setSortBy(field: SortField) {
 		sortBy.value = field;
-		void setKV(SORT_BY_KEY, field);
 	}
 
 	function setSortDirection(direction: SortDirection) {
 		sortDirection.value = direction;
-		void setKV(SORT_DIRECTION_KEY, direction);
 	}
 
 	function toggleSortDirection() {

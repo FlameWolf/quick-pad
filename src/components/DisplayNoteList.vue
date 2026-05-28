@@ -117,24 +117,22 @@
 		if (ids.length === 0) {
 			return;
 		}
+		let syncNotes = true;
+		let purgeNotes = false;
 		const noun = ids.length === 1 ? "note" : "notes";
 		switch (key) {
 			case "export": {
 				const selected = sourceNotes.value.filter(n => isSelected(n.id));
 				await exportNotes(selected);
-				exitSelectionMode();
+				syncNotes = false;
 				break;
 			}
 			case "archive": {
-				notesStore.archiveMultiple(ids);
-				requestSync();
-				exitSelectionMode();
+				await notesStore.archiveMultiple(ids);
 				break;
 			}
 			case "unarchive": {
-				notesStore.unarchiveMultiple(ids);
-				requestSync();
-				exitSelectionMode();
+				await notesStore.unarchiveMultiple(ids);
 				break;
 			}
 			case "trash": {
@@ -148,15 +146,11 @@
 				if (!ok) {
 					return;
 				}
-				notesStore.trashMultiple(ids);
-				requestSync();
-				exitSelectionMode();
+				await notesStore.trashMultiple(ids);
 				break;
 			}
 			case "restore": {
-				notesStore.restoreFromTrashMultiple(ids);
-				requestSync();
-				exitSelectionMode();
+				await notesStore.restoreFromTrashMultiple(ids);
 				break;
 			}
 			case "permanent": {
@@ -170,12 +164,15 @@
 				if (!ok) {
 					return;
 				}
-				notesStore.permanentlyDeleteMultiple(ids);
-				requestSync(ids);
-				exitSelectionMode();
+				await notesStore.permanentlyDeleteMultiple(ids);
+				purgeNotes = true;
 				break;
 			}
 		}
+		if (syncNotes) {
+			requestSync(purgeNotes ? ids : undefined);
+		}
+		exitSelectionMode();
 	}
 
 	async function handleEmptyTrash() {
@@ -194,7 +191,7 @@
 			return;
 		}
 		const trashedNoteIds = notesStore.trashedNotes.map(n => n.id);
-		notesStore.permanentlyDeleteMultiple(trashedNoteIds);
+		await notesStore.permanentlyDeleteMultiple(trashedNoteIds);
 		requestSync(trashedNoteIds);
 	}
 

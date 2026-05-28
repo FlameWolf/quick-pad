@@ -28,20 +28,15 @@ const pendingPurges = new Set<UUID>();
 
 export async function hydrateSyncMetadata(): Promise<void> {
 	const storedLocal = await getKV<string>(LAST_SYNCED_TO_LOCAL_KEY);
-	lastSyncedToLocalAt.value = storedLocal ? new Date(storedLocal) : null;
-
 	const storedCloud = await getKV<string>(LAST_SYNCED_TO_CLOUD_KEY);
-	lastSyncedToCloudAt.value = storedCloud ? new Date(storedCloud) : null;
-
 	const storedAutoSync = await getKV<boolean>(AUTO_SYNC_KEY);
+	lastSyncedToLocalAt.value = storedLocal ? new Date(storedLocal) : null;
+	lastSyncedToCloudAt.value = storedCloud ? new Date(storedCloud) : null;
 	autoSyncEnabled.value = storedAutoSync === undefined ? true : storedAutoSync;
-
 	try {
 		const storedPurges = await getKV<UUID[]>(PENDING_PURGES_KEY);
 		if (Array.isArray(storedPurges)) {
-			for (const id of storedPurges) {
-				pendingPurges.add(id);
-			}
+			storedPurges.forEach(Set.prototype.add, pendingPurges);
 		}
 	} catch {
 		void 0;
@@ -49,23 +44,23 @@ export async function hydrateSyncMetadata(): Promise<void> {
 }
 
 function persistAutoSync(val: boolean) {
-	void setKV(AUTO_SYNC_KEY, val);
+	setKV(AUTO_SYNC_KEY, val);
 }
 
 function persistLastSyncedToLocal(date: Date) {
-	void setKV(LAST_SYNCED_TO_LOCAL_KEY, date.toISOString());
+	setKV(LAST_SYNCED_TO_LOCAL_KEY, date.toISOString());
 }
 
 function persistLastSyncedToCloud(date: Date) {
-	void setKV(LAST_SYNCED_TO_CLOUD_KEY, date.toISOString());
+	setKV(LAST_SYNCED_TO_CLOUD_KEY, date.toISOString());
 }
 
 function persistPendingPurges(set: Set<UUID>) {
 	if (set.size === 0) {
-		void deleteKV(PENDING_PURGES_KEY);
+		deleteKV(PENDING_PURGES_KEY);
 		return;
 	}
-	void setKV(PENDING_PURGES_KEY, Array.from(set));
+	setKV(PENDING_PURGES_KEY, Array.from(set));
 }
 
 function noteEffectiveTime(note: NoteModel): number {
@@ -153,7 +148,7 @@ export function useNotesSync() {
 					return "uploaded";
 				}
 				if (remoteEffectiveTime > localEffectiveTime) {
-					store.replaceNote(remoteNote);
+					await store.replaceNote(remoteNote);
 					return "conflict";
 				}
 			}
@@ -218,9 +213,9 @@ export function useNotesSync() {
 			}
 			const changes = mergeNotesByModifiedAt(store.notes, remoteNotes);
 			if (changes.length > 0) {
-				store.replaceMultiple(changes);
+				await store.replaceMultiple(changes);
 			}
-			await purgeRemoteFiles(store.purgeExpiredTrash());
+			await purgeRemoteFiles(await store.purgeExpiredTrash());
 			lastSyncedToLocalAt.value = syncStartedAt;
 			persistLastSyncedToLocal(syncStartedAt);
 			lastSyncMessage.value = {

@@ -149,19 +149,19 @@
 		}
 	}
 
-	function saveNote() {
+	async function saveNote() {
 		const title = editTitle.value.trim() || "Untitled";
 		const content = editContent.value;
 		if (isCreateMode.value) {
 			const note = new NoteModel(title, content);
-			store.addNote(note);
+			await store.addNote(note);
 			isEditing.value = false;
 			requestSync();
 			router.push(`/notes/${note.id}`);
 			return;
 		}
 		if (existingNote.value) {
-			store.updateNote({ id: existingNote.value.id, title, content });
+			await store.updateNote({ id: existingNote.value.id, title, content });
 			requestSync();
 		}
 		isEditing.value = false;
@@ -182,34 +182,34 @@
 		if (!ok) {
 			return;
 		}
-		store.trashNote(existingNote.value.id);
+		await store.trashNote(existingNote.value.id);
 		requestSync();
 		router.push(returnTo);
 	}
 
-	function archiveNote() {
+	async function archiveNote() {
 		if (!existingNote.value) {
 			return;
 		}
-		store.archiveNote(existingNote.value.id);
+		await store.archiveNote(existingNote.value.id);
 		requestSync();
 		router.push("/notes");
 	}
 
-	function unarchiveNote() {
+	async function unarchiveNote() {
 		if (!existingNote.value) {
 			return;
 		}
-		store.unarchiveNote(existingNote.value.id);
+		await store.unarchiveNote(existingNote.value.id);
 		requestSync();
 		router.push("/notes/archive");
 	}
 
-	function restoreNote() {
+	async function restoreNote() {
 		if (!existingNote.value) {
 			return;
 		}
-		store.restoreFromTrash(existingNote.value.id);
+		await store.restoreFromTrash(existingNote.value.id);
 		requestSync();
 		router.push("/notes/trash");
 	}
@@ -229,7 +229,7 @@
 			return;
 		}
 		const existingNoteId = existingNote.value.id;
-		store.permanentlyDelete(existingNoteId);
+		await store.permanentlyDelete(existingNoteId);
 		requestSync([existingNoteId]);
 		router.push("/notes/trash");
 	}

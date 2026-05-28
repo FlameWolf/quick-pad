@@ -34,15 +34,15 @@ export async function hydrateAuthState(): Promise<void> {
 }
 
 function persistAuthState(token: string, expiresAt: number) {
-	void setKV(TOKEN_KEY, token);
-	void setKV(EXPIRY_KEY, expiresAt);
+	setKV(TOKEN_KEY, token);
+	setKV(EXPIRY_KEY, expiresAt);
 }
 
 function persistUserInfo(info: { email: string; name: string } | null) {
 	if (info) {
-		void setKV(USER_KEY, info);
+		setKV(USER_KEY, info);
 	} else {
-		void deleteKV(USER_KEY);
+		deleteKV(USER_KEY);
 	}
 }
 
@@ -88,9 +88,9 @@ export function useGoogleAuth() {
 					isReady.value = true;
 					return;
 				}
-				accessToken.value = response.access_token;
 				tokenExpiresAt = Date.now() + response.expires_in * 1000;
-				void setKV(SESSION_KEY, true);
+				accessToken.value = response.access_token;
+				setKV(SESSION_KEY, true);
 				persistAuthState(response.access_token, tokenExpiresAt);
 				if (!user.value) {
 					await fetchUserInfo(response.access_token);
@@ -112,8 +112,8 @@ export function useGoogleAuth() {
 			return;
 		}
 		if (cachedToken && cachedExpiry && Date.now() < cachedExpiry - TOKEN_REFRESH_BUFFER_MS) {
-			accessToken.value = cachedToken;
 			tokenExpiresAt = cachedExpiry;
+			accessToken.value = cachedToken;
 			user.value = cachedUser;
 			isSignedIn.value = true;
 		} else if (cachedUser) {
@@ -153,14 +153,14 @@ export function useGoogleAuth() {
 		tokenExpiresAt = 0;
 		cachedToken = null;
 		cachedExpiry = 0;
-		void deleteKV(TOKEN_KEY);
-		void deleteKV(EXPIRY_KEY);
+		deleteKV(TOKEN_KEY);
+		deleteKV(EXPIRY_KEY);
 		if (!keepUser) {
 			user.value = null;
 			isSignedIn.value = false;
 			cachedUser = null;
-			void deleteKV(SESSION_KEY);
-			void deleteKV(USER_KEY);
+			deleteKV(SESSION_KEY);
+			deleteKV(USER_KEY);
 		}
 	}
 

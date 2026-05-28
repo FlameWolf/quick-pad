@@ -53,7 +53,7 @@ export function useFileIO() {
 						const content = await file.text();
 						const title = file.name.replace(/\.txt$/i, emptyString) || "Untitled";
 						const note = new NoteModel(title, content);
-						store.addNote(note);
+						await store.addNote(note);
 						count++;
 					} catch (err) {
 						importErrors.value?.push({

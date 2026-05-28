@@ -1,7 +1,7 @@
 import { ref, computed, readonly } from "vue";
 import { defineStore } from "pinia";
 import { NoteModel } from "@/models/NoteModel";
-import { deleteNote, getAllNotes, putNote } from "@/storage/db";
+import { deleteNote, deleteNotes, getAllNotes, putNote, putNotes } from "@/storage/db";
 import { contains, emptyString } from "@/library";
 import type { UUID } from "crypto";
 
@@ -22,12 +22,20 @@ export async function hydrateNotes(): Promise<void> {
 	}
 }
 
-function persistNote(note: NoteModel) {
-	void putNote(note.toJSON());
+async function persistNote(note: NoteModel) {
+	await putNote(note.toJSON());
 }
 
-function removeNote(id: UUID) {
-	void deleteNote(id);
+async function persistNotes(notes: NoteModel[]) {
+	await putNotes(notes.map(note => note.toJSON()));
+}
+
+async function removeNote(id: UUID) {
+	await deleteNote(id);
+}
+
+async function removeNotes(ids: UUID[]) {
+	await deleteNotes(ids);
 }
 
 export const useNotesStore = defineStore("notes", () => {
@@ -37,18 +45,18 @@ export const useNotesStore = defineStore("notes", () => {
 	const archivedNotes = computed(() => searchResults.value.filter(note => note.archivedAt && !note.deletedAt && !note.purgedAt));
 	const trashedNotes = computed(() => searchResults.value.filter(note => note.deletedAt && !note.purgedAt));
 
-	function addNote(note: NoteModel) {
+	async function addNote(note: NoteModel) {
 		notes.value.push(note);
-		persistNote(note);
+		await persistNote(note);
 	}
 
-	function updateNote(data: { id: UUID; title: string; content: string }) {
+	async function updateNote(data: { id: UUID; title: string; content: string }) {
 		const index = notes.value.findIndex(note => note.id === data.id);
 		if (index !== -1) {
 			const existingNote = notes.value[index] as NoteModel;
 			existingNote.update(data.title, data.content);
 			notes.value[index] = existingNote;
-			persistNote(existingNote);
+			await persistNote(existingNote);
 		}
 	}
 
@@ -56,79 +64,82 @@ export const useNotesStore = defineStore("notes", () => {
 		return notes.value.find(note => note.id === id);
 	};
 
-	function applyToNote(id: UUID, mutator: (note: NoteModel) => void) {
+	async function applyToNote(id: UUID, mutator: (note: NoteModel) => void) {
 		const index = notes.value.findIndex(note => note.id === id);
 		if (index === -1) {
 			return;
 		}
 		const note = notes.value[index] as NoteModel;
 		mutator(note);
-		persistNote(note);
+		await persistNote(note);
 		notes.value[index] = note;
 	}
 
-	function applyToMany(ids: ReadonlyArray<UUID> | Set<UUID>, mutator: (note: NoteModel) => void) {
+	async function applyToMany(ids: ReadonlyArray<UUID> | Set<UUID>, mutator: (note: NoteModel) => void | Promise<void>) {
 		const idSet = new Set<UUID>(ids);
-		notes.value = notes.value.map(note => {
-			if (idSet.has(note.id)) {
-				mutator(note);
-				persistNote(note);
+		const targets = notes.value.reduce((acc: Array<{ index: number; note: NoteModel }>, curr: NoteModel, index) => {
+			if (idSet.has(curr.id)) {
+				acc.push({ index, note: curr });
 			}
-			return note;
-		});
+			return acc;
+		}, []);
+		const targetNotes = targets.map(x => x.note);
+		await Promise.all(targetNotes.map(mutator));
+		targets.forEach(t => notes.value.splice(t.index, 1, t.note));
+		await persistNotes(targetNotes);
 	}
 
-	function archiveNote(id: UUID) {
-		applyToNote(id, note => note.archive());
+	async function archiveNote(id: UUID) {
+		await applyToNote(id, note => note.archive());
 	}
 
-	function archiveMultiple(ids: ReadonlyArray<UUID>) {
+	async function archiveMultiple(ids: ReadonlyArray<UUID>) {
 		const idSet = new Set<UUID>(ids);
-		applyToMany(idSet, note => note.archive());
+		await applyToMany(idSet, note => note.archive());
 	}
 
-	function unarchiveNote(id: UUID) {
-		applyToNote(id, note => note.unarchive());
+	async function unarchiveNote(id: UUID) {
+		await applyToNote(id, note => note.unarchive());
 	}
 
-	function unarchiveMultiple(ids: ReadonlyArray<UUID>) {
+	async function unarchiveMultiple(ids: ReadonlyArray<UUID>) {
 		const idSet = new Set<UUID>(ids);
-		applyToMany(idSet, note => note.unarchive());
+		await applyToMany(idSet, note => note.unarchive());
 	}
 
-	function trashNote(id: UUID) {
-		applyToNote(id, note => note.trash());
+	async function trashNote(id: UUID) {
+		await applyToNote(id, note => note.trash());
 	}
 
-	function trashMultiple(ids: ReadonlyArray<UUID>) {
+	async function trashMultiple(ids: ReadonlyArray<UUID>) {
 		const idSet = new Set<UUID>(ids);
-		applyToMany(idSet, note => note.trash());
+		await applyToMany(idSet, note => note.trash());
 	}
 
-	function restoreFromTrash(id: UUID) {
-		applyToNote(id, note => note.restore());
+	async function restoreFromTrash(id: UUID) {
+		await applyToNote(id, note => note.restore());
 	}
 
-	function restoreFromTrashMultiple(ids: ReadonlyArray<UUID>) {
+	async function restoreFromTrashMultiple(ids: ReadonlyArray<UUID>) {
 		const idSet = new Set<UUID>(ids);
-		applyToMany(idSet, note => note.restore());
+		await applyToMany(idSet, note => note.restore());
 	}
 
-	function permanentlyDelete(id: UUID) {
+	async function permanentlyDelete(id: UUID) {
 		const index = notes.value.findIndex(note => note.id === id);
 		if (index !== -1) {
 			notes.value.splice(index, 1);
-			removeNote(id);
+			await removeNote(id);
 		}
 	}
 
-	function permanentlyDeleteMultiple(ids: ReadonlyArray<UUID>) {
+	async function permanentlyDeleteMultiple(ids: ReadonlyArray<UUID>) {
 		const idSet = new Set<UUID>(ids);
 		notes.value = notes.value.filter(note => !idSet.has(note.id));
-		idSet.forEach(removeNote);
+		await removeNotes(Array.from(idSet));
 	}
 
-	function purgeExpiredTrash() {
+	async function purgeExpiredTrash() {
 		const cutoff = Date.now() - TRASH_RETENTION_MS;
 		const expiredIds = notes.value
 			.filter(note => {
@@ -143,12 +154,12 @@ export const useNotesStore = defineStore("notes", () => {
 			})
 			.map(expired => expired.id);
 		if (expiredIds.length > 0) {
-			permanentlyDeleteMultiple(expiredIds);
+			await permanentlyDeleteMultiple(expiredIds);
 		}
 		return expiredIds;
 	}
 
-	function replaceNote(updatedNote: NoteModel) {
+	async function replaceNote(updatedNote: NoteModel) {
 		const index = notes.value.findIndex(note => note.id === updatedNote.id);
 		switch (index) {
 			case -1:
@@ -158,16 +169,11 @@ export const useNotesStore = defineStore("notes", () => {
 				notes.value.splice(index, 1, updatedNote);
 				break;
 		}
-		persistNote(updatedNote);
+		await persistNote(updatedNote);
 	}
 
-	function replaceMultiple(updatedNotes: NoteModel[]) {
-		updatedNotes.forEach(replaceNote);
-	}
-
-	function replaceAllNotes(newNotes: NoteModel[]) {
-		notes.value = newNotes;
-		newNotes.forEach(persistNote);
+	async function replaceMultiple(updatedNotes: NoteModel[]) {
+		await Promise.all(updatedNotes.map(replaceNote));
 	}
 
 	return {
@@ -193,7 +199,6 @@ export const useNotesStore = defineStore("notes", () => {
 		permanentlyDeleteMultiple,
 		purgeExpiredTrash,
 		replaceNote,
-		replaceMultiple,
-		replaceAllNotes
+		replaceMultiple
 	};
 });

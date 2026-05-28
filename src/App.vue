@@ -104,8 +104,8 @@
 		{ immediate: true }
 	);
 
-	onMounted(() => {
-		const purgedIds = notesStore.purgeExpiredTrash();
+	onMounted(async () => {
+		const purgedIds = await notesStore.purgeExpiredTrash();
 		if (purgedIds.length > 0) {
 			requestSync(purgedIds);
 		}

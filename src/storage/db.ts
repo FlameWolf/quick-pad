@@ -34,9 +34,27 @@ export async function putNote(note: NoteJSON): Promise<void> {
 	await db.put(NOTES_STORE, note);
 }
 
+export async function putNotes(notes: NoteJSON[]): Promise<void> {
+	if (notes.length === 0) {
+		return;
+	}
+	const db = await getDB();
+	const tx = db.transaction(NOTES_STORE, "readwrite");
+	await Promise.all(notes.map(note => tx.store.put(note)).concat(tx.done as Promise<any>));
+}
+
 export async function deleteNote(id: string): Promise<void> {
 	const db = await getDB();
 	await db.delete(NOTES_STORE, id);
+}
+
+export async function deleteNotes(ids: string[]): Promise<void> {
+	if (ids.length === 0) {
+		return;
+	}
+	const db = await getDB();
+	const tx = db.transaction(NOTES_STORE, "readwrite");
+	await Promise.all(ids.map(id => tx.store.delete(id)).concat(tx.done));
 }
 
 export async function getKV<T>(key: string): Promise<T | undefined> {
