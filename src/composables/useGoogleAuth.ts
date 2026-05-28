@@ -1,15 +1,16 @@
-import { emptyString } from "@/library";
 import { ref, readonly, computed } from "vue";
+import { deleteKV, getKV, setKV } from "@/storage/db";
+import { emptyString } from "@/library";
 
 let tokenClient: any | null = null;
 let tokenExpiresAt = 0;
 let gsiReadyPromise: Promise<boolean> | null = null;
 const CLIENT_ID = import.meta.env.VITE_GOOG_OAUTH_CLIENT_ID ?? emptyString;
 const SCOPES = "https://www.googleapis.com/auth/drive.appdata openid email profile";
-const SESSION_KEY = "google_session_hint";
-const TOKEN_KEY = "google_access_token";
-const EXPIRY_KEY = "google_token_expires_at";
-const USER_KEY = "google_user_info";
+const SESSION_KEY = "google-session-hint";
+const TOKEN_KEY = "google-access-token";
+const EXPIRY_KEY = "google-token-expires-at";
+const USER_KEY = "google-user-info";
 const TOKEN_REFRESH_BUFFER_MS = 60_000;
 const GSI_WAIT_MS = 6000;
 const accessToken = ref<string | null>(null);
@@ -17,34 +18,32 @@ const user = ref<{ email: string; name: string } | null>(null);
 const isReady = ref(false);
 const isSignedIn = ref(false);
 
+let cachedToken: string | null = null;
+let cachedExpiry = 0;
+let cachedUser: { email: string; name: string } | null = null;
+
+export async function hydrateAuthState(): Promise<void> {
+	cachedToken = (await getKV<string>(TOKEN_KEY)) ?? null;
+	cachedExpiry = (await getKV<number>(EXPIRY_KEY)) ?? 0;
+	const stored = await getKV<{ email: unknown; name: unknown }>(USER_KEY);
+	if (stored && typeof stored.email === "string" && typeof stored.name === "string") {
+		cachedUser = { email: stored.email, name: stored.name };
+	} else {
+		cachedUser = null;
+	}
+}
+
 function persistAuthState(token: string, expiresAt: number) {
-	localStorage.setItem(TOKEN_KEY, token);
-	localStorage.setItem(EXPIRY_KEY, String(expiresAt));
+	void setKV(TOKEN_KEY, token);
+	void setKV(EXPIRY_KEY, expiresAt);
 }
 
 function persistUserInfo(info: { email: string; name: string } | null) {
 	if (info) {
-		localStorage.setItem(USER_KEY, JSON.stringify(info));
+		void setKV(USER_KEY, info);
 	} else {
-		localStorage.removeItem(USER_KEY);
+		void deleteKV(USER_KEY);
 	}
-}
-
-function loadStoredUser(): { email: string; name: string } | null {
-	const raw = localStorage.getItem(USER_KEY);
-	if (!raw) {
-		return null;
-	}
-	try {
-		const parsed = JSON.parse(raw);
-		if (parsed && typeof parsed.email === "string" && typeof parsed.name === "string") {
-			return {
-				email: parsed.email,
-				name: parsed.name
-			};
-		}
-	} catch {}
-	return null;
 }
 
 function waitForGoogleIdentity(): Promise<boolean> {
@@ -91,7 +90,7 @@ export function useGoogleAuth() {
 				}
 				accessToken.value = response.access_token;
 				tokenExpiresAt = Date.now() + response.expires_in * 1000;
-				localStorage.setItem(SESSION_KEY, "true");
+				void setKV(SESSION_KEY, true);
 				persistAuthState(response.access_token, tokenExpiresAt);
 				if (!user.value) {
 					await fetchUserInfo(response.access_token);
@@ -112,17 +111,13 @@ export function useGoogleAuth() {
 			isReady.value = true;
 			return;
 		}
-		const storedToken = localStorage.getItem(TOKEN_KEY);
-		const storedExpiryRaw = localStorage.getItem(EXPIRY_KEY);
-		const storedExpiry = storedExpiryRaw ? Number(storedExpiryRaw) : 0;
-		const storedUser = loadStoredUser();
-		if (storedToken && storedExpiry && Date.now() < storedExpiry - TOKEN_REFRESH_BUFFER_MS) {
-			accessToken.value = storedToken;
-			tokenExpiresAt = storedExpiry;
-			user.value = storedUser;
+		if (cachedToken && cachedExpiry && Date.now() < cachedExpiry - TOKEN_REFRESH_BUFFER_MS) {
+			accessToken.value = cachedToken;
+			tokenExpiresAt = cachedExpiry;
+			user.value = cachedUser;
 			isSignedIn.value = true;
-		} else if (storedUser) {
-			user.value = storedUser;
+		} else if (cachedUser) {
+			user.value = cachedUser;
 			isSignedIn.value = true;
 		}
 		isReady.value = true;
@@ -156,13 +151,16 @@ export function useGoogleAuth() {
 	function clearSession(keepUser = false) {
 		accessToken.value = null;
 		tokenExpiresAt = 0;
-		localStorage.removeItem(TOKEN_KEY);
-		localStorage.removeItem(EXPIRY_KEY);
+		cachedToken = null;
+		cachedExpiry = 0;
+		void deleteKV(TOKEN_KEY);
+		void deleteKV(EXPIRY_KEY);
 		if (!keepUser) {
 			user.value = null;
 			isSignedIn.value = false;
-			localStorage.removeItem(SESSION_KEY);
-			localStorage.removeItem(USER_KEY);
+			cachedUser = null;
+			void deleteKV(SESSION_KEY);
+			void deleteKV(USER_KEY);
 		}
 	}
 

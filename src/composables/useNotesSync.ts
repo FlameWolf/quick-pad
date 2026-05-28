@@ -3,71 +3,69 @@ import { useGoogleDrive } from "./useGoogleDrive";
 import { useGoogleAuth } from "./useGoogleAuth";
 import { useNotesStore } from "@/stores/notes";
 import { NoteModel } from "@/models/NoteModel";
+import { deleteKV, getKV, setKV } from "@/storage/db";
 import { debounce, emptyString } from "@/library";
 import type { NoteJSON } from "@/models/NoteModel";
 import type { UUID } from "crypto";
 
 const LEGACY_SYNC_FILENAME = "quick-pad-notes.json";
-const LAST_SYNCED_TO_LOCAL_KEY = "quick-pad-last-synced-to-local";
-const LAST_SYNCED_TO_CLOUD_KEY = "quick-pad-last-synced-to-cloud";
-const AUTO_SYNC_KEY = "quick-pad-auto-sync";
-const PENDING_PURGES_KEY = "quick-pad-pending-purges";
+const LAST_SYNCED_TO_LOCAL_KEY = "last-synced-to-local";
+const LAST_SYNCED_TO_CLOUD_KEY = "last-synced-to-cloud";
+const AUTO_SYNC_KEY = "auto-sync";
+const PENDING_PURGES_KEY = "pending-purges";
 const DEBOUNCE_MS = 3000;
 const isSyncing = ref(false);
-const lastSyncedToLocalAt = ref<Date | null>(loadLastSyncedToLocal());
-const lastSyncedToCloudAt = ref<Date | null>(loadLastSyncedToCloud());
-const autoSyncEnabled = ref<boolean>(loadAutoSync());
+const lastSyncedToLocalAt = ref<Date | null>(null);
+const lastSyncedToCloudAt = ref<Date | null>(null);
+const autoSyncEnabled = ref<boolean>(true);
 const lastSyncMessage = ref<{
 	text: string;
 	type: "success" | "error";
 	timeStamp: number;
 } | null>(null);
 const syncError = ref<string | null>(null);
-const pendingPurges = loadPendingPurges();
+const pendingPurges = new Set<UUID>();
 
-function loadLastSyncedToLocal(): Date | null {
-	const raw = localStorage.getItem(LAST_SYNCED_TO_LOCAL_KEY);
-	return raw ? new Date(raw) : null;
-}
+export async function hydrateSyncMetadata(): Promise<void> {
+	const storedLocal = await getKV<string>(LAST_SYNCED_TO_LOCAL_KEY);
+	lastSyncedToLocalAt.value = storedLocal ? new Date(storedLocal) : null;
 
-function loadLastSyncedToCloud(): Date | null {
-	const raw = localStorage.getItem(LAST_SYNCED_TO_CLOUD_KEY);
-	return raw ? new Date(raw) : null;
-}
+	const storedCloud = await getKV<string>(LAST_SYNCED_TO_CLOUD_KEY);
+	lastSyncedToCloudAt.value = storedCloud ? new Date(storedCloud) : null;
 
-function loadAutoSync(): boolean {
-	const raw = localStorage.getItem(AUTO_SYNC_KEY);
-	return raw === null ? true : raw === "true";
+	const storedAutoSync = await getKV<boolean>(AUTO_SYNC_KEY);
+	autoSyncEnabled.value = storedAutoSync === undefined ? true : storedAutoSync;
+
+	try {
+		const storedPurges = await getKV<UUID[]>(PENDING_PURGES_KEY);
+		if (Array.isArray(storedPurges)) {
+			for (const id of storedPurges) {
+				pendingPurges.add(id);
+			}
+		}
+	} catch {
+		void 0;
+	}
 }
 
 function persistAutoSync(val: boolean) {
-	localStorage.setItem(AUTO_SYNC_KEY, String(val));
+	void setKV(AUTO_SYNC_KEY, val);
 }
 
 function persistLastSyncedToLocal(date: Date) {
-	localStorage.setItem(LAST_SYNCED_TO_LOCAL_KEY, date.toISOString());
+	void setKV(LAST_SYNCED_TO_LOCAL_KEY, date.toISOString());
 }
 
 function persistLastSyncedToCloud(date: Date) {
-	localStorage.setItem(LAST_SYNCED_TO_CLOUD_KEY, date.toISOString());
-}
-
-function loadPendingPurges(): Set<UUID> {
-	try {
-		const raw = localStorage.getItem(PENDING_PURGES_KEY);
-		const ids: UUID[] = raw ? JSON.parse(raw) : [];
-		return new Set(ids);
-	} catch {
-		return new Set();
-	}
+	void setKV(LAST_SYNCED_TO_CLOUD_KEY, date.toISOString());
 }
 
 function persistPendingPurges(set: Set<UUID>) {
 	if (set.size === 0) {
-		localStorage.removeItem(PENDING_PURGES_KEY);
+		void deleteKV(PENDING_PURGES_KEY);
 		return;
 	}
-	localStorage.setItem(PENDING_PURGES_KEY, JSON.stringify(Array.from(set)));
+	void setKV(PENDING_PURGES_KEY, Array.from(set));
 }
 
 function noteEffectiveTime(note: NoteModel): number {

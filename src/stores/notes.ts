@@ -1,55 +1,34 @@
 import { ref, computed, readonly } from "vue";
 import { defineStore } from "pinia";
 import { NoteModel } from "@/models/NoteModel";
+import { deleteNote, getAllNotes, putNote } from "@/storage/db";
 import { contains, emptyString } from "@/library";
 import type { UUID } from "crypto";
 
-const LEGACY_STORAGE_KEY = "quick-pad-notes";
 const STORAGE_KEY = "qp-note:";
 const TRASH_RETENTION_DAYS = 30;
 const TRASH_RETENTION_MS = TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000;
 const isLoading = ref(true);
 const notes = ref<NoteModel[]>([]);
-const noteKey = (id: UUID) => `${STORAGE_KEY}${id}`;
 
-async function migrateFromLegacy(): Promise<NoteModel[]> {
-	const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
-	if (!raw) {
-		return [];
-	}
+export async function hydrateNotes(): Promise<void> {
 	try {
-		return JSON.parse(raw).map(NoteModel.fromJSON);
+		const raw = await getAllNotes();
+		notes.value = raw.map(NoteModel.fromJSON);
 	} catch {
-		return [];
+		notes.value = [];
 	} finally {
-		localStorage.removeItem(LEGACY_STORAGE_KEY);
+		isLoading.value = false;
 	}
 }
 
 function persistNote(note: NoteModel) {
-	localStorage.setItem(noteKey(note.id), JSON.stringify(note.toJSON()));
+	void putNote(note.toJSON());
 }
 
 function removeNote(id: UUID) {
-	localStorage.removeItem(noteKey(id));
+	void deleteNote(id);
 }
-
-setTimeout(async () => {
-	const storedNotes: NoteModel[] = await migrateFromLegacy();
-	for (let index = 0; index < localStorage.length; index++) {
-		const key = localStorage.key(index);
-		if (!key?.startsWith(STORAGE_KEY)) {
-			continue;
-		}
-		try {
-			storedNotes.push(NoteModel.fromJSON(JSON.parse(localStorage.getItem(key) as string)));
-		} catch {
-			void 0;
-		}
-	}
-	notes.value = storedNotes;
-	isLoading.value = false;
-});
 
 export const useNotesStore = defineStore("notes", () => {
 	const searchText = ref<string>(emptyString);
