@@ -55,10 +55,10 @@
 		background-color: var(--bs-body-bg);
 		color: var(--bs-body-color);
 		border-radius: 0.75rem;
-		box-shadow: 0 0.75rem 2.5rem rgba(0, 0, 0, 0.25);
 		padding: 1.25rem;
 		width: 100%;
 		max-width: 28rem;
+		filter: drop-shadow(0 0 0.75rem rgb(127, 127, 127));
 	}
 	.confirm-title {
 		margin: 0 0 0.75rem 0;
