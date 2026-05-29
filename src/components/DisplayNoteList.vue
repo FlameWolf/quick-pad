@@ -199,9 +199,7 @@
 		exitSelectionMode();
 	});
 
-	watch(view, () => {
-		exitSelectionMode();
-	});
+	watch(view, exitSelectionMode);
 </script>
 
 <template>

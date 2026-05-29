@@ -265,7 +265,7 @@
 		return await confirmDiscardChanges();
 	});
 
-	watch(() => editContent.value, adjustTextAreaHeight);
+	watch(editContent, adjustTextAreaHeight);
 </script>
 
 <template>

@@ -12,13 +12,6 @@ const SORT_DIRECTIONS: ReadonlyArray<SortDirection> = ["asc", "desc"];
 const sortBy = ref<SortField>("modifiedAt");
 const sortDirection = ref<SortDirection>("desc");
 
-watch(sortBy, async field => {
-	await setKV(SORT_BY_KEY, field);
-});
-watch(sortDirection, async direction => {
-	await setKV(SORT_DIRECTION_KEY, direction);
-});
-
 export async function hydrateSortPrefs(): Promise<void> {
 	const storedBy = await getKV<string>(SORT_BY_KEY);
 	if (SORT_FIELDS.includes(storedBy as SortField)) {
@@ -28,6 +21,12 @@ export async function hydrateSortPrefs(): Promise<void> {
 	if (SORT_DIRECTIONS.includes(storedDir as SortDirection)) {
 		sortDirection.value = storedDir as SortDirection;
 	}
+	watch(sortBy, async field => {
+		await setKV(SORT_BY_KEY, field);
+	});
+	watch(sortDirection, async direction => {
+		await setKV(SORT_DIRECTION_KEY, direction);
+	});
 }
 
 function compareNotes(a: NoteModel, b: NoteModel, field: SortField): number {

@@ -1,4 +1,4 @@
-import { ref, readonly, computed } from "vue";
+import { ref, readonly, computed, watch } from "vue";
 import { useGoogleDrive } from "./useGoogleDrive";
 import { useGoogleAuth } from "./useGoogleAuth";
 import { useNotesStore } from "@/stores/notes";
@@ -32,18 +32,15 @@ export async function hydrateSyncMetadata(): Promise<void> {
 	lastSyncedToLocalAt.value = storedLocal ? new Date(storedLocal) : null;
 	lastSyncedToCloudAt.value = storedCloud ? new Date(storedCloud) : null;
 	autoSyncEnabled.value = storedAutoSync === undefined ? true : storedAutoSync;
-}
-
-async function persistAutoSync(val: boolean) {
-	await setKV(AUTO_SYNC_KEY, val);
-}
-
-async function persistLastSyncedToLocal(date: Date) {
-	await setKV(LAST_SYNCED_TO_LOCAL_KEY, date.toISOString());
-}
-
-async function persistLastSyncedToCloud(date: Date) {
-	await setKV(LAST_SYNCED_TO_CLOUD_KEY, date.toISOString());
+	watch(autoSyncEnabled, async flag => {
+		await setKV(AUTO_SYNC_KEY, flag);
+	});
+	watch(lastSyncedToLocalAt, async date => {
+		await setKV(LAST_SYNCED_TO_LOCAL_KEY, date?.toISOString());
+	});
+	watch(lastSyncedToCloudAt, async date => {
+		await setKV(LAST_SYNCED_TO_CLOUD_KEY, date?.toISOString());
+	});
 }
 
 function noteEffectiveTime(note: NoteModel): number {
@@ -155,7 +152,6 @@ export function useNotesSync() {
 				await deleteFromLegacy();
 			}
 			lastSyncedToCloudAt.value = syncStartedAt;
-			await persistLastSyncedToCloud(syncStartedAt);
 			lastSyncMessage.value = {
 				text: `Notes saved to Drive${conflictCount > 0 ? ` with ${conflictCount} conflict${conflictCount > 1 ? "s" : emptyString} resolved` : emptyString}`,
 				type: "success",
@@ -198,7 +194,6 @@ export function useNotesSync() {
 			}
 			await purgeRemoteFiles(await store.purgeExpiredTrash());
 			lastSyncedToLocalAt.value = syncStartedAt;
-			await persistLastSyncedToLocal(syncStartedAt);
 			lastSyncMessage.value = {
 				text: remoteNotes.length === 0 ? "No notes found on Drive" : "Notes loaded from Drive",
 				type: "success",
@@ -238,7 +233,6 @@ export function useNotesSync() {
 
 	async function setAutoSync(enabled: boolean) {
 		autoSyncEnabled.value = enabled;
-		await persistAutoSync(enabled);
 		if (!enabled) {
 			requestSync.cancel();
 		}

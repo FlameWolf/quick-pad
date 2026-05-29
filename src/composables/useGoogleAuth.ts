@@ -1,4 +1,4 @@
-import { ref, readonly, computed, toRaw } from "vue";
+import { ref, readonly, computed, toRaw, watch } from "vue";
 import { deleteKV, getKV, setKV } from "@/storage/db";
 import { emptyString } from "@/library";
 
@@ -7,8 +7,10 @@ type UserInfo = {
 	name: string;
 };
 
+let cachedToken: string | null = null;
+let cachedExpiry: number = 0;
+let cachedUser: UserInfo | null = null;
 let tokenClient: any | null = null;
-let tokenExpiresAt = 0;
 let gsiReadyPromise: Promise<boolean> | null = null;
 const CLIENT_ID = import.meta.env.VITE_GOOG_OAUTH_CLIENT_ID ?? emptyString;
 const SCOPES = "https://www.googleapis.com/auth/drive.appdata openid email profile";
@@ -19,13 +21,31 @@ const USER_KEY = "google-user-info";
 const TOKEN_REFRESH_BUFFER_MS = 60_000;
 const GSI_WAIT_MS = 6000;
 const accessToken = ref<string | null>(null);
+const tokenExpiresAt = ref(0);
 const user = ref<UserInfo | null>(null);
 const isReady = ref(false);
 const isSignedIn = ref(false);
 
-let cachedToken: string | null = null;
-let cachedExpiry = 0;
-let cachedUser: UserInfo | null = null;
+watch([accessToken, tokenExpiresAt], async ([token, expiresAt]) => {
+	if (!token || !expiresAt) {
+		await deleteKV(TOKEN_KEY);
+		await deleteKV(EXPIRY_KEY);
+		return;
+	}
+	if (token !== cachedToken || expiresAt !== cachedExpiry) {
+		await setKV(TOKEN_KEY, token);
+		await setKV(EXPIRY_KEY, expiresAt);
+	}
+});
+watch(user, async info => {
+	if (!info) {
+		await deleteKV(USER_KEY);
+		return;
+	}
+	if (info && (info.email !== cachedUser?.email || info.name !== cachedUser?.name)) {
+		await setKV(USER_KEY, toRaw(info));
+	}
+});
 
 export async function hydrateAuthState(): Promise<void> {
 	cachedToken = (await getKV<string>(TOKEN_KEY)) ?? null;
@@ -38,19 +58,6 @@ export async function hydrateAuthState(): Promise<void> {
 		};
 	} else {
 		cachedUser = null;
-	}
-}
-
-async function persistAuthState(token: string, expiresAt: number) {
-	await setKV(TOKEN_KEY, token);
-	await setKV(EXPIRY_KEY, expiresAt);
-}
-
-async function persistUserInfo(info: UserInfo | null) {
-	if (info) {
-		await setKV(USER_KEY, toRaw(info));
-	} else {
-		await deleteKV(USER_KEY);
 	}
 }
 
@@ -96,13 +103,11 @@ export function useGoogleAuth() {
 					isReady.value = true;
 					return;
 				}
-				tokenExpiresAt = Date.now() + response.expires_in * 1000;
 				accessToken.value = response.access_token;
+				tokenExpiresAt.value = Date.now() + response.expires_in * 1000;
 				await setKV(SESSION_KEY, true);
-				await persistAuthState(response.access_token, tokenExpiresAt);
 				if (!user.value) {
 					await fetchUserInfo(response.access_token);
-					await persistUserInfo(user.value);
 				}
 				isSignedIn.value = true;
 				isReady.value = true;
@@ -120,8 +125,8 @@ export function useGoogleAuth() {
 			return;
 		}
 		if (cachedToken && cachedExpiry && Date.now() < cachedExpiry - TOKEN_REFRESH_BUFFER_MS) {
-			tokenExpiresAt = cachedExpiry;
 			accessToken.value = cachedToken;
+			tokenExpiresAt.value = cachedExpiry;
 			user.value = cachedUser;
 			isSignedIn.value = true;
 		} else if (cachedUser) {
@@ -158,17 +163,14 @@ export function useGoogleAuth() {
 
 	async function clearSession(keepUser = false) {
 		accessToken.value = null;
-		tokenExpiresAt = 0;
+		tokenExpiresAt.value = 0;
 		cachedToken = null;
 		cachedExpiry = 0;
-		await deleteKV(TOKEN_KEY);
-		await deleteKV(EXPIRY_KEY);
 		if (!keepUser) {
 			user.value = null;
 			isSignedIn.value = false;
 			cachedUser = null;
 			await deleteKV(SESSION_KEY);
-			await deleteKV(USER_KEY);
 		}
 	}
 
@@ -191,7 +193,7 @@ export function useGoogleAuth() {
 	}
 
 	async function getAccessToken(): Promise<string> {
-		if (accessToken.value && Date.now() < tokenExpiresAt - TOKEN_REFRESH_BUFFER_MS) {
+		if (accessToken.value && Date.now() < tokenExpiresAt.value - TOKEN_REFRESH_BUFFER_MS) {
 			return accessToken.value;
 		}
 		const loaded = await waitForGoogleIdentity();
