@@ -40,6 +40,6 @@
 		padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0));
 		background-color: var(--bs-body-bg);
 		border-top: 1pt solid var(--bs-border-color);
-		filter: drop-shadow(0 0 0.5rem rgb(127, 127, 127));
+		filter: drop-shadow(0 0 0.5rem var(--bs-body-color));
 	}
 </style>

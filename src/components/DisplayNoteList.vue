@@ -313,7 +313,7 @@
 		overflow: hidden;
 	}
 	.note-card:hover {
-		filter: drop-shadow(0 0 0.75rem rgb(127, 127, 127));
+		filter: drop-shadow(0 0 0.75rem var(--bs-body-color));
 	}
 	.new-note-card {
 		border-style: dashed;

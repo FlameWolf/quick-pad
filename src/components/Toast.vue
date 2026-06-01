@@ -66,7 +66,7 @@
 		gap: 0.5rem;
 		padding: 0.75rem 1rem;
 		font-size: 0.875rem;
-		filter: drop-shadow(0 0 0.75rem rgb(127, 127, 127));
+		filter: drop-shadow(0 0 0.75rem var(--bs-body-color));
 	}
 	.toast-notification.success {
 		background-color: var(--bs-success-bg-subtle, #d1e7dd);

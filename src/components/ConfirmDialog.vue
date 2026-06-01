@@ -58,7 +58,7 @@
 		padding: 1.25rem;
 		width: 100%;
 		max-width: 28rem;
-		filter: drop-shadow(0 0 0.75rem rgb(127, 127, 127));
+		filter: drop-shadow(0 0 0.75rem var(--bs-body-color));
 	}
 	.confirm-title {
 		margin: 0 0 0.75rem 0;
