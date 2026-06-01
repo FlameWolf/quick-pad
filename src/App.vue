@@ -6,6 +6,7 @@
 	import { useTheme } from "@/composables/useTheme";
 	import { useGoogleAuth } from "@/composables/useGoogleAuth";
 	import { useNotesSync } from "@/composables/useNotesSync";
+	import { useConfirmDialog } from "@/composables/useConfirmDialog";
 	import { useNotesStore } from "@/stores/notes";
 	import { isNavigating, listViewRoutes } from "@/router";
 	import { debounce, emptyString } from "@/library";
@@ -16,6 +17,7 @@
 	const { isDark, applyTheme } = useTheme();
 	const { isSignedIn, isReady, isConfigured, user, tryRestoreSession, signIn, signOut } = useGoogleAuth();
 	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, lastSyncMessage, doPullAndPush, setAutoSync, dismissMessage, requestSync } = useNotesSync();
+	const { confirm } = useConfirmDialog();
 	const notesStore = useNotesStore();
 	const searchInput = useTemplateRef("search-input");
 	const showSyncMenu = ref(false);
@@ -47,7 +49,20 @@
 
 	async function handleSync(force = false) {
 		closeSyncMenu();
-		await doPullAndPush({ force });
+		if (!force) {
+			await doPullAndPush();
+			return;
+		}
+		const ok = await confirm({
+			title: "Force Sync",
+			message: "This will pull and push all notes from cloud and local. It might take more time and use more data than a normal sync. Are you sure you want to continue?",
+			confirmText: "Yes",
+			cancelText: "Cancel",
+			variant: "warning"
+		});
+		if (ok) {
+			await doPullAndPush({ force: true });
+		}
 	}
 
 	async function handleSignOut() {
