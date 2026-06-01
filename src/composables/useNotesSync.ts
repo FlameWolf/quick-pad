@@ -238,7 +238,6 @@ export function useNotesSync() {
 		syncError: readonly(syncError),
 		autoSyncEnabled: readonly(autoSyncEnabled),
 		lastSyncMessage: readonly(lastSyncMessage),
-		saveToCloud,
 		doPullAndPush,
 		requestSync,
 		setAutoSync,
