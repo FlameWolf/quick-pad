@@ -48,7 +48,10 @@ router.afterEach((to, _) => {
 	const toPath = to.path;
 	const scrollTop = (listViewRoutes.includes(toPath) && scrollPositions.get(toPath)) || 0;
 	setTimeout(() => {
-		window.scrollTo(0, scrollTop);
+		window.scrollTo({
+			top: scrollTop,
+			behavior: "instant"
+		});
 	});
 	isNavigating.value = false;
 });
