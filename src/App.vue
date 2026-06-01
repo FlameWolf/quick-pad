@@ -15,7 +15,7 @@
 	let readyTimeout: ReturnType<typeof setTimeout> | null = null;
 	const { isDark, applyTheme } = useTheme();
 	const { isSignedIn, isReady, isConfigured, user, tryRestoreSession, signIn, signOut } = useGoogleAuth();
-	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, lastSyncMessage, saveToCloud, loadFromCloud, setAutoSync, dismissMessage, requestSync } = useNotesSync();
+	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, lastSyncMessage, doPullAndPush, setAutoSync, dismissMessage, requestSync } = useNotesSync();
 	const notesStore = useNotesStore();
 	const searchInput = useTemplateRef("search-input");
 	const showSyncMenu = ref(false);
@@ -45,14 +45,9 @@
 		showSyncMenu.value = false;
 	}
 
-	async function handleSave() {
+	async function handleSync(force = false) {
 		closeSyncMenu();
-		await saveToCloud();
-	}
-
-	async function handleLoad() {
-		closeSyncMenu();
-		await loadFromCloud();
+		await doPullAndPush({ force });
 	}
 
 	async function handleSignOut() {
@@ -97,8 +92,7 @@
 		isSignedIn,
 		async signedIn => {
 			if (signedIn && autoSyncEnabled.value) {
-				await loadFromCloud();
-				await saveToCloud();
+				await doPullAndPush();
 			}
 		},
 		{ immediate: true }
@@ -168,13 +162,13 @@
 									<span>Auto-sync</span>
 								</label>
 								<div class="dropdown-divider"></div>
-								<button class="dropdown-item sync-dropdown-item" @click="handleSave" :disabled="isSyncing">
+								<button class="dropdown-item sync-dropdown-item" @click="handleSync(false)" :disabled="isSyncing">
 									<i class="bi bi-cloud-upload me-2" aria-hidden="true"></i>
-									<span>Save to Drive</span>
+									<span>Sync</span>
 								</button>
-								<button class="dropdown-item sync-dropdown-item" @click="handleLoad" :disabled="isSyncing">
+								<button class="dropdown-item sync-dropdown-item" @click="handleSync(true)" :disabled="isSyncing">
 									<i class="bi bi-cloud-download me-2" aria-hidden="true"></i>
-									<span>Load from Drive</span>
+									<span>Force Sync</span>
 								</button>
 								<div v-if="lastSyncedLabel" class="dropdown-header text-muted small px-3 py-1">Last synced: {{ lastSyncedLabel }}</div>
 								<div class="dropdown-divider"></div>
