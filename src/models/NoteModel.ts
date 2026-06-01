@@ -32,8 +32,8 @@ export class NoteModel {
 	wordCount!: number;
 	characterCount!: number;
 
-	constructor(title: string, content: string) {
-		this.id = crypto.randomUUID();
+	constructor(title: string, content: string, id?: UUID) {
+		this.id = id ?? crypto.randomUUID();
 		this.title = title;
 		this.content = content;
 		this.createdAt = new Date();
@@ -104,8 +104,7 @@ export class NoteModel {
 	}
 
 	static fromJSON(data: NoteJSON): NoteModel {
-		const note = new NoteModel(data.title, data.content);
-		note.id = data.id as UUID;
+		const note = new NoteModel(data.title, data.content, data.id as UUID);
 		note.createdAt = new Date(data.createdAt);
 		note.modifiedAt = data.modifiedAt ? new Date(data.modifiedAt) : undefined;
 		note.archivedAt = data.archivedAt ? new Date(data.archivedAt) : undefined;

@@ -1,6 +1,6 @@
 import { ref, readonly, computed, toRaw, watch } from "vue";
 import { deleteKV, getKV, setKV } from "@/storage/db";
-import { CLIENT_ID, emptyString, EXPIRY_KEY, GSI_WAIT_MS, SCOPES, SESSION_KEY, TOKEN_KEY, TOKEN_REFRESH_BUFFER_MS, USER_KEY } from "@/library";
+import { CLIENT_ID, emptyString, EXPIRY_KEY, GSI_WAIT_MS, LAST_SYNCED_TO_CLOUD_KEY, LAST_SYNCED_TO_LOCAL_KEY, SCOPES, SESSION_KEY, TOKEN_KEY, TOKEN_REFRESH_BUFFER_MS, USER_KEY } from "@/library";
 
 type UserInfo = {
 	email: string;
@@ -163,6 +163,8 @@ export function useGoogleAuth() {
 			isSignedIn.value = false;
 			cachedUser = null;
 			await deleteKV(SESSION_KEY);
+			await deleteKV(LAST_SYNCED_TO_CLOUD_KEY);
+			await deleteKV(LAST_SYNCED_TO_LOCAL_KEY);
 		}
 	}
 
