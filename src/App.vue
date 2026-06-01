@@ -6,6 +6,7 @@
 	import { useTheme } from "@/composables/useTheme";
 	import { useGoogleAuth } from "@/composables/useGoogleAuth";
 	import { useNotesSync } from "@/composables/useNotesSync";
+	import { useConfirmDialog } from "@/composables/useConfirmDialog";
 	import { useNotesStore } from "@/stores/notes";
 	import { isNavigating, listViewRoutes } from "@/router";
 	import { debounce, emptyString } from "@/library";
@@ -15,7 +16,8 @@
 	let readyTimeout: ReturnType<typeof setTimeout> | null = null;
 	const { isDark, applyTheme } = useTheme();
 	const { isSignedIn, isReady, isConfigured, user, tryRestoreSession, signIn, signOut } = useGoogleAuth();
-	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, lastSyncMessage, saveToCloud, loadFromCloud, setAutoSync, dismissMessage, requestSync } = useNotesSync();
+	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, lastSyncMessage, doPullAndPush, setAutoSync, dismissMessage, requestSync } = useNotesSync();
+	const { confirm } = useConfirmDialog();
 	const notesStore = useNotesStore();
 	const searchInput = useTemplateRef("search-input");
 	const showSyncMenu = ref(false);
@@ -45,14 +47,22 @@
 		showSyncMenu.value = false;
 	}
 
-	async function handleSave() {
+	async function handleSync(force = false) {
 		closeSyncMenu();
-		await saveToCloud();
-	}
-
-	async function handleLoad() {
-		closeSyncMenu();
-		await loadFromCloud();
+		if (!force) {
+			await doPullAndPush();
+			return;
+		}
+		const ok = await confirm({
+			title: "Force Sync",
+			message: "This will pull and push all notes from cloud and local. It might take more time and use more data than a normal sync. Are you sure you want to continue?",
+			confirmText: "Yes",
+			cancelText: "Cancel",
+			variant: "warning"
+		});
+		if (ok) {
+			await doPullAndPush({ force: true });
+		}
 	}
 
 	async function handleSignOut() {
@@ -97,8 +107,7 @@
 		isSignedIn,
 		async signedIn => {
 			if (signedIn && autoSyncEnabled.value) {
-				await loadFromCloud();
-				await saveToCloud();
+				await doPullAndPush();
 			}
 		},
 		{ immediate: true }
@@ -168,13 +177,13 @@
 									<span>Auto-sync</span>
 								</label>
 								<div class="dropdown-divider"></div>
-								<button class="dropdown-item sync-dropdown-item" @click="handleSave" :disabled="isSyncing">
-									<i class="bi bi-cloud-upload me-2" aria-hidden="true"></i>
-									<span>Save to Drive</span>
+								<button class="dropdown-item sync-dropdown-item" @click="handleSync(false)" :disabled="isSyncing">
+									<i class="bi bi-arrow-repeat me-2" aria-hidden="true"></i>
+									<span>Sync</span>
 								</button>
-								<button class="dropdown-item sync-dropdown-item" @click="handleLoad" :disabled="isSyncing">
-									<i class="bi bi-cloud-download me-2" aria-hidden="true"></i>
-									<span>Load from Drive</span>
+								<button class="dropdown-item sync-dropdown-item" @click="handleSync(true)" :disabled="isSyncing">
+									<i class="bi bi-lightning-charge me-2" aria-hidden="true"></i>
+									<span>Force Sync</span>
 								</button>
 								<div v-if="lastSyncedLabel" class="dropdown-header text-muted small px-3 py-1">Last synced: {{ lastSyncedLabel }}</div>
 								<div class="dropdown-divider"></div>
