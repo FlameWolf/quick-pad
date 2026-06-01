@@ -137,9 +137,9 @@ export function useNotesSync() {
 			const pullResult = await runPull(force);
 			const pushResult = await runPush(purged, force);
 			const empty = pullResult.remoteCount === 0 && store.notes.length === 0;
-			const conflicts = Math.max(pushResult.conflicts, pullResult.downloaded);
+			const changes = pushResult.conflicts + pullResult.downloaded;
 			lastSyncMessage.value = {
-				text: empty ? "Nothing to sync" : `Notes synced with Drive${conflicts > 0 ? ` with ${conflicts} conflict${conflicts > 1 ? "s" : emptyString} resolved` : emptyString}`,
+				text: empty ? "Nothing to sync" : `Notes synced${changes > 0 ? ` with ${changes} changes${changes > 1 ? "s" : emptyString} fetched from remote` : emptyString}`,
 				type: "success",
 				timeStamp: Date.now()
 			};

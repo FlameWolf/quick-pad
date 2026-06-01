@@ -163,11 +163,11 @@
 								</label>
 								<div class="dropdown-divider"></div>
 								<button class="dropdown-item sync-dropdown-item" @click="handleSync(false)" :disabled="isSyncing">
-									<i class="bi bi-cloud-upload me-2" aria-hidden="true"></i>
+									<i class="bi bi-arrow-repeat me-2"></i>
 									<span>Sync</span>
 								</button>
 								<button class="dropdown-item sync-dropdown-item" @click="handleSync(true)" :disabled="isSyncing">
-									<i class="bi bi-cloud-download me-2" aria-hidden="true"></i>
+									<i class="bi bi-lightning-charge me-2"></i>
 									<span>Force Sync</span>
 								</button>
 								<div v-if="lastSyncedLabel" class="dropdown-header text-muted small px-3 py-1">Last synced: {{ lastSyncedLabel }}</div>
