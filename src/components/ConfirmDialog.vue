@@ -48,7 +48,7 @@
 		align-items: center;
 		justify-content: center;
 		padding: 1rem;
-		background-color: rgba(0, 0, 0, 0.5);
+		background-color: color-mix(in srgb, var(--bs-body-color) 50%, transparent);
 		z-index: 1080;
 	}
 	.confirm-dialog {
