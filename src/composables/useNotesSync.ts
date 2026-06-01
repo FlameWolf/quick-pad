@@ -4,15 +4,10 @@ import { useGoogleAuth } from "./useGoogleAuth";
 import { useNotesStore } from "@/stores/notes";
 import { NoteModel } from "@/models/NoteModel";
 import { getKV, setKV } from "@/storage/db";
-import { debounce, emptyString } from "@/library";
+import { AUTO_SYNC_KEY, debounce, DEBOUNCE_MS, emptyString, LAST_SYNCED_TO_CLOUD_KEY, LAST_SYNCED_TO_LOCAL_KEY, LEGACY_SYNC_FILENAME } from "@/library";
 import type { NoteJSON } from "@/models/NoteModel";
 import type { UUID } from "crypto";
 
-const LEGACY_SYNC_FILENAME = "quick-pad-notes.json";
-const LAST_SYNCED_TO_LOCAL_KEY = "last-synced-to-local";
-const LAST_SYNCED_TO_CLOUD_KEY = "last-synced-to-cloud";
-const AUTO_SYNC_KEY = "auto-sync";
-const DEBOUNCE_MS = 3000;
 const isSyncing = ref(false);
 const lastSyncedToLocalAt = ref<Date | null>(null);
 const lastSyncedToCloudAt = ref<Date | null>(null);

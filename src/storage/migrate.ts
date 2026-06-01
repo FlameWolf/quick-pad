@@ -1,11 +1,9 @@
 import { getKV, putNote, setKV } from "./db";
 import type { NoteJSON } from "@/models/NoteModel";
+import { MIGRATION_FLAG, LEGACY_NOTES_KEY, NOTE_PREFIX } from "@/library";
 
 type Coercion = "string" | "number" | "boolean" | "json";
 
-const MIGRATION_FLAG = "__migrated-to-idb";
-const LEGACY_NOTES_KEY = "quick-pad-notes";
-const NOTE_PREFIX = "qp-note:";
 const KV_MAPPINGS: ReadonlyArray<readonly [string, string, Coercion]> = [
 	["quick-pad-sort-by", "sort-by", "string"],
 	["quick-pad-sort-direction", "sort-direction", "string"],

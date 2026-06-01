@@ -1,14 +1,11 @@
 import { ref, readonly, watch } from "vue";
 import { getKV, setKV } from "@/storage/db";
+import { SORT_BY_KEY, SORT_DIRECTION_KEY, SORT_DIRECTIONS, SORT_FIELDS } from "@/library";
 import type { NoteModel } from "@/models/NoteModel";
 
-export type SortField = "createdAt" | "modifiedAt" | "title" | "sentenceCount" | "wordCount" | "characterCount";
-export type SortDirection = "asc" | "desc";
+export type SortField = (typeof SORT_FIELDS)[number];
+export type SortDirection = (typeof SORT_DIRECTIONS)[number];
 
-const SORT_BY_KEY = "sort-by";
-const SORT_DIRECTION_KEY = "sort-direction";
-const SORT_FIELDS: ReadonlyArray<SortField> = ["createdAt", "modifiedAt", "title", "characterCount"];
-const SORT_DIRECTIONS: ReadonlyArray<SortDirection> = ["asc", "desc"];
 const sortBy = ref<SortField>("modifiedAt");
 const sortDirection = ref<SortDirection>("desc");
 

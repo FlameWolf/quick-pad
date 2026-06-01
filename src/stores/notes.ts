@@ -2,12 +2,9 @@ import { ref, computed, readonly } from "vue";
 import { defineStore } from "pinia";
 import { NoteModel } from "@/models/NoteModel";
 import { deleteNote, deleteNotes, getAllNotes, putNote, putNotes } from "@/storage/db";
-import { contains, emptyString } from "@/library";
+import { contains, emptyString, STORAGE_KEY, TRASH_RETENTION_MS } from "@/library";
 import type { UUID } from "crypto";
 
-const STORAGE_KEY = "qp-note:";
-const TRASH_RETENTION_DAYS = 30;
-const TRASH_RETENTION_MS = TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000;
 const isLoading = ref(true);
 const notes = ref<NoteModel[]>([]);
 

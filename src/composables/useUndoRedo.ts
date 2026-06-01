@@ -1,6 +1,5 @@
 import { ref, computed, type Ref, type ComputedRef } from "vue";
-
-const MAX_HISTORY = 100;
+import { MAX_HISTORY } from "@/library";
 
 export interface UndoRedo<T> {
 	current: Ref<T>;
