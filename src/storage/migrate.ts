@@ -1,9 +1,9 @@
-import { getKV, putNoteFull, setKV } from "./db";
+import { getKV, putNotesFull, setKV } from "./db";
 import { NoteModel, type NoteJSON } from "@/models/NoteModel";
 import { MIGRATION_FLAG, LEGACY_NOTES_KEY, NOTE_PREFIX } from "@/library";
 
-async function persistLegacyNote(note: NoteJSON): Promise<void> {
-	await putNoteFull(NoteModel.fromJSON(note).toJSON());
+async function persistLegacyNotes(notes: NoteJSON[]): Promise<void> {
+	await putNotesFull(notes.map(NoteModel.fromJSON).map(n => n.toJSON()));
 }
 
 type Coercion = "string" | "number" | "boolean" | "json";
@@ -44,11 +44,7 @@ export async function runMigration(): Promise<void> {
 		try {
 			const arr = JSON.parse(legacyRaw) as NoteJSON[];
 			if (Array.isArray(arr)) {
-				for (const note of arr) {
-					if (note && typeof note.id === "string") {
-						await persistLegacyNote(note);
-					}
-				}
+				await persistLegacyNotes(arr);
 			}
 		} catch {
 			void 0;
@@ -60,19 +56,14 @@ export async function runMigration(): Promise<void> {
 			noteKeysToRemove.push(k);
 		}
 	}
-	for (const k of noteKeysToRemove) {
-		const raw = localStorage.getItem(k);
-		if (!raw) {
-			continue;
-		}
-		try {
-			const note = JSON.parse(raw) as NoteJSON;
-			if (note && typeof note.id === "string") {
-				await persistLegacyNote(note);
-			}
-		} catch {
-			void 0;
-		}
+	try {
+		const notes = noteKeysToRemove
+			.map(localStorage.getItem)
+			.filter((raw): raw is string => raw !== null)
+			.map(raw => JSON.parse(raw) as NoteJSON);
+		await persistLegacyNotes(notes);
+	} catch {
+		void 0;
 	}
 	for (const [lsKey, idbKey, type] of KV_MAPPINGS) {
 		const raw = localStorage.getItem(lsKey);

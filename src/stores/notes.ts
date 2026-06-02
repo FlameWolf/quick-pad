@@ -1,7 +1,7 @@
 import { ref, computed, readonly, watch } from "vue";
 import { defineStore } from "pinia";
 import { NoteModel } from "@/models/NoteModel";
-import { deleteNote, deleteNotes, getAllNotes, getNoteContent, putNoteFull, putNoteMeta, putNotesMeta } from "@/storage/db";
+import { deleteNote, deleteNotes, getAllNotes, getNoteContent, putNoteFull, putNoteMeta, putNotesFull, putNotesMeta } from "@/storage/db";
 import { contains, emptyString, STORAGE_KEY, TRASH_RETENTION_MS } from "@/library";
 import type { UUID } from "crypto";
 
@@ -41,12 +41,10 @@ async function removeNotes(ids: UUID[]) {
 }
 
 export const useNotesStore = defineStore("notes", () => {
-	let searchToken = 0;
 	const searchText = ref<string>(emptyString);
 	const matchedIds = ref<Set<UUID> | null>(null);
 	const runSearch = async (text: string) => {
-		const query = text.trim();
-		const token = ++searchToken;
+		const query = text;
 		if (!query) {
 			matchedIds.value = null;
 			return;
@@ -64,7 +62,7 @@ export const useNotesStore = defineStore("notes", () => {
 				}
 			})
 		);
-		if (token === searchToken) {
+		if (query === searchText.value) {
 			matchedIds.value = ids;
 		}
 	};
@@ -203,7 +201,12 @@ export const useNotesStore = defineStore("notes", () => {
 	}
 
 	async function replaceMultiple(updatedNotes: NoteModel[]) {
-		await Promise.all(updatedNotes.map(replaceNote));
+		for (const updatedNote of updatedNotes) {
+			const index = notes.value.findIndex(note => note.id === updatedNote.id);
+			index === -1 ? notes.value.push(updatedNote) : notes.value.splice(index, 1, updatedNote);
+		}
+		await putNotesFull(updatedNotes.map(note => note.toJSON()));
+		updatedNotes.forEach(note => (note.content = undefined));
 	}
 
 	return {

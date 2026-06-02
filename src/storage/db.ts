@@ -88,6 +88,24 @@ export async function putNoteFull(note: NoteJSON): Promise<void> {
 	]);
 }
 
+export async function putNotesFull(notes: NoteJSON[]): Promise<void> {
+	if (notes.length === 0) {
+		return;
+	}
+	const db = await getDB();
+	const tx = db.transaction([NOTES_STORE, CONTENTS_STORE], "readwrite");
+	const notesStore = tx.objectStore(NOTES_STORE);
+	const contentsStore = tx.objectStore(CONTENTS_STORE);
+	const ops: Promise<unknown>[] = [];
+	for (const note of notes) {
+		const { content, ...meta } = note;
+		ops.push(notesStore.put(meta));
+		ops.push(contentsStore.put({ id: note.id, content: content ?? emptyString }));
+	}
+	ops.push(tx.done);
+	await Promise.all(ops);
+}
+
 export async function deleteNote(id: string): Promise<void> {
 	const db = await getDB();
 	const tx = db.transaction([NOTES_STORE, CONTENTS_STORE], "readwrite");
