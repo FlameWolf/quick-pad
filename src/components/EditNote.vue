@@ -82,8 +82,11 @@
 			return;
 		}
 		if (isEditing.value) {
-			const editor = editTextArea.value!;
-			const editorParent = editor.parentElement!;
+			const editor = editTextArea.value;
+			const editorParent = editor?.parentElement;
+			if (!editorParent) {
+				return;
+			}
 			const editorClone = editor.cloneNode() as HTMLTextAreaElement;
 			editorClone.classList.add("d-hidden");
 			editorClone.style.setProperty("height", "auto");
