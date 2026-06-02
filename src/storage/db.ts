@@ -22,8 +22,6 @@ function getDB(): Promise<IDBPDatabase> {
 				if (!db.objectStoreNames.contains(CONTENTS_STORE)) {
 					db.createObjectStore(CONTENTS_STORE, { keyPath: "id" });
 				}
-				// v1 stored content inline in each note record. Move it into its own
-				// store so the in-memory note list can stay content-free.
 				if (oldVersion > 0 && oldVersion < 2) {
 					const notesStore = tx.objectStore(NOTES_STORE);
 					const contentsStore = tx.objectStore(CONTENTS_STORE);
