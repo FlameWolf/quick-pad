@@ -41,11 +41,10 @@ async function removeNotes(ids: UUID[]) {
 }
 
 export const useNotesStore = defineStore("notes", () => {
+	let searchToken = 0;
 	const searchText = ref<string>(emptyString);
 	const matchedIds = ref<Set<UUID> | null>(null);
-	let searchToken = 0;
-
-	async function runSearch(text: string) {
+	const runSearch = async (text: string) => {
 		const query = text.trim();
 		const token = ++searchToken;
 		if (!query) {
@@ -68,16 +67,13 @@ export const useNotesStore = defineStore("notes", () => {
 		if (token === searchToken) {
 			matchedIds.value = ids;
 		}
-	}
-
-	watch(searchText, text => {
-		void runSearch(text);
-	});
-
+	};
 	const isMatch = (note: NoteModel) => matchedIds.value === null || matchedIds.value.has(note.id);
 	const activeNotes = computed(() => notes.value.filter(note => !note.archivedAt && !note.deletedAt && !note.purgedAt && isMatch(note)));
 	const archivedNotes = computed(() => notes.value.filter(note => note.archivedAt && !note.deletedAt && !note.purgedAt && isMatch(note)));
 	const trashedNotes = computed(() => notes.value.filter(note => note.deletedAt && !note.purgedAt && isMatch(note)));
+
+	watch(searchText, runSearch);
 
 	async function addNote(note: NoteModel) {
 		await persistFull(note);
@@ -194,7 +190,6 @@ export const useNotesStore = defineStore("notes", () => {
 	}
 
 	async function replaceNote(updatedNote: NoteModel) {
-		await persistFull(updatedNote);
 		const index = notes.value.findIndex(note => note.id === updatedNote.id);
 		switch (index) {
 			case -1:
@@ -204,6 +199,7 @@ export const useNotesStore = defineStore("notes", () => {
 				notes.value.splice(index, 1, updatedNote);
 				break;
 		}
+		await persistFull(updatedNote);
 	}
 
 	async function replaceMultiple(updatedNotes: NoteModel[]) {

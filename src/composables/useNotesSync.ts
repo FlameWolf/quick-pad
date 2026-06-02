@@ -8,6 +8,11 @@ import { AUTO_SYNC_KEY, debounce, DEBOUNCE_MS, emptyString, LAST_SYNCED_TO_CLOUD
 import type { NoteJSON } from "@/models/NoteModel";
 import type { UUID } from "crypto";
 
+enum NoteUploadResult {
+	Uploaded = "uploaded",
+	Conflict = "conflict"
+}
+
 const isSyncing = ref(false);
 const lastSyncedToLocalAt = ref<Date | null>(null);
 const lastSyncedToCloudAt = ref<Date | null>(null);
@@ -107,11 +112,11 @@ export function useNotesSync() {
 		}
 	}
 
-	async function uploadNote(note: NoteModel): Promise<"uploaded" | "conflict"> {
+	async function uploadNote(note: NoteModel): Promise<NoteUploadResult> {
 		const fileName = getFileName(note.id);
 		const localJSON = await getNoteRecord(note.id);
 		if (!localJSON) {
-			return "uploaded";
+			return NoteUploadResult.Uploaded;
 		}
 		const remoteFile = await findFile(fileName);
 		if (remoteFile) {
@@ -122,17 +127,17 @@ export function useNotesSync() {
 				const localEffectiveTime = noteEffectiveTime(note);
 				if (localEffectiveTime > remoteEffectiveTime) {
 					await writeJSONById(remoteFile.id, localJSON);
-					return "uploaded";
+					return NoteUploadResult.Uploaded;
 				}
 				if (remoteEffectiveTime > localEffectiveTime) {
 					await store.replaceNote(remoteNote);
-					return "conflict";
+					return NoteUploadResult.Conflict;
 				}
 			}
 		} else {
 			await writeJSON(fileName, localJSON);
 		}
-		return "uploaded";
+		return NoteUploadResult.Uploaded;
 	}
 
 	async function runPull(force = false) {
