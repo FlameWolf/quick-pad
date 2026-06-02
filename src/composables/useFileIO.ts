@@ -1,8 +1,13 @@
 import { ref } from "vue";
 import { useNotesStore } from "@/stores/notes";
 import { NoteModel } from "@/models/NoteModel";
+import { getNoteContent } from "@/storage/db";
 import { emptyString, isTextFile } from "@/library";
 import JSZip from "jszip";
+
+function resolveContent(note: NoteModel): Promise<string> {
+	return note.content != null ? Promise.resolve(note.content) : getNoteContent(note.id);
+}
 
 const importErrors = ref<Array<{
 	fileName: string;
@@ -72,8 +77,9 @@ export function useFileIO() {
 		importErrors.value = [];
 	}
 
-	function exportNote(note: NoteModel) {
-		const blob = new Blob([note.content], { type: "text/plain;charset=utf-8" });
+	async function exportNote(note: NoteModel) {
+		const content = await resolveContent(note);
+		const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
 		triggerDownload(blob, `${sanitizeFilename(note.title)}.txt`);
 	}
 
@@ -81,9 +87,10 @@ export function useFileIO() {
 		if (notes.length === 0) {
 			return;
 		}
+		const contents = await Promise.all(notes.map(resolveContent));
 		const zip = new JSZip();
 		const usedNames = new Set<string>();
-		for (const note of notes) {
+		notes.forEach((note, index) => {
 			let name = sanitizeFilename(note.title);
 			let uniqueName = name;
 			let counter = 1;
@@ -91,8 +98,8 @@ export function useFileIO() {
 				uniqueName = `${name} (${counter++})`;
 			}
 			usedNames.add(uniqueName);
-			zip.file(`${uniqueName}.txt`, note.content);
-		}
+			zip.file(`${uniqueName}.txt`, contents[index] ?? emptyString);
+		});
 		const blob = await zip.generateAsync({ type: "blob" });
 		triggerDownload(blob, "quick-pad-notes.zip");
 	}

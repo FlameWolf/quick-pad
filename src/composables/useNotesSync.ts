@@ -3,7 +3,7 @@ import { useGoogleDrive } from "./useGoogleDrive";
 import { useGoogleAuth } from "./useGoogleAuth";
 import { useNotesStore } from "@/stores/notes";
 import { NoteModel } from "@/models/NoteModel";
-import { getKV, setKV } from "@/storage/db";
+import { getKV, getNoteRecord, setKV } from "@/storage/db";
 import { AUTO_SYNC_KEY, debounce, DEBOUNCE_MS, emptyString, LAST_SYNCED_TO_CLOUD_KEY, LAST_SYNCED_TO_LOCAL_KEY, LEGACY_SYNC_FILENAME } from "@/library";
 import type { NoteJSON } from "@/models/NoteModel";
 import type { UUID } from "crypto";
@@ -109,6 +109,10 @@ export function useNotesSync() {
 
 	async function uploadNote(note: NoteModel): Promise<"uploaded" | "conflict"> {
 		const fileName = getFileName(note.id);
+		const localJSON = await getNoteRecord(note.id);
+		if (!localJSON) {
+			return "uploaded";
+		}
 		const remoteFile = await findFile(fileName);
 		if (remoteFile) {
 			const remoteJSON = await readJSONById<NoteJSON>(remoteFile.id);
@@ -117,7 +121,7 @@ export function useNotesSync() {
 				const remoteEffectiveTime = noteEffectiveTime(remoteNote);
 				const localEffectiveTime = noteEffectiveTime(note);
 				if (localEffectiveTime > remoteEffectiveTime) {
-					await writeJSONById(remoteFile.id, note.toJSON());
+					await writeJSONById(remoteFile.id, localJSON);
 					return "uploaded";
 				}
 				if (remoteEffectiveTime > localEffectiveTime) {
@@ -126,7 +130,7 @@ export function useNotesSync() {
 				}
 			}
 		} else {
-			await writeJSON(fileName, note.toJSON());
+			await writeJSON(fileName, localJSON);
 		}
 		return "uploaded";
 	}

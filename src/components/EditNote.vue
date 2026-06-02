@@ -7,6 +7,7 @@
 	import { useNotesSync } from "@/composables/useNotesSync";
 	import { NoteModel } from "@/models/NoteModel";
 	import { useFileIO } from "@/composables/useFileIO";
+	import { getNoteContent } from "@/storage/db";
 	import { getSentenceCount, getWordCount, getCharacterCount, emptyString, debounce } from "@/library";
 	import Toast from "@/components/Toast.vue";
 	import type { UUID } from "crypto";
@@ -30,13 +31,28 @@
 	});
 	const isEditing = ref(isCreateMode.value);
 	const editTitle = ref(existingNote.value?.title ?? emptyString);
-	const editContent = ref(existingNote.value?.content ?? emptyString);
+	const editContent = ref(emptyString);
+	const loadedContent = ref(emptyString);
+	const isContentLoading = ref(false);
 	const editTextArea = useTemplateRef("edit-text-area");
 	const undoRedo = useUndoRedo(editContent.value);
-	const displayContent = computed(() => (isEditing.value ? editContent.value : (existingNote.value?.content ?? emptyString)));
-	const sentenceCount = computed(() => getSentenceCount(displayContent.value));
-	const wordCount = computed(() => getWordCount(displayContent.value));
-	const characterCount = computed(() => getCharacterCount(displayContent.value));
+	const hasBody = computed(() => (isEditing.value ? editContent.value.length > 0 : (existingNote.value?.characterCount ?? 0) > 0));
+	const sentenceCount = computed(() => (isEditing.value ? getSentenceCount(editContent.value) : (existingNote.value?.sentenceCount ?? 0)));
+	const wordCount = computed(() => (isEditing.value ? getWordCount(editContent.value) : (existingNote.value?.wordCount ?? 0)));
+	const characterCount = computed(() => (isEditing.value ? getCharacterCount(editContent.value) : (existingNote.value?.characterCount ?? 0)));
+
+	async function loadContent() {
+		if (isCreateMode.value || !props.id) {
+			loadedContent.value = emptyString;
+			return;
+		}
+		isContentLoading.value = true;
+		try {
+			loadedContent.value = await getNoteContent(props.id);
+		} finally {
+			isContentLoading.value = false;
+		}
+	}
 	const isArchived = computed(() => !!existingNote.value?.archivedAt && !existingNote.value?.deletedAt);
 	const isTrashed = computed(() => !!existingNote.value?.deletedAt);
 	const backRoute = computed(() => {
@@ -58,7 +74,7 @@
 		if (!existingNote.value) {
 			return false;
 		}
-		return editTitle.value !== existingNote.value.title || editContent.value !== existingNote.value.content;
+		return editTitle.value !== existingNote.value.title || editContent.value !== loadedContent.value;
 	});
 
 	function adjustTextAreaHeight() {
@@ -99,7 +115,7 @@
 	function copyToClipboard() {
 		isCopying.value = true;
 		navigator.clipboard
-			.writeText(existingNote.value?.content as string)
+			.writeText(loadedContent.value)
 			.then(() => {
 				copyResult.value = {
 					status: "success",
@@ -116,8 +132,8 @@
 
 	function startEditing() {
 		editTitle.value = existingNote.value?.title ?? emptyString;
-		editContent.value = existingNote.value?.content ?? emptyString;
-		undoRedo.push(editContent.value);
+		editContent.value = loadedContent.value;
+		undoRedo.reset(editContent.value);
 		isEditing.value = true;
 		setTimeout(adjustTextAreaHeight);
 	}
@@ -145,7 +161,7 @@
 		} else {
 			isEditing.value = false;
 			editTitle.value = existingNote.value?.title ?? emptyString;
-			editContent.value = existingNote.value?.content ?? emptyString;
+			editContent.value = loadedContent.value;
 		}
 	}
 
@@ -155,6 +171,7 @@
 		if (isCreateMode.value) {
 			const note = new NoteModel(title, content);
 			await store.addNote(note);
+			loadedContent.value = content;
 			isEditing.value = false;
 			requestSync();
 			router.push(`/notes/${note.id}`);
@@ -162,6 +179,7 @@
 		}
 		if (existingNote.value) {
 			await store.updateNote({ id: existingNote.value.id, title, content });
+			loadedContent.value = content;
 			requestSync();
 		}
 		isEditing.value = false;
@@ -265,6 +283,7 @@
 		return await confirmDiscardChanges();
 	});
 
+	watch(() => props.id, loadContent, { immediate: true });
 	watch(editContent, adjustTextAreaHeight);
 </script>
 
@@ -324,13 +343,16 @@
 		<template v-if="!isEditing && existingNote">
 			<h2 class="mb-3">{{ existingNote.title }}</h2>
 			<div class="text-muted small mb-3" v-if="existingNote.modifiedAt || existingNote.createdAt">{{ existingNote.modifiedAt ? `Modified ${formatDate(existingNote.modifiedAt)}` : `Created ${formatDate(existingNote.createdAt)}` }}</div>
-			<div class="note-content">{{ existingNote.content }}</div>
+			<div v-if="isContentLoading" class="d-flex justify-content-center py-5">
+				<div class="spinner-border" role="status" aria-label="Loading note"></div>
+			</div>
+			<div v-else class="note-content">{{ loadedContent }}</div>
 		</template>
 		<template v-if="isEditing">
 			<input v-model="editTitle" type="text" class="form-control form-control-lg mb-3" placeholder="Title"/>
 			<textarea ref="edit-text-area" :value="editContent" @input="onContentInput" class="form-control note-textarea" placeholder="Start writing..." rows="12"></textarea>
 		</template>
-		<div class="d-flex flex-wrap gap-2 mt-3" v-if="displayContent">
+		<div class="d-flex flex-wrap gap-2 mt-3" v-if="hasBody">
 			<span class="badge text-bg-secondary" v-if="sentenceCount">{{ sentenceCount }} sentences</span>
 			<span class="badge text-bg-secondary" v-if="wordCount">{{ wordCount }} words</span>
 			<span class="badge text-bg-secondary" v-if="characterCount">{{ characterCount }} characters</span>

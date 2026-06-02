@@ -1,7 +1,8 @@
 export const emptyString = "";
 export const DB_NAME = "quick-pad";
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 export const NOTES_STORE = "notes";
+export const CONTENTS_STORE = "note-contents";
 export const KV_STORE = "kv";
 export const MIGRATION_FLAG = "__migrated-to-idb";
 export const LEGACY_NOTES_KEY = "quick-pad-notes";
@@ -36,19 +37,34 @@ const characterSegmenter = new Intl.Segmenter("en", { granularity: "grapheme" })
 const wordMatchRegExp = /[\p{L}\p{M}\p{Nd}\p{Pc}\p{Join_C}]+/u;
 const summaryLength = 100;
 
-export const getSummary = (text: string): string => {
+export const getSummary = (text: string | null | undefined): string => {
+	if (!text) {
+		return emptyString;
+	}
 	return text.length > summaryLength ? text.substring(0, summaryLength) + "\u2026" : text;
 };
-export const getSentenceCount = (text: string): number => {
+export const getSentenceCount = (text: string | null | undefined): number => {
+	if (!text) {
+		return 0;
+	}
 	return Array.from(sentenceSegmenter.segment(text)).length;
 };
-export const getWordCount = (text: string): number => {
+export const getWordCount = (text: string | null | undefined): number => {
+	if (!text) {
+		return 0;
+	}
 	return Array.from(wordSegmenter.segment(text)).filter(x => wordMatchRegExp.test(x.segment)).length;
 };
-export const getCharacterCount = (text: string): number => {
+export const getCharacterCount = (text: string | null | undefined): number => {
+	if (!text) {
+		return 0;
+	}
 	return Array.from(characterSegmenter.segment(text)).length;
 };
-export const contains = (text: string, search: string): boolean => {
+export const contains = (text: string | null | undefined, search: string): boolean => {
+	if (!text) {
+		return false;
+	}
 	return new RegExp(RegExp.escape(search), "i").test(text);
 };
 export const isTextFile = (function () {

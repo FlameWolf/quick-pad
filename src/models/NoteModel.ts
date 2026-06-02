@@ -17,10 +17,12 @@ export interface NoteJSON {
 	characterCount: number;
 }
 
+export type NoteMetaJSON = Omit<NoteJSON, "content">;
+
 export class NoteModel {
 	id: UUID;
 	title: string;
-	content: string;
+	content?: string | null;
 	createdAt: Date;
 	modifiedAt?: Date;
 	archivedAt?: Date;
@@ -85,11 +87,10 @@ export class NoteModel {
 		this.computeDerived();
 	}
 
-	toJSON(): NoteJSON {
+	toMetaJSON(): NoteMetaJSON {
 		return {
 			id: this.id,
 			title: this.title,
-			content: this.content,
 			createdAt: this.createdAt.toISOString(),
 			modifiedAt: this.modifiedAt?.toISOString(),
 			archivedAt: this.archivedAt?.toISOString(),
@@ -103,22 +104,36 @@ export class NoteModel {
 		};
 	}
 
-	static fromJSON(data: NoteJSON): NoteModel {
-		const note = new NoteModel(data.title, data.content, data.id as UUID);
+	toJSON(): NoteJSON {
+		return { ...this.toMetaJSON(), content: this.content ?? emptyString };
+	}
+
+	private static applyMeta(note: NoteModel, data: NoteMetaJSON): void {
 		note.createdAt = new Date(data.createdAt);
 		note.modifiedAt = data.modifiedAt ? new Date(data.modifiedAt) : undefined;
 		note.archivedAt = data.archivedAt ? new Date(data.archivedAt) : undefined;
 		note.deletedAt = data.deletedAt ? new Date(data.deletedAt) : undefined;
 		note.purgedAt = data.purgedAt ? new Date(data.purgedAt) : undefined;
 		note.stateChangedAt = data.stateChangedAt ? new Date(data.stateChangedAt) : undefined;
-		if (data.summary && data.sentenceCount && data.wordCount && data.characterCount) {
-			note.summary = data.summary;
-			note.sentenceCount = data.sentenceCount;
-			note.wordCount = data.wordCount;
-			note.characterCount = data.characterCount;
-		} else {
+		note.summary = data.summary ?? emptyString;
+		note.sentenceCount = data.sentenceCount ?? 0;
+		note.wordCount = data.wordCount ?? 0;
+		note.characterCount = data.characterCount ?? 0;
+	}
+
+	static fromJSON(data: NoteJSON): NoteModel {
+		const note = new NoteModel(data.title, data.content, data.id as UUID);
+		NoteModel.applyMeta(note, data);
+		if (!(data.summary && data.sentenceCount && data.wordCount && data.characterCount)) {
 			note.computeDerived();
 		}
+		return note;
+	}
+
+	static fromSummaryJSON(data: NoteMetaJSON): NoteModel {
+		const note = new NoteModel(data.title, emptyString, data.id as UUID);
+		note.content = undefined;
+		NoteModel.applyMeta(note, data);
 		return note;
 	}
 }

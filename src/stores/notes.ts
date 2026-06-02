@@ -1,7 +1,7 @@
-import { ref, computed, readonly } from "vue";
+import { ref, computed, readonly, watch } from "vue";
 import { defineStore } from "pinia";
 import { NoteModel } from "@/models/NoteModel";
-import { deleteNote, deleteNotes, getAllNotes, putNote, putNotes } from "@/storage/db";
+import { deleteNote, deleteNotes, getAllNotes, getNoteContent, putNoteFull, putNoteMeta, putNotesMeta } from "@/storage/db";
 import { contains, emptyString, STORAGE_KEY, TRASH_RETENTION_MS } from "@/library";
 import type { UUID } from "crypto";
 
@@ -11,7 +11,7 @@ const notes = ref<NoteModel[]>([]);
 export async function hydrateNotes(): Promise<void> {
 	try {
 		const raw = await getAllNotes();
-		notes.value = raw.map(NoteModel.fromJSON);
+		notes.value = raw.map(NoteModel.fromSummaryJSON);
 	} catch {
 		notes.value = [];
 	} finally {
@@ -19,12 +19,17 @@ export async function hydrateNotes(): Promise<void> {
 	}
 }
 
-async function persistNote(note: NoteModel) {
-	await putNote(note.toJSON());
+async function persistMeta(note: NoteModel) {
+	await putNoteMeta(note.toMetaJSON());
 }
 
-async function persistNotes(notes: NoteModel[]) {
-	await putNotes(notes.map(note => note.toJSON()));
+async function persistManyMeta(notes: NoteModel[]) {
+	await putNotesMeta(notes.map(note => note.toMetaJSON()));
+}
+
+async function persistFull(note: NoteModel) {
+	await putNoteFull(note.toJSON());
+	note.content = undefined;
 }
 
 async function removeNote(id: UUID) {
@@ -37,14 +42,46 @@ async function removeNotes(ids: UUID[]) {
 
 export const useNotesStore = defineStore("notes", () => {
 	const searchText = ref<string>(emptyString);
-	const searchResults = computed(() => (searchText.value.trim() ? notes.value.filter(note => contains(note.title, searchText.value) || contains(note.content, searchText.value)) : notes.value));
-	const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt && !note.purgedAt));
-	const archivedNotes = computed(() => searchResults.value.filter(note => note.archivedAt && !note.deletedAt && !note.purgedAt));
-	const trashedNotes = computed(() => searchResults.value.filter(note => note.deletedAt && !note.purgedAt));
+	const matchedIds = ref<Set<UUID> | null>(null);
+	let searchToken = 0;
+
+	async function runSearch(text: string) {
+		const query = text.trim();
+		const token = ++searchToken;
+		if (!query) {
+			matchedIds.value = null;
+			return;
+		}
+		const snapshot = notes.value.slice();
+		const ids = new Set<UUID>();
+		await Promise.all(
+			snapshot.map(async note => {
+				if (contains(note.title, query)) {
+					ids.add(note.id);
+					return;
+				}
+				if (contains(await getNoteContent(note.id), query)) {
+					ids.add(note.id);
+				}
+			})
+		);
+		if (token === searchToken) {
+			matchedIds.value = ids;
+		}
+	}
+
+	watch(searchText, text => {
+		void runSearch(text);
+	});
+
+	const isMatch = (note: NoteModel) => matchedIds.value === null || matchedIds.value.has(note.id);
+	const activeNotes = computed(() => notes.value.filter(note => !note.archivedAt && !note.deletedAt && !note.purgedAt && isMatch(note)));
+	const archivedNotes = computed(() => notes.value.filter(note => note.archivedAt && !note.deletedAt && !note.purgedAt && isMatch(note)));
+	const trashedNotes = computed(() => notes.value.filter(note => note.deletedAt && !note.purgedAt && isMatch(note)));
 
 	async function addNote(note: NoteModel) {
+		await persistFull(note);
 		notes.value.push(note);
-		await persistNote(note);
 	}
 
 	async function updateNote(data: { id: UUID; title: string; content: string }) {
@@ -52,8 +89,8 @@ export const useNotesStore = defineStore("notes", () => {
 		if (index !== -1) {
 			const existingNote = notes.value[index] as NoteModel;
 			existingNote.update(data.title, data.content);
+			await persistFull(existingNote);
 			notes.value[index] = existingNote;
-			await persistNote(existingNote);
 		}
 	}
 
@@ -68,7 +105,7 @@ export const useNotesStore = defineStore("notes", () => {
 		}
 		const note = notes.value[index] as NoteModel;
 		mutator(note);
-		await persistNote(note);
+		await persistMeta(note);
 		notes.value[index] = note;
 	}
 
@@ -83,7 +120,7 @@ export const useNotesStore = defineStore("notes", () => {
 		const targetNotes = targets.map(x => x.note);
 		await Promise.all(targetNotes.map(mutator));
 		targets.forEach(t => notes.value.splice(t.index, 1, t.note));
-		await persistNotes(targetNotes);
+		await persistManyMeta(targetNotes);
 	}
 
 	async function archiveNote(id: UUID) {
@@ -157,6 +194,7 @@ export const useNotesStore = defineStore("notes", () => {
 	}
 
 	async function replaceNote(updatedNote: NoteModel) {
+		await persistFull(updatedNote);
 		const index = notes.value.findIndex(note => note.id === updatedNote.id);
 		switch (index) {
 			case -1:
@@ -166,7 +204,6 @@ export const useNotesStore = defineStore("notes", () => {
 				notes.value.splice(index, 1, updatedNote);
 				break;
 		}
-		await persistNote(updatedNote);
 	}
 
 	async function replaceMultiple(updatedNotes: NoteModel[]) {

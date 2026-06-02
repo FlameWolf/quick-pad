@@ -1,6 +1,10 @@
-import { getKV, putNote, setKV } from "./db";
-import type { NoteJSON } from "@/models/NoteModel";
+import { getKV, putNoteFull, setKV } from "./db";
+import { NoteModel, type NoteJSON } from "@/models/NoteModel";
 import { MIGRATION_FLAG, LEGACY_NOTES_KEY, NOTE_PREFIX } from "@/library";
+
+async function persistLegacyNote(note: NoteJSON): Promise<void> {
+	await putNoteFull(NoteModel.fromJSON(note).toJSON());
+}
 
 type Coercion = "string" | "number" | "boolean" | "json";
 
@@ -42,7 +46,7 @@ export async function runMigration(): Promise<void> {
 			if (Array.isArray(arr)) {
 				for (const note of arr) {
 					if (note && typeof note.id === "string") {
-						await putNote(note);
+						await persistLegacyNote(note);
 					}
 				}
 			}
@@ -64,7 +68,7 @@ export async function runMigration(): Promise<void> {
 		try {
 			const note = JSON.parse(raw) as NoteJSON;
 			if (note && typeof note.id === "string") {
-				await putNote(note);
+				await persistLegacyNote(note);
 			}
 		} catch {
 			void 0;
