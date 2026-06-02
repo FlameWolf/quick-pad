@@ -1,6 +1,6 @@
 import { openDB, type IDBPDatabase } from "idb";
+import { DB_NAME, DB_VERSION, NOTES_STORE, CONTENTS_STORE, KV_STORE, emptyString } from "@/library";
 import type { NoteJSON, NoteMetaJSON } from "@/models/NoteModel";
-import { DB_NAME, DB_VERSION, NOTES_STORE, CONTENTS_STORE, KV_STORE } from "@/library";
 
 interface NoteContentRecord {
 	id: string;
@@ -28,7 +28,7 @@ function getDB(): Promise<IDBPDatabase> {
 					let cursor = await notesStore.openCursor();
 					while (cursor) {
 						const { content, ...meta } = cursor.value as NoteJSON;
-						contentsStore.put({ id: cursor.value.id, content: content ?? "" });
+						contentsStore.put({ id: cursor.value.id, content: content ?? emptyString });
 						cursor.update(meta);
 						cursor = await cursor.continue();
 					}
@@ -47,7 +47,7 @@ export async function getAllNotes(): Promise<NoteMetaJSON[]> {
 export async function getNoteContent(id: string): Promise<string> {
 	const db = await getDB();
 	const record = (await db.get(CONTENTS_STORE, id)) as NoteContentRecord | undefined;
-	return record?.content ?? "";
+	return record?.content ?? emptyString;
 }
 
 export async function getNoteRecord(id: string): Promise<NoteJSON | undefined> {
@@ -57,7 +57,7 @@ export async function getNoteRecord(id: string): Promise<NoteJSON | undefined> {
 	if (!meta) {
 		return undefined;
 	}
-	return { ...meta, content: contentRecord?.content ?? "" };
+	return { ...meta, content: contentRecord?.content ?? emptyString };
 }
 
 export async function putNoteMeta(meta: NoteMetaJSON): Promise<void> {
@@ -78,7 +78,14 @@ export async function putNoteFull(note: NoteJSON): Promise<void> {
 	const { content, ...meta } = note;
 	const db = await getDB();
 	const tx = db.transaction([NOTES_STORE, CONTENTS_STORE], "readwrite");
-	await Promise.all([tx.objectStore(NOTES_STORE).put(meta), tx.objectStore(CONTENTS_STORE).put({ id: note.id, content: content ?? "" }), tx.done]);
+	await Promise.all([
+		tx.objectStore(NOTES_STORE).put(meta),
+		tx.objectStore(CONTENTS_STORE).put({
+			id: note.id,
+			content: content ?? emptyString
+		}),
+		tx.done
+	]);
 }
 
 export async function deleteNote(id: string): Promise<void> {
