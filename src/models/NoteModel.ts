@@ -1,4 +1,4 @@
-import { emptyString, getCharacterCount, getSentenceCount, getSummary, getWordCount } from "@/library";
+import { getCharacterCount, getSentenceCount, getSummary, getWordCount } from "@/library";
 import type { UUID } from "crypto";
 
 export interface NoteJSON {
@@ -9,7 +9,6 @@ export interface NoteJSON {
 	modifiedAt?: string;
 	archivedAt?: string;
 	deletedAt?: string;
-	purgedAt?: string;
 	stateChangedAt?: string;
 	summary: string;
 	sentenceCount: number;
@@ -25,7 +24,6 @@ export class NoteModel {
 	modifiedAt?: Date;
 	archivedAt?: Date;
 	deletedAt?: Date;
-	purgedAt?: Date;
 	stateChangedAt?: Date;
 	summary!: string;
 	sentenceCount!: number;
@@ -76,15 +74,6 @@ export class NoteModel {
 		this.stateChangedAt = new Date();
 	}
 
-	purge() {
-		const now = new Date();
-		this.purgedAt = now;
-		this.stateChangedAt = now;
-		this.title = emptyString;
-		this.content = emptyString;
-		this.computeDerived();
-	}
-
 	toJSON(): NoteJSON {
 		return {
 			id: this.id,
@@ -94,7 +83,6 @@ export class NoteModel {
 			modifiedAt: this.modifiedAt?.toISOString(),
 			archivedAt: this.archivedAt?.toISOString(),
 			deletedAt: this.deletedAt?.toISOString(),
-			purgedAt: this.purgedAt?.toISOString(),
 			stateChangedAt: this.stateChangedAt?.toISOString(),
 			summary: this.summary,
 			sentenceCount: this.sentenceCount,
@@ -109,7 +97,6 @@ export class NoteModel {
 		note.modifiedAt = data.modifiedAt ? new Date(data.modifiedAt) : undefined;
 		note.archivedAt = data.archivedAt ? new Date(data.archivedAt) : undefined;
 		note.deletedAt = data.deletedAt ? new Date(data.deletedAt) : undefined;
-		note.purgedAt = data.purgedAt ? new Date(data.purgedAt) : undefined;
 		note.stateChangedAt = data.stateChangedAt ? new Date(data.stateChangedAt) : undefined;
 		if (data.summary && data.sentenceCount && data.wordCount && data.characterCount) {
 			note.summary = data.summary;

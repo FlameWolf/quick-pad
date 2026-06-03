@@ -38,9 +38,9 @@ async function removeNotes(ids: UUID[]) {
 export const useNotesStore = defineStore("notes", () => {
 	const searchText = ref<string>(emptyString);
 	const searchResults = computed(() => (searchText.value.trim() ? notes.value.filter(note => contains(note.title, searchText.value) || contains(note.content, searchText.value)) : notes.value));
-	const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt && !note.purgedAt));
-	const archivedNotes = computed(() => searchResults.value.filter(note => note.archivedAt && !note.deletedAt && !note.purgedAt));
-	const trashedNotes = computed(() => searchResults.value.filter(note => note.deletedAt && !note.purgedAt));
+	const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt));
+	const archivedNotes = computed(() => searchResults.value.filter(note => note.archivedAt && !note.deletedAt));
+	const trashedNotes = computed(() => searchResults.value.filter(note => note.deletedAt));
 
 	async function addNote(note: NoteModel) {
 		notes.value.push(note);
@@ -67,12 +67,12 @@ export const useNotesStore = defineStore("notes", () => {
 			return;
 		}
 		const note = notes.value[index] as NoteModel;
-		mutator(note);
-		await persistNote(note);
+		await Promise.resolve(mutator(note));
 		notes.value[index] = note;
+		await persistNote(note);
 	}
 
-	async function applyToMany(ids: ReadonlyArray<UUID> | Set<UUID>, mutator: (note: NoteModel) => void | Promise<void>) {
+	async function applyToMany(ids: ReadonlyArray<UUID>, mutator: (note: NoteModel) => void | Promise<void>) {
 		const idSet = new Set<UUID>(ids);
 		const targets = notes.value.reduce((acc: Array<{ index: number; note: NoteModel }>, curr: NoteModel, index) => {
 			if (idSet.has(curr.id)) {
@@ -91,8 +91,7 @@ export const useNotesStore = defineStore("notes", () => {
 	}
 
 	async function archiveMultiple(ids: ReadonlyArray<UUID>) {
-		const idSet = new Set<UUID>(ids);
-		await applyToMany(idSet, note => note.archive());
+		await applyToMany(ids, note => note.archive());
 	}
 
 	async function unarchiveNote(id: UUID) {
@@ -100,8 +99,7 @@ export const useNotesStore = defineStore("notes", () => {
 	}
 
 	async function unarchiveMultiple(ids: ReadonlyArray<UUID>) {
-		const idSet = new Set<UUID>(ids);
-		await applyToMany(idSet, note => note.unarchive());
+		await applyToMany(ids, note => note.unarchive());
 	}
 
 	async function trashNote(id: UUID) {
@@ -109,8 +107,7 @@ export const useNotesStore = defineStore("notes", () => {
 	}
 
 	async function trashMultiple(ids: ReadonlyArray<UUID>) {
-		const idSet = new Set<UUID>(ids);
-		await applyToMany(idSet, note => note.trash());
+		await applyToMany(ids, note => note.trash());
 	}
 
 	async function restoreFromTrash(id: UUID) {
@@ -118,8 +115,7 @@ export const useNotesStore = defineStore("notes", () => {
 	}
 
 	async function restoreFromTrashMultiple(ids: ReadonlyArray<UUID>) {
-		const idSet = new Set<UUID>(ids);
-		await applyToMany(idSet, note => note.restore());
+		await applyToMany(ids, note => note.restore());
 	}
 
 	async function permanentlyDelete(id: UUID) {
@@ -133,7 +129,7 @@ export const useNotesStore = defineStore("notes", () => {
 	async function permanentlyDeleteMultiple(ids: ReadonlyArray<UUID>) {
 		const idSet = new Set<UUID>(ids);
 		notes.value = notes.value.filter(note => !idSet.has(note.id));
-		await removeNotes(Array.from(idSet));
+		await removeNotes(ids as UUID[]);
 	}
 
 	async function purgeExpiredTrash() {
@@ -142,9 +138,6 @@ export const useNotesStore = defineStore("notes", () => {
 			.filter(note => {
 				if (!note.deletedAt) {
 					return false;
-				}
-				if (note.purgedAt) {
-					return true;
 				}
 				const tombstoneTime = note.deletedAt.getTime();
 				return tombstoneTime > 0 && tombstoneTime < cutoff;

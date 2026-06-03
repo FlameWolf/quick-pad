@@ -39,7 +39,7 @@ export async function hydrateSyncMetadata(): Promise<void> {
 }
 
 function noteEffectiveTime(note: NoteModel): number {
-	return Math.max(note.createdAt.getTime(), note.modifiedAt?.getTime() ?? 0, note.archivedAt?.getTime() ?? 0, note.deletedAt?.getTime() ?? 0, note.purgedAt?.getTime() ?? 0, note.stateChangedAt?.getTime() ?? 0);
+	return Math.max(note.createdAt.getTime(), note.modifiedAt?.getTime() ?? 0, note.archivedAt?.getTime() ?? 0, note.deletedAt?.getTime() ?? 0, note.stateChangedAt?.getTime() ?? 0);
 }
 
 export function mergeNotesByModifiedAt(local: ReadonlyArray<NoteModel>, remote: ReadonlyArray<NoteModel>): NoteModel[] {
