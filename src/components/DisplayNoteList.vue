@@ -274,9 +274,9 @@
 					<span class="fs-1 text-muted">+</span>
 				</div>
 			</RouterLink>
-			<RouterLink v-for="note in sortedNotes" :key="note.id" :to="`/notes/${note.id}`" class="card note-card text-decoration-none position-relative" :class="{ selected: isSelectionMode && isSelected(note.id) }" @click="(e: MouseEvent) => onTileClick(e, note.id)">
+			<RouterLink v-for="note in sortedNotes" :key="note.id" :to="`/notes/${note.id}`" class="card note-card text-decoration-none position-relative" :class="{ selected: isSelectionMode && isSelected(note.id) }" @click.capture="(e: MouseEvent) => onTileClick(e, note.id)">
 				<div class="card-body d-flex flex-column">
-					<input v-if="isSelectionMode" type="checkbox" class="form-check-input selection-checkbox" :checked="isSelected(note.id)" @click.stop.prevent="toggleSelection(note.id)"/>
+					<input v-if="isSelectionMode" type="checkbox" class="form-check-input selection-checkbox rounded-circle" :checked="isSelected(note.id)"/>
 					<div class="d-flex gap-1 mb-2">
 						<div class="text-truncate">{{ note.title }}</div>
 						<div class="badge align-self-center text-muted border ms-auto">{{ formatDate(note.modifiedAt ?? note.createdAt) }}</div>
@@ -333,5 +333,6 @@
 		width: 1.25rem;
 		height: 1.25rem;
 		cursor: pointer;
+		pointer-events: none;
 	}
 </style>
