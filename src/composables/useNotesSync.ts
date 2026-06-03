@@ -8,6 +8,11 @@ import { AUTO_SYNC_KEY, debounce, DEBOUNCE_MS, emptyString, LAST_SYNCED_TO_CLOUD
 import type { NoteJSON } from "@/models/NoteModel";
 import type { UUID } from "crypto";
 
+enum NoteUploadResult {
+	Uploaded = "uploaded",
+	Conflict = "conflict"
+}
+
 const isSyncing = ref(false);
 const lastSyncedToLocalAt = ref<Date | null>(null);
 const lastSyncedToCloudAt = ref<Date | null>(null);
@@ -107,7 +112,7 @@ export function useNotesSync() {
 		}
 	}
 
-	async function uploadNote(note: NoteModel): Promise<"uploaded" | "conflict"> {
+	async function uploadNote(note: NoteModel): Promise<NoteUploadResult> {
 		const fileName = getFileName(note.id);
 		const remoteFile = await findFile(fileName);
 		if (remoteFile) {
@@ -118,17 +123,17 @@ export function useNotesSync() {
 				const localEffectiveTime = noteEffectiveTime(note);
 				if (localEffectiveTime > remoteEffectiveTime) {
 					await writeJSONById(remoteFile.id, note.toJSON());
-					return "uploaded";
+					return NoteUploadResult.Uploaded;
 				}
 				if (remoteEffectiveTime > localEffectiveTime) {
 					await store.replaceNote(remoteNote);
-					return "conflict";
+					return NoteUploadResult.Conflict;
 				}
 			}
 		} else {
 			await writeJSON(fileName, note.toJSON());
 		}
-		return "uploaded";
+		return NoteUploadResult.Uploaded;
 	}
 
 	async function runPull(force = false) {
@@ -172,7 +177,7 @@ export function useNotesSync() {
 			const empty = pullResult.remoteCount === 0 && store.notes.length === 0;
 			const changes = pushResult.conflicts + pullResult.downloaded;
 			lastSyncMessage.value = {
-				text: empty ? "Nothing to sync" : `Notes synced${changes > 0 ? ` with ${changes} changes${changes > 1 ? "s" : emptyString} fetched from remote` : emptyString}`,
+				text: empty ? "Nothing to sync" : `Notes synced${changes > 0 ? ` with ${changes} change${changes > 1 ? "s" : emptyString} fetched from remote` : emptyString}`,
 				type: "success",
 				timeStamp: Date.now()
 			};
@@ -201,7 +206,21 @@ export function useNotesSync() {
 
 	const debouncedFlush = debounce(() => {
 		if (isSignedIn.value && autoSyncEnabled.value) {
-			saveToCloud();
+			saveToCloud()
+				.then(() => {
+					lastSyncMessage.value = {
+						text: "Auto-synced changes to cloud",
+						type: "success",
+						timeStamp: Date.now()
+					};
+				})
+				.catch(() => {
+					lastSyncMessage.value = {
+						text: "Auto-sync failed",
+						type: "error",
+						timeStamp: Date.now()
+					};
+				});
 		}
 	}, DEBOUNCE_MS);
 
