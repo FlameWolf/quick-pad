@@ -72,8 +72,9 @@ export function useFileIO() {
 		importErrors.value = [];
 	}
 
-	function exportNote(note: NoteModel) {
-		const blob = new Blob([note.content], { type: "text/plain;charset=utf-8" });
+	async function exportNote(note: NoteModel) {
+		const content = (await store.getNoteContent(note.id)) ?? emptyString;
+		const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
 		triggerDownload(blob, `${sanitizeFilename(note.title)}.txt`);
 	}
 
@@ -91,7 +92,8 @@ export function useFileIO() {
 				uniqueName = `${name} (${counter++})`;
 			}
 			usedNames.add(uniqueName);
-			zip.file(`${uniqueName}.txt`, note.content);
+			const content = (await store.getNoteContent(note.id)) ?? emptyString;
+			zip.file(`${uniqueName}.txt`, content);
 		}
 		const blob = await zip.generateAsync({ type: "blob" });
 		triggerDownload(blob, "quick-pad-notes.zip");

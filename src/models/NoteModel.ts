@@ -1,10 +1,9 @@
-import { getCharacterCount, getSentenceCount, getSummary, getWordCount } from "@/library";
+import { emptyString, getCharacterCount, getSentenceCount, getSummary, getWordCount } from "@/library";
 import type { UUID } from "crypto";
 
-export interface NoteJSON {
+export interface NoteMetaJSON {
 	id: string;
 	title: string;
-	content: string;
 	createdAt: string;
 	modifiedAt?: string;
 	archivedAt?: string;
@@ -16,10 +15,14 @@ export interface NoteJSON {
 	characterCount: number;
 }
 
+export interface NoteJSON extends NoteMetaJSON {
+	content?: string;
+}
+
 export class NoteModel {
 	id: UUID;
 	title: string;
-	content: string;
+	content?: string;
 	createdAt: Date;
 	modifiedAt?: Date;
 	archivedAt?: Date;
@@ -30,19 +33,22 @@ export class NoteModel {
 	wordCount!: number;
 	characterCount!: number;
 
-	constructor(title: string, content: string, id?: UUID) {
+	constructor(title: string, content?: string, id?: UUID) {
 		this.id = id ?? crypto.randomUUID();
 		this.title = title;
 		this.content = content;
 		this.createdAt = new Date();
-		this.computeDerived();
+		if (content !== undefined) {
+			this.computeDerived();
+		}
 	}
 
 	computeDerived() {
-		this.summary = getSummary(this.content);
-		this.sentenceCount = getSentenceCount(this.content);
-		this.wordCount = getWordCount(this.content);
-		this.characterCount = getCharacterCount(this.content);
+		const content = this.content ?? emptyString;
+		this.summary = getSummary(content);
+		this.sentenceCount = getSentenceCount(content);
+		this.wordCount = getWordCount(content);
+		this.characterCount = getCharacterCount(content);
 	}
 
 	update(title: string, content: string) {
@@ -74,11 +80,10 @@ export class NoteModel {
 		this.stateChangedAt = new Date();
 	}
 
-	toJSON(): NoteJSON {
+	toMetaJSON(): NoteMetaJSON {
 		return {
 			id: this.id,
 			title: this.title,
-			content: this.content,
 			createdAt: this.createdAt.toISOString(),
 			modifiedAt: this.modifiedAt?.toISOString(),
 			archivedAt: this.archivedAt?.toISOString(),
@@ -91,6 +96,12 @@ export class NoteModel {
 		};
 	}
 
+	toJSON(): NoteJSON {
+		return Object.assign(this.toMetaJSON(), {
+			content: this.content
+		});
+	}
+
 	static fromJSON(data: NoteJSON): NoteModel {
 		const note = new NoteModel(data.title, data.content, data.id as UUID);
 		note.createdAt = new Date(data.createdAt);
@@ -98,7 +109,7 @@ export class NoteModel {
 		note.archivedAt = data.archivedAt ? new Date(data.archivedAt) : undefined;
 		note.deletedAt = data.deletedAt ? new Date(data.deletedAt) : undefined;
 		note.stateChangedAt = data.stateChangedAt ? new Date(data.stateChangedAt) : undefined;
-		if (data.summary && data.sentenceCount && data.wordCount && data.characterCount) {
+		if (data.summary !== undefined && data.sentenceCount !== undefined && data.wordCount !== undefined && data.characterCount !== undefined) {
 			note.summary = data.summary;
 			note.sentenceCount = data.sentenceCount;
 			note.wordCount = data.wordCount;
