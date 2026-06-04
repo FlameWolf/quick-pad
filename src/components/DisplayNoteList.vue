@@ -112,6 +112,13 @@
 		return sourceNotes.value.filter(n => isSelected(n.id)).map(n => n.id);
 	}
 
+	async function handleImport() {
+		const importedCount = await importFiles();
+		if (importedCount > 0) {
+			requestSync();
+		}
+	}
+
 	async function handleSelectionAction(key: string) {
 		const ids = getSelectedIds();
 		if (ids.length === 0) {
@@ -210,10 +217,10 @@
 			<span>&#xA0;Back to Notes</span>
 		</RouterLink>
 	</div>
-	<div v-if="notesStore.isLoading">
+	<div v-if="notesStore.isLoading || notesStore.isSearching">
 		<div class="d-flex flex-column justify-content-center align-items-center">
 			<div class="spinner-border" aria-hidden="true"></div>
-			<div class="mt-3" role="status">Loading notes...</div>
+			<div class="mt-3" role="status">{{ notesStore.isSearching ? "Searching..." : "Loading notes..." }}</div>
 		</div>
 	</div>
 	<div v-else-if="!hasNotes" class="empty-state text-center py-5">
@@ -227,7 +234,7 @@
 		<div v-if="view === 'active' && !isSearchMode" class="d-flex flex-column gap-2 align-items-center">
 			<div class="d-flex gap-2 justify-content-center flex-wrap">
 				<RouterLink to="/notes/new" class="btn btn-primary">Create a note</RouterLink>
-				<button class="btn btn-outline-secondary" @click="importFiles">Import from files</button>
+				<button class="btn btn-outline-secondary" @click="handleImport">Import from files</button>
 			</div>
 			<div class="d-flex gap-3 justify-content-center flex-wrap">
 				<RouterLink to="/notes/archive" class="btn btn-link btn-sm text-decoration-none"> <i class="bi bi-archive me-1" aria-hidden="true"></i>Archived </RouterLink>
@@ -258,7 +265,7 @@
 				</div>
 				<button class="btn btn-outline-secondary btn-sm" @click="enterSelectionMode">Select</button>
 				<template v-if="view === 'active'">
-					<button class="btn btn-outline-secondary btn-sm" @click="importFiles">Import</button>
+					<button class="btn btn-outline-secondary btn-sm" @click="handleImport">Import</button>
 					<button class="btn btn-outline-secondary btn-sm" @click="exportAllNotes">Export All</button>
 					<RouterLink to="/notes/archive" class="btn btn-outline-secondary btn-sm"> <i class="bi bi-archive me-1" aria-hidden="true"></i>Archived </RouterLink>
 					<RouterLink to="/notes/trash" class="btn btn-outline-secondary btn-sm"> <i class="bi bi-trash me-1" aria-hidden="true"></i>Trash </RouterLink>
