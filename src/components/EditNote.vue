@@ -284,6 +284,7 @@
 				loadedContent.value = emptyString;
 			}
 			isContentLoaded.value = true;
+			undoRedo.reset(loadedContent.value);
 		},
 		{ immediate: true }
 	);

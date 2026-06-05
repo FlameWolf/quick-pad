@@ -4,6 +4,7 @@ import { MAX_HISTORY } from "@/library";
 export interface UndoRedo<T> {
 	current: Ref<T>;
 	push: (value: T) => void;
+	reset: (value: T) => void;
 	undo: () => void;
 	redo: () => void;
 	canUndo: ComputedRef<boolean>;
@@ -29,6 +30,12 @@ export function useUndoRedo<T>(initial: T): UndoRedo<T> {
 		future.value = [];
 	}
 
+	function reset(value: T) {
+		current.value = value;
+		past.value = [];
+		future.value = [];
+	}
+
 	function undo() {
 		if (past.value.length === 0) {
 			return;
@@ -45,5 +52,5 @@ export function useUndoRedo<T>(initial: T): UndoRedo<T> {
 		current.value = future.value.pop()!;
 	}
 
-	return { current, push, undo, redo, canUndo, canRedo };
+	return { current, push, reset, undo, redo, canUndo, canRedo };
 }
