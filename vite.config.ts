@@ -5,6 +5,7 @@ import crypto from "node:crypto";
 import { defineConfig, type PluginOption } from "vite";
 import vue from "@vitejs/plugin-vue";
 import vueJsx from "@vitejs/plugin-vue-jsx";
+import purgeCSSPlugin from "@fullhuman/postcss-purgecss";
 
 function precacheManifestPlugin(): PluginOption {
 	const CACHE_VERSION_PLACEHOLDER = '"__CACHE_VERSION__"';
@@ -37,11 +38,27 @@ function precacheManifestPlugin(): PluginOption {
 	};
 }
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
 	plugins: [vue(), vueJsx(), precacheManifestPlugin()],
 	resolve: {
 		alias: {
 			"@": fileURLToPath(new URL("./src", import.meta.url))
+		}
+	},
+	css: {
+		postcss: {
+			plugins:
+				command === "build"
+					? [
+							purgeCSSPlugin({
+								content: ["./index.html", "./src/**/*.{vue,js,ts,jsx,tsx}"],
+								defaultExtractor: content => content.match(/[\w-/:]+(?<!:)/g) || [],
+								safelist: {
+									standard: [/^btn-(outline-)?(primary|secondary|success|danger|warning|info|light|dark)$/]
+								}
+							})
+						]
+					: []
 		}
 	},
 	build: {
@@ -61,4 +78,4 @@ export default defineConfig({
 			}
 		}
 	}
-});
+}));
