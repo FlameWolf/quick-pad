@@ -184,7 +184,7 @@ export function useNotesSync() {
 			const empty = pullResult.remoteCount === 0 && store.notes.length === 0;
 			const changes = pushResult.conflicts + pullResult.downloaded;
 			lastSyncMessage.value = {
-				text: empty ? "Nothing to sync" : `Notes synced${changes > 0 ? ` with ${changes} change${changes > 1 ? "s" : emptyString} fetched from remote` : emptyString}`,
+				text: empty ? "Nothing to sync" : `Synced${changes > 0 ? ` (pulled ${changes} change${changes > 1 ? "s" : emptyString} from cloud)` : emptyString}`,
 				type: "success",
 				timeStamp: Date.now()
 			};
@@ -216,14 +216,14 @@ export function useNotesSync() {
 			saveToCloud()
 				.then(() => {
 					lastSyncMessage.value = {
-						text: "Auto-synced changes to cloud",
+						text: "Synced",
 						type: "success",
 						timeStamp: Date.now()
 					};
 				})
 				.catch(() => {
 					lastSyncMessage.value = {
-						text: "Auto-sync failed",
+						text: "Sync failed",
 						type: "error",
 						timeStamp: Date.now()
 					};
