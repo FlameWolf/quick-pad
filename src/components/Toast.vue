@@ -60,6 +60,8 @@
 
 <style>
 	.toast-container {
+		max-width: 80vw;
+		max-height: 25vh;
 		position: fixed;
 		bottom: 1.5rem;
 		right: 1.5rem;
