@@ -61,7 +61,6 @@
 <style>
 	.toast-container {
 		max-width: 80vw;
-		max-height: 25vh;
 		position: fixed;
 		bottom: 1.5rem;
 		right: 1.5rem;
@@ -91,6 +90,8 @@
 	}
 	.toast-text {
 		flex: 1;
+		max-height: 20vh;
+		overflow-y: scroll;
 	}
 	.toast-slide-enter-active,
 	.toast-slide-leave-active {
