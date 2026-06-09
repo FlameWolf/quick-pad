@@ -27,7 +27,7 @@
 	watch(
 		() => props.timeStamp,
 		val => {
-			if (val) {
+			if (val && props.type === "success") {
 				resetDismissTimeout();
 			}
 		}
@@ -90,7 +90,7 @@
 	}
 	.toast-text {
 		flex: 1;
-		max-height: 20vh;
+		max-height: 25vh;
 		overflow-y: scroll;
 	}
 	.toast-slide-enter-active,
