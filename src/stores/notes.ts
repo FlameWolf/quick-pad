@@ -2,7 +2,7 @@ import { ref, computed, readonly, watch } from "vue";
 import { defineStore } from "pinia";
 import { NoteModel } from "@/models/NoteModel";
 import * as db from "@/storage/db";
-import { contains, emptyString, STORAGE_KEY, TRASH_RETENTION_MS } from "@/library";
+import { contains, emptyString, NOTE_PREFIX, TRASH_RETENTION_MS } from "@/library";
 import type { UUID } from "crypto";
 
 const isLoading = ref(true);
@@ -219,7 +219,7 @@ export const useNotesStore = defineStore("notes", () => {
 		archivedNotes,
 		trashedNotes,
 		isLoading: readonly(isLoading),
-		fileNamePrefix: STORAGE_KEY,
+		fileNamePrefix: NOTE_PREFIX,
 		addNote,
 		updateNote,
 		getNote,

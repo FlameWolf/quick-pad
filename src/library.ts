@@ -7,7 +7,18 @@ export const KV_STORE = "kv";
 export const MIGRATION_FLAG = "__migrated-to-idb";
 export const LEGACY_NOTES_KEY = "quick-pad-notes";
 export const NOTE_PREFIX = "qp-note:";
-export const STORAGE_KEY = "qp-note:";
+export const KV_MAPPINGS: ReadonlyArray<readonly [string, string, "string" | "number" | "boolean" | "json"]> = [
+	["quick-pad-sort-by", "sort-by", "string"],
+	["quick-pad-sort-direction", "sort-direction", "string"],
+	["quick-pad-last-synced-to-local", "last-synced-to-local", "string"],
+	["quick-pad-last-synced-to-cloud", "last-synced-to-cloud", "string"],
+	["quick-pad-auto-sync", "auto-sync", "boolean"],
+	["quick-pad-pending-purges", "pending-purges", "json"],
+	["google_session_hint", "google-session-hint", "string"],
+	["google_access_token", "google-access-token", "string"],
+	["google_token_expires_at", "google-token-expires-at", "number"],
+	["google_user_info", "google-user-info", "json"]
+];
 export const TRASH_RETENTION_DAYS = 30;
 export const TRASH_RETENTION_MS = TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000;
 export const MAX_HISTORY = 100;
@@ -16,13 +27,14 @@ export const SORT_DIRECTION_KEY = "sort-direction";
 export const SORT_FIELDS = ["createdAt", "modifiedAt", "title", "sentenceCount", "wordCount", "characterCount"] as const;
 export const SORT_DIRECTIONS = ["asc", "desc"] as const;
 export const CLIENT_ID = import.meta.env.VITE_GOOG_OAUTH_CLIENT_ID ?? emptyString;
-export const SCOPES = "https://www.googleapis.com/auth/drive.appdata openid email profile";
 export const SESSION_KEY = "google-session-hint";
 export const TOKEN_KEY = "google-access-token";
 export const EXPIRY_KEY = "google-token-expires-at";
 export const USER_KEY = "google-user-info";
 export const TOKEN_REFRESH_BUFFER_MS = 60_000;
-export const GSI_WAIT_MS = 6000;
+export const AUTH_START_URL = "/api/auth/start";
+export const AUTH_TOKEN_URL = "/api/auth/token";
+export const AUTH_SIGNOUT_URL = "/api/auth/signout";
 export const DRIVE_API = "https://www.googleapis.com/drive/v3/files";
 export const UPLOAD_API = "https://www.googleapis.com/upload/drive/v3/files";
 export const LEGACY_SYNC_FILENAME = "quick-pad-notes.json";

@@ -1,6 +1,6 @@
 import { ref, readonly, computed, toRaw, watch } from "vue";
 import { deleteKV, getKV, setKV } from "@/storage/db";
-import { CLIENT_ID, emptyString, EXPIRY_KEY, GSI_WAIT_MS, LAST_SYNCED_TO_CLOUD_KEY, LAST_SYNCED_TO_LOCAL_KEY, SCOPES, SESSION_KEY, TOKEN_KEY, TOKEN_REFRESH_BUFFER_MS, USER_KEY } from "@/library";
+import { AUTH_SIGNOUT_URL, AUTH_START_URL, AUTH_TOKEN_URL, CLIENT_ID, EXPIRY_KEY, LAST_SYNCED_TO_CLOUD_KEY, LAST_SYNCED_TO_LOCAL_KEY, SESSION_KEY, TOKEN_KEY, TOKEN_REFRESH_BUFFER_MS, USER_KEY } from "@/library";
 
 type UserInfo = {
 	email: string;
@@ -10,8 +10,7 @@ type UserInfo = {
 let cachedToken: string | null = null;
 let cachedExpiry: number = 0;
 let cachedUser: UserInfo | null = null;
-let tokenClient: any | null = null;
-let gsiReadyPromise: Promise<boolean> | null = null;
+let refreshInFlight: Promise<string> | null = null;
 const accessToken = ref<string | null>(null);
 const tokenExpiresAt = ref(0);
 const user = ref<UserInfo | null>(null);
@@ -53,60 +52,8 @@ export async function hydrateAuthState(): Promise<void> {
 	}
 }
 
-function waitForGoogleIdentity(): Promise<boolean> {
-	if (gsiReadyPromise) {
-		return gsiReadyPromise;
-	}
-	gsiReadyPromise = new Promise(resolve => {
-		if (typeof google !== "undefined" && google?.accounts?.oauth2) {
-			resolve(true);
-			return;
-		}
-		const start = Date.now();
-		const interval = setInterval(() => {
-			if (typeof google !== "undefined" && google?.accounts?.oauth2) {
-				clearInterval(interval);
-				resolve(true);
-			} else if (Date.now() - start > GSI_WAIT_MS) {
-				clearInterval(interval);
-				resolve(false);
-			}
-		}, 100);
-	});
-	return gsiReadyPromise;
-}
-
 export function useGoogleAuth() {
 	const isConfigured = computed(() => Boolean(CLIENT_ID));
-
-	function initClient(): boolean {
-		if (tokenClient) {
-			return true;
-		}
-		if (!CLIENT_ID || typeof google === "undefined" || !google?.accounts?.oauth2) {
-			return false;
-		}
-		tokenClient = google.accounts.oauth2.initTokenClient({
-			client_id: CLIENT_ID,
-			scope: SCOPES,
-			callback: async (response: any) => {
-				if (response.error) {
-					await clearSession(user.value !== null);
-					isReady.value = true;
-					return;
-				}
-				accessToken.value = response.access_token;
-				tokenExpiresAt.value = Date.now() + response.expires_in * 1000;
-				await setKV(SESSION_KEY, true);
-				if (!user.value) {
-					await fetchUserInfo(response.access_token);
-				}
-				isSignedIn.value = true;
-				isReady.value = true;
-			}
-		});
-		return true;
-	}
 
 	function tryRestoreSession() {
 		if (isReady.value) {
@@ -128,29 +75,110 @@ export function useGoogleAuth() {
 		isReady.value = true;
 	}
 
-	async function signIn() {
+	async function refreshFromServer(): Promise<string> {
+		if (refreshInFlight) {
+			return refreshInFlight;
+		}
+		refreshInFlight = (async () => {
+			try {
+				const res = await fetch(AUTH_TOKEN_URL, {
+					method: "GET",
+					credentials: "include",
+					headers: { Accept: "application/json" }
+				});
+				if (res.status === 401) {
+					await clearSession(false);
+					throw new Error("Your Google session has expired. Please sign in again.");
+				}
+				if (!res.ok) {
+					throw new Error(`Could not refresh the Google session (status ${res.status}).`);
+				}
+				const data = (await res.json()) as { access_token: string; expires_in: number; user?: UserInfo | null };
+				accessToken.value = data.access_token;
+				tokenExpiresAt.value = Date.now() + (data.expires_in || 3600) * 1000;
+				if (data.user) {
+					user.value = data.user;
+				}
+				await setKV(SESSION_KEY, true);
+				isSignedIn.value = true;
+				return data.access_token;
+			} finally {
+				refreshInFlight = null;
+			}
+		})();
+		return refreshInFlight;
+	}
+
+	async function getAccessToken(): Promise<string> {
+		const token = accessToken.value;
+		if (token && Date.now() < tokenExpiresAt.value - TOKEN_REFRESH_BUFFER_MS) {
+			return token;
+		}
+		return refreshFromServer();
+	}
+
+	function signIn(): Promise<void> {
 		if (!CLIENT_ID) {
-			return;
+			return Promise.resolve();
 		}
-		const loaded = await waitForGoogleIdentity();
-		if (!loaded || !initClient()) {
-			return;
-		}
-		try {
-			tokenClient!.requestAccessToken({ prompt: "consent" });
-		} catch {
-			console.log("Consent popup blocked or GSI not ready");
-		}
+		return new Promise<void>(resolve => {
+			const width = 500;
+			const height = 600;
+			const left = window.screenX + Math.max(0, Math.round((window.outerWidth - width) / 2));
+			const top = window.screenY + Math.max(0, Math.round((window.outerHeight - height) / 2));
+			const popup = window.open(AUTH_START_URL, "qp-google-auth", `width=${width},height=${height},left=${left},top=${top}`);
+			let settled = false;
+			let pollTimer: ReturnType<typeof setInterval> | null = null;
+			function cleanup() {
+				window.removeEventListener("message", onMessage);
+				if (pollTimer) {
+					clearInterval(pollTimer);
+					pollTimer = null;
+				}
+			}
+			function finish() {
+				if (settled) {
+					return;
+				}
+				settled = true;
+				cleanup();
+				resolve();
+			}
+			async function onMessage(event: MessageEvent) {
+				if (event.origin !== window.location.origin || !event.data || event.data.type !== "qp-auth") {
+					return;
+				}
+				if (event.data.ok) {
+					if (event.data.user) {
+						user.value = event.data.user;
+					}
+					await setKV(SESSION_KEY, true);
+					isSignedIn.value = true;
+					try {
+						await refreshFromServer();
+					} catch {}
+				}
+				finish();
+			}
+			window.addEventListener("message", onMessage);
+			if (!popup) {
+				console.log("Sign-in popup was blocked by the browser.");
+				finish();
+				return;
+			}
+			pollTimer = setInterval(() => {
+				if (popup.closed) {
+					finish();
+				}
+			}, 500);
+		});
 	}
 
 	async function signOut() {
-		if (accessToken.value && typeof google !== "undefined" && google?.accounts?.oauth2) {
-			google.accounts.oauth2.revoke(accessToken.value, async () => {
-				await clearSession();
-			});
-		} else {
-			await clearSession();
-		}
+		try {
+			await fetch(AUTH_SIGNOUT_URL, { method: "POST", credentials: "include" });
+		} catch {}
+		await clearSession();
 	}
 
 	async function clearSession(keepUser = false) {
@@ -166,51 +194,6 @@ export function useGoogleAuth() {
 			await deleteKV(LAST_SYNCED_TO_CLOUD_KEY);
 			await deleteKV(LAST_SYNCED_TO_LOCAL_KEY);
 		}
-	}
-
-	async function fetchUserInfo(token: string) {
-		try {
-			const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
-			});
-			if (!res.ok) {
-				return;
-			}
-			const data = await res.json();
-			user.value = {
-				email: data.email,
-				name: data.name
-			};
-		} catch {}
-	}
-
-	async function getAccessToken(): Promise<string> {
-		if (accessToken.value && Date.now() < tokenExpiresAt.value - TOKEN_REFRESH_BUFFER_MS) {
-			return accessToken.value;
-		}
-		const loaded = await waitForGoogleIdentity();
-		if (!loaded || !initClient()) {
-			throw new Error("Google Sign-In is unavailable");
-		}
-		return new Promise((resolve, reject) => {
-			const original = tokenClient!.callback;
-			tokenClient!.callback = (response: any) => {
-				tokenClient!.callback = original;
-				original(response);
-				if (response.error) {
-					reject(new Error(response.error));
-				} else {
-					resolve(response.access_token);
-				}
-			};
-			const params: { prompt: string; hint?: string } = { prompt: emptyString };
-			if (user.value?.email) {
-				params.hint = user.value.email;
-			}
-			tokenClient!.requestAccessToken(params);
-		});
 	}
 
 	return {
