@@ -28,6 +28,7 @@ watch([accessToken, tokenExpiresAt], async ([token, expiresAt]) => {
 		await setKV(EXPIRY_KEY, expiresAt);
 	}
 });
+
 watch(user, async info => {
 	if (!info) {
 		await deleteKV(USER_KEY);
@@ -54,6 +55,21 @@ export async function hydrateAuthState(): Promise<void> {
 
 export function useGoogleAuth() {
 	const isConfigured = computed(() => Boolean(CLIENT_ID));
+
+	async function clearSession(keepUser = false) {
+		accessToken.value = null;
+		tokenExpiresAt.value = 0;
+		cachedToken = null;
+		cachedExpiry = 0;
+		if (!keepUser) {
+			user.value = null;
+			isSignedIn.value = false;
+			cachedUser = null;
+			await deleteKV(SESSION_KEY);
+			await deleteKV(LAST_SYNCED_TO_CLOUD_KEY);
+			await deleteKV(LAST_SYNCED_TO_LOCAL_KEY);
+		}
+	}
 
 	function tryRestoreSession() {
 		if (isReady.value) {
@@ -179,21 +195,6 @@ export function useGoogleAuth() {
 			await fetch(AUTH_SIGNOUT_URL, { method: "POST", credentials: "include" });
 		} catch {}
 		await clearSession();
-	}
-
-	async function clearSession(keepUser = false) {
-		accessToken.value = null;
-		tokenExpiresAt.value = 0;
-		cachedToken = null;
-		cachedExpiry = 0;
-		if (!keepUser) {
-			user.value = null;
-			isSignedIn.value = false;
-			cachedUser = null;
-			await deleteKV(SESSION_KEY);
-			await deleteKV(LAST_SYNCED_TO_CLOUD_KEY);
-			await deleteKV(LAST_SYNCED_TO_LOCAL_KEY);
-		}
 	}
 
 	return {
