@@ -7,6 +7,13 @@ import vue from "@vitejs/plugin-vue";
 import vueJsx from "@vitejs/plugin-vue-jsx";
 import purgeCSSPlugin from "@fullhuman/postcss-purgecss";
 
+const apiProxy = {
+	"/api": {
+		target: "http://localhost:3000",
+		changeOrigin: false
+	}
+};
+
 function precacheManifestPlugin(): PluginOption {
 	const CACHE_VERSION_PLACEHOLDER = '"__CACHE_VERSION__"';
 	const PRECACHE_MANIFEST_PLACEHOLDER = '["__PRECACHE_MANIFEST__"]';
@@ -63,12 +70,10 @@ export default defineConfig(({ command }) => ({
 	},
 	...(command === "serve" && {
 		server: {
-			proxy: {
-				"/api": {
-					target: "http://localhost:3000",
-					changeOrigin: false
-				}
-			}
+			proxy: apiProxy
+		},
+		preview: {
+			proxy: apiProxy
 		}
 	}),
 	build: {
