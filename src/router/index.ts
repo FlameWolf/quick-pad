@@ -34,7 +34,9 @@ const router = createRouter({
 			}
 		},
 		{ path: "/notes/new", component: EditNote },
-		{ path: "/notes/:id", component: EditNote, props: true }
+		{ path: "/notes/:id", component: EditNote, props: true },
+		{ path: "/privacy", component: () => import("@/components/PrivacyPolicy.vue") },
+		{ path: "/terms", component: () => import("@/components/TermsOfService.vue") }
 	]
 });
 router.beforeEach((_, from) => {
