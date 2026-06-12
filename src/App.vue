@@ -241,7 +241,7 @@
 			</div>
 		</div>
 	</nav>
-	<main class="container px-2 pb-4">
+	<main class="flex-grow-1 container px-2 pb-4">
 		<RouterView/>
 		<div class="d-flex flex-column gap-1 position-fixed bottom-0 end-0 opacity-75 mb-2 me-2">
 			<button class="btn btn-secondary btn-sm" @click="scrollToPosition(`top`)">
