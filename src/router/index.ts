@@ -2,6 +2,8 @@ import { ref } from "vue";
 import { createRouter, createWebHistory } from "vue-router";
 import DisplayNoteList from "@/components/DisplayNoteList.vue";
 import EditNote from "@/components/EditNote.vue";
+import PrivacyPolicy from "@/components/PrivacyPolicy.vue";
+import TermsOfService from "@/components/TermsOfService.vue";
 
 export const isNavigating = ref(false);
 export const listViewRoutes = ["/notes", "/notes/archive", "/notes/trash"];
@@ -34,7 +36,9 @@ const router = createRouter({
 			}
 		},
 		{ path: "/notes/new", component: EditNote },
-		{ path: "/notes/:id", component: EditNote, props: true }
+		{ path: "/notes/:id", component: EditNote, props: true },
+		{ path: "/privacy", component: PrivacyPolicy },
+		{ path: "/terms", component: TermsOfService }
 	]
 });
 router.beforeEach((_, from) => {

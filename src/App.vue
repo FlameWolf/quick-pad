@@ -256,6 +256,13 @@
 			</button>
 		</div>
 	</main>
+	<footer class="bg-body-tertiary border-top mt-4">
+		<div class="container px-2 py-3 d-flex flex-wrap justify-content-center align-items-center gap-3 small text-muted">
+			<span>QuickPad</span>
+			<RouterLink to="/privacy" class="link-secondary text-decoration-none">Privacy Policy</RouterLink>
+			<RouterLink to="/terms" class="link-secondary text-decoration-none">Terms of Service</RouterLink>
+		</div>
+	</footer>
 	<Toast v-if="lastSyncMessage" :message="lastSyncMessage.text" :type="lastSyncMessage.type" :visible="!!lastSyncMessage" :timeStamp="lastSyncMessage.timeStamp" @dismiss="dismissMessage"/>
 	<ConfirmDialog/>
 	<div v-if="isNavigating" class="nav-overlay"></div>
