@@ -14,7 +14,7 @@
 		{
 			heading: "Data Stored Locally on Your Device",
 			blocks: [
-				{ type: "paragraph", text: 'Your data is stored locally in your browser in an IndexedDB database named "quick-pad". There is no server-side storage of your notes for local use. No account, login, or authentication is required to create and store notes. The data stored locally includes:' },
+				{ type: "paragraph", text: `Your data is stored locally in your browser in an IndexedDB database named "quick-pad". There is no server-side storage of your notes for local use. No account, login, or authentication is required to create and store notes. The data stored locally includes:` },
 				{
 					type: "list",
 					items: ["Your note titles and the full body text of each note.", "Per-note metadata, including a randomly generated UUID id (not derived from your identity or content), a 100-character text summary (the first 100 characters of the content), sentence, word, and character counts, and timestamps (created, modified, archived, deleted, and state-changed).", "Your preferences, such as your sort field, sort direction, an auto-sync on/off flag, and a list of pending purges.", "If you use Google sync: sync timestamps (last synced to local and to cloud), a cached short-lived Google access token and its expiry, a Google session hint, and your cached Google user info (your name and email)."]

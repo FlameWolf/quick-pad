@@ -26,7 +26,7 @@
 		<section v-for="section in sections" :key="section.heading" class="mt-4">
 			<h3 class="h5 mb-3">{{ section.heading }}</h3>
 			<template v-for="(block, index) in section.blocks" :key="index">
-				<p v-if="block.type === 'paragraph'" v-html="block.text"></p>
+				<p v-if="block.type === `paragraph`" v-html="block.text"></p>
 				<ul v-else class="mb-3">
 					<li v-for="(item, itemIndex) in block.items" :key="itemIndex" class="mb-1" v-html="item"></li>
 				</ul>

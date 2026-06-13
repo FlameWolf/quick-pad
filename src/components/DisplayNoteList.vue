@@ -210,7 +210,7 @@
 </script>
 
 <template>
-	<div v-if="view !== 'active'" class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+	<div v-if="view !== `active`" class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
 		<h2 class="mb-0">{{ pageTitle }}</h2>
 		<RouterLink to="/notes" class="btn btn-secondary btn-sm">
 			<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
@@ -233,7 +233,7 @@
 			</svg>
 		</div>
 		<p class="text-muted mb-3">{{ emptyMessage }}</p>
-		<div v-if="view === 'active' && !isSearchMode" class="d-flex flex-column gap-2 align-items-center">
+		<div v-if="view === `active` && !isSearchMode" class="d-flex flex-column gap-2 align-items-center">
 			<div class="d-flex gap-2 justify-content-center flex-wrap">
 				<RouterLink to="/notes/new" class="btn btn-primary">Create a note</RouterLink>
 				<button class="btn btn-outline-secondary" @click="handleImport">Import from files</button>
@@ -272,7 +272,7 @@
 						<option value="wordCount">Words</option>
 						<option value="characterCount">Characters</option>
 					</select>
-					<button class="btn btn-outline-secondary btn-sm" @click="toggleSortDirection" :aria-label="sortDirection === 'asc' ? 'Sort ascending, click to switch to descending' : 'Sort descending, click to switch to ascending'" :title="sortDirection === 'asc' ? 'Ascending' : 'Descending'">
+					<button class="btn btn-outline-secondary btn-sm" @click="toggleSortDirection" :aria-label="sortDirection === `asc` ? `Sort ascending, click to switch to descending` : `Sort descending, click to switch to ascending`" :title="sortDirection === `asc` ? `Ascending` : `Descending`">
 						<svg v-if="sortDirection === `asc`" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-sort-down" viewBox="0 0 16 16">
 							<path d="M3.5 2.5a.5.5 0 0 0-1 0v8.793l-1.146-1.147a.5.5 0 0 0-.708.708l2 1.999.007.007a.497.497 0 0 0 .7-.006l2-2a.5.5 0 0 0-.707-.708L3.5 11.293zm3.5 1a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5M7.5 6a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1zm0 3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1zm0 3a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1z"/>
 						</svg>
@@ -282,7 +282,7 @@
 					</button>
 				</div>
 				<button class="btn btn-outline-secondary btn-sm" @click="enterSelectionMode">Select</button>
-				<template v-if="view === 'active'">
+				<template v-if="view === `active`">
 					<button class="btn btn-outline-secondary btn-sm" @click="handleImport">Import</button>
 					<button class="btn btn-outline-secondary btn-sm" @click="exportAllNotes">Export All</button>
 					<RouterLink to="/notes/archive" class="btn btn-outline-secondary btn-sm">
@@ -299,7 +299,7 @@
 						<span>Trash</span>
 					</RouterLink>
 				</template>
-				<template v-if="view === 'trash'">
+				<template v-if="view === `trash`">
 					<button class="btn btn-outline-danger btn-sm" @click="handleEmptyTrash">
 						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash-fill me-1" viewBox="0 0 16 16">
 							<path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"/>
@@ -310,7 +310,7 @@
 			</template>
 		</div>
 		<div class="notes-grid">
-			<RouterLink v-if="view === 'active' && !isSelectionMode" to="/notes/new" class="card note-card new-note-card text-decoration-none">
+			<RouterLink v-if="view === `active` && !isSelectionMode" to="/notes/new" class="card note-card new-note-card text-decoration-none">
 				<div class="card-body d-flex align-items-center justify-content-center">
 					<span class="fs-1 text-muted">+</span>
 				</div>

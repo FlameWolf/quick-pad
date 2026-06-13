@@ -52,7 +52,7 @@
 					</svg>
 				</span>
 				<span class="toast-text" v-html="message"></span>
-				<button class="btn-close align-self-start ms-auto" @click="$emit('dismiss')"></button>
+				<button class="btn-close align-self-start ms-auto" @click="$emit(`dismiss`)"></button>
 			</div>
 		</div>
 	</Transition>
