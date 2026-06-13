@@ -37,6 +37,7 @@
 
 <style>
 	.legal-content {
+		overflow-wrap: break-word;
 		max-width: 48rem;
 	}
 	.legal-content :is(h3) {
