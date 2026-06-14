@@ -2,8 +2,8 @@ import { ref } from "vue";
 import { useNotesStore } from "@/stores/notes";
 import { NoteModel } from "@/models/NoteModel";
 import { emptyString, isTextFile } from "@/library";
-import JSZip from "jszip";
 
+const JSZip = (await import("jszip")).default;
 const importErrors = ref<Array<{
 	fileName: string;
 	message: string;

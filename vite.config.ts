@@ -80,13 +80,8 @@ export default defineConfig(({ command }) => ({
 		rollupOptions: {
 			output: {
 				manualChunks(id) {
-					if (!id.includes("node_modules")) {
-						return;
-					}
-					if (id.includes("/jszip/")) {
-						return "vendor-jszip";
-					}
-					if (id.includes("/@vue/") || id.includes("/vue/") || id.includes("/vue-router/") || id.includes("/pinia/")) {
+					const vendorModules = ["node_modules/@vue/", "node_modules/vue/", "node_modules/vue-router/", "node_modules/pinia/"];
+					if (vendorModules.some(module => id.includes(module))) {
 						return "vendor-vue";
 					}
 				}
