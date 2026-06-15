@@ -104,7 +104,7 @@ export async function putNotesMeta(metas: NoteMetaJSON[]): Promise<void> {
 	}
 	const db = await getDB();
 	const tx = db.transaction(NOTES_STORE, "readwrite");
-	await Promise.all([...metas.map(meta => tx.store.put(meta)), tx.done]);
+	await Promise.all(metas.map(meta => tx.store.put(meta)).concat(tx.done as Promise<any>));
 }
 
 export async function deleteNote(id: string): Promise<void> {
