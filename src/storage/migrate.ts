@@ -1,6 +1,7 @@
-import { getKV, putNote, setKV } from "./db";
+import { getKV, putNote, setKV, setKVRaw } from "./db";
+import { KV_MAPPINGS, LEGACY_NOTES_KEY, MIGRATION_FLAG, NOTE_PREFIX } from "@/constants/storage";
+import { logWarn } from "@/utils/logger";
 import type { NoteJSON } from "@/models/NoteModel";
-import { KV_MAPPINGS, LEGACY_NOTES_KEY, MIGRATION_FLAG, NOTE_PREFIX } from "@/library";
 
 type Coercion = (typeof KV_MAPPINGS)[number][2];
 
@@ -20,7 +21,7 @@ function coerce(raw: string, type: Coercion): FromName<Coercion> {
 }
 
 export async function runMigration(): Promise<void> {
-	if (await getKV<boolean>(MIGRATION_FLAG)) {
+	if (await getKV(MIGRATION_FLAG)) {
 		return;
 	}
 	const noteKeysToRemove: string[] = [];
@@ -35,8 +36,8 @@ export async function runMigration(): Promise<void> {
 					}
 				}
 			}
-		} catch {
-			void 0;
+		} catch (error) {
+			logWarn(`Failed to migrate legacy notes array from "${LEGACY_NOTES_KEY}"`, error);
 		}
 	}
 	for (let i = 0; i < localStorage.length; i++) {
@@ -55,8 +56,8 @@ export async function runMigration(): Promise<void> {
 			if (note && typeof note.id === "string") {
 				await putNote(note);
 			}
-		} catch {
-			void 0;
+		} catch (error) {
+			logWarn(`Failed to migrate note from localStorage key "${k}"`, error);
 		}
 	}
 	for (const [lsKey, idbKey, type] of KV_MAPPINGS) {
@@ -65,9 +66,9 @@ export async function runMigration(): Promise<void> {
 			continue;
 		}
 		try {
-			await setKV(idbKey, coerce(raw, type));
-		} catch {
-			void 0;
+			await setKVRaw(idbKey, coerce(raw, type));
+		} catch (error) {
+			logWarn(`Failed to migrate localStorage key "${lsKey}" (type "${type}")`, error);
 		}
 	}
 	for (const k of noteKeysToRemove) {

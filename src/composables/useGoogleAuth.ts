@@ -1,6 +1,8 @@
 import { ref, readonly, computed, toRaw, watch } from "vue";
 import { deleteKV, getKV, setKV } from "@/storage/db";
-import { AUTH_SIGNOUT_URL, AUTH_START_URL, AUTH_TOKEN_URL, CLIENT_ID, EXPIRY_KEY, LAST_SYNCED_TO_CLOUD_KEY, LAST_SYNCED_TO_LOCAL_KEY, SESSION_KEY, TOKEN_KEY, TOKEN_REFRESH_BUFFER_MS, USER_KEY } from "@/library";
+import { AUTH_SIGNOUT_URL, AUTH_START_URL, AUTH_TOKEN_URL, CLIENT_ID, EXPIRY_KEY, SESSION_KEY, TOKEN_KEY, TOKEN_REFRESH_BUFFER_MS, USER_KEY } from "@/constants/auth";
+import { LAST_SYNCED_TO_CLOUD_KEY, LAST_SYNCED_TO_LOCAL_KEY } from "@/constants/sync";
+import { logWarn } from "@/utils/logger";
 
 type UserInfo = {
 	email: string;
@@ -40,9 +42,9 @@ watch(user, async info => {
 });
 
 export async function hydrateAuthState(): Promise<void> {
-	cachedToken = (await getKV<string>(TOKEN_KEY)) ?? null;
-	cachedExpiry = (await getKV<number>(EXPIRY_KEY)) ?? 0;
-	const stored = await getKV<UserInfo>(USER_KEY);
+	cachedToken = (await getKV(TOKEN_KEY)) ?? null;
+	cachedExpiry = (await getKV(EXPIRY_KEY)) ?? 0;
+	const stored = await getKV(USER_KEY);
 	if (stored && typeof stored.email === "string" && typeof stored.name === "string") {
 		cachedUser = {
 			email: stored.email,
@@ -172,13 +174,15 @@ export function useGoogleAuth() {
 					isSignedIn.value = true;
 					try {
 						await refreshFromServer();
-					} catch {}
+					} catch (error) {
+						logWarn("Failed to refresh access token after sign-in", error);
+					}
 				}
 				finish();
 			}
 			window.addEventListener("message", onMessage);
 			if (!popup) {
-				console.log("Sign-in popup was blocked by the browser.");
+				logWarn("Sign-in popup was blocked by the browser.");
 				finish();
 				return;
 			}
@@ -193,7 +197,9 @@ export function useGoogleAuth() {
 	async function signOut() {
 		try {
 			await fetch(AUTH_SIGNOUT_URL, { method: "POST", credentials: "include" });
-		} catch {}
+		} catch (error) {
+			logWarn("Failed to notify the server of sign-out", error);
+		}
 		await clearSession();
 	}
 

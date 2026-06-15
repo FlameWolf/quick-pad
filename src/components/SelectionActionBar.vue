@@ -5,11 +5,11 @@
 		variant: "primary" | "danger" | "outline-primary" | "outline-secondary" | "outline-danger";
 	}
 
-	defineProps<{
+	const props = defineProps<{
 		selectedCount: number;
 		actions: SelectionAction[];
 	}>();
-	defineEmits<{
+	const emit = defineEmits<{
 		(e: "action", key: string): void;
 		(e: "cancel"): void;
 	}>();
@@ -17,10 +17,10 @@
 
 <template>
 	<div class="selection-action-bar">
-		<span class="fw-medium">{{ selectedCount }} selected</span>
+		<span class="fw-medium">{{ props.selectedCount }} selected</span>
 		<div class="d-flex gap-2 flex-wrap">
-			<button v-for="action in actions" :key="action.key" type="button" class="btn btn-sm" :class="`btn-${action.variant}`" @click="$emit(`action`, action.key)">{{ action.label }}</button>
-			<button type="button" class="btn btn-outline-secondary btn-sm" @click="$emit(`cancel`)">Cancel</button>
+			<button v-for="action in props.actions" :key="action.key" type="button" class="btn btn-sm" :class="`btn-${action.variant}`" @click="emit(`action`, action.key)">{{ action.label }}</button>
+			<button type="button" class="btn btn-outline-secondary btn-sm" @click="emit(`cancel`)">Cancel</button>
 		</div>
 	</div>
 </template>

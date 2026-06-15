@@ -52,6 +52,11 @@ function shutdown() {
 			}
 		}
 	}
+	const forceExit = setTimeout(() => {
+		console.error("[run-all] Children did not exit in time; forcing shutdown.");
+		process.exit(1);
+	}, 5000);
+	forceExit.unref();
 }
 
 process.on("SIGINT", shutdown);

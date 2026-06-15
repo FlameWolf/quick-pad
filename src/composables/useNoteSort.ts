@@ -1,6 +1,6 @@
 import { ref, readonly, watch } from "vue";
 import { getKV, setKV } from "@/storage/db";
-import { SORT_BY_KEY, SORT_DIRECTION_KEY, SORT_DIRECTIONS, SORT_FIELDS } from "@/library";
+import { SORT_BY_KEY, SORT_DIRECTION_KEY, SORT_DIRECTIONS, SORT_FIELDS } from "@/constants/sort";
 import type { NoteModel } from "@/models/NoteModel";
 
 export type SortField = (typeof SORT_FIELDS)[number];
@@ -10,11 +10,11 @@ const sortBy = ref<SortField>("modifiedAt");
 const sortDirection = ref<SortDirection>("desc");
 
 export async function hydrateSortPrefs(): Promise<void> {
-	const storedBy = await getKV<string>(SORT_BY_KEY);
+	const storedBy = await getKV(SORT_BY_KEY);
 	if (SORT_FIELDS.includes(storedBy as SortField)) {
 		sortBy.value = storedBy as SortField;
 	}
-	const storedDir = await getKV<string>(SORT_DIRECTION_KEY);
+	const storedDir = await getKV(SORT_DIRECTION_KEY);
 	if (SORT_DIRECTIONS.includes(storedDir as SortDirection)) {
 		sortDirection.value = storedDir as SortDirection;
 	}
