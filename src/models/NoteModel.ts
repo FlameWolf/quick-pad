@@ -1,4 +1,5 @@
-import { emptyString, getCharacterCount, getSentenceCount, getSummary, getWordCount } from "@/library";
+import { getCharacterCount, getSentenceCount, getSummary, getWordCount } from "@/utils/text-analysis";
+import { emptyString } from "@/constants/common";
 import type { UUID } from "crypto";
 
 export interface NoteMetaJSON {
@@ -17,6 +18,18 @@ export interface NoteMetaJSON {
 
 export interface NoteJSON extends NoteMetaJSON {
 	content?: string;
+}
+
+function parseValidDate(value: string | undefined): Date | undefined {
+	if (!value) {
+		return undefined;
+	}
+	const date = new Date(value);
+	return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+function isValidCount(value: unknown): value is number {
+	return typeof value === "number" && Number.isFinite(value) && value >= 0;
 }
 
 export class NoteModel {
@@ -104,12 +117,12 @@ export class NoteModel {
 
 	static fromJSON(data: NoteJSON): NoteModel {
 		const note = new NoteModel(data.title, data.content, data.id as UUID);
-		note.createdAt = new Date(data.createdAt);
-		note.modifiedAt = data.modifiedAt ? new Date(data.modifiedAt) : undefined;
-		note.archivedAt = data.archivedAt ? new Date(data.archivedAt) : undefined;
-		note.deletedAt = data.deletedAt ? new Date(data.deletedAt) : undefined;
-		note.stateChangedAt = data.stateChangedAt ? new Date(data.stateChangedAt) : undefined;
-		if (data.summary !== undefined && data.sentenceCount !== undefined && data.wordCount !== undefined && data.characterCount !== undefined) {
+		note.createdAt = parseValidDate(data.createdAt) ?? note.createdAt;
+		note.modifiedAt = parseValidDate(data.modifiedAt);
+		note.archivedAt = parseValidDate(data.archivedAt);
+		note.deletedAt = parseValidDate(data.deletedAt);
+		note.stateChangedAt = parseValidDate(data.stateChangedAt);
+		if (typeof data.summary === "string" && isValidCount(data.sentenceCount) && isValidCount(data.wordCount) && isValidCount(data.characterCount)) {
 			note.summary = data.summary;
 			note.sentenceCount = data.sentenceCount;
 			note.wordCount = data.wordCount;

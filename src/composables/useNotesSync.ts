@@ -3,8 +3,11 @@ import { useGoogleDrive } from "./useGoogleDrive";
 import { useGoogleAuth } from "./useGoogleAuth";
 import { useNotesStore } from "@/stores/notes";
 import { NoteModel } from "@/models/NoteModel";
-import { getKV, setKV } from "@/storage/db";
-import { AUTO_SYNC_KEY, debounce, DEBOUNCE_MS, emptyString, LAST_SYNCED_TO_CLOUD_KEY, LAST_SYNCED_TO_LOCAL_KEY } from "@/library";
+import { deleteKV, getKV, setKV } from "@/storage/db";
+import { debounce } from "@/utils/timing";
+import { emptyString } from "@/constants/common";
+import { AUTO_SYNC_KEY, DEBOUNCE_MS, LAST_SYNCED_TO_CLOUD_KEY, LAST_SYNCED_TO_LOCAL_KEY } from "@/constants/sync";
+import { logWarn } from "@/utils/logger";
 import type { NoteJSON } from "@/models/NoteModel";
 import type { UUID } from "crypto";
 
@@ -26,9 +29,9 @@ const syncError = ref<string | null>(null);
 const pendingPurges = new Set<UUID>();
 
 export async function hydrateSyncMetadata(): Promise<void> {
-	const storedLocal = await getKV<string>(LAST_SYNCED_TO_LOCAL_KEY);
-	const storedCloud = await getKV<string>(LAST_SYNCED_TO_CLOUD_KEY);
-	const storedAutoSync = await getKV<boolean>(AUTO_SYNC_KEY);
+	const storedLocal = await getKV(LAST_SYNCED_TO_LOCAL_KEY);
+	const storedCloud = await getKV(LAST_SYNCED_TO_CLOUD_KEY);
+	const storedAutoSync = await getKV(AUTO_SYNC_KEY);
 	lastSyncedToLocalAt.value = storedLocal ? new Date(storedLocal) : null;
 	lastSyncedToCloudAt.value = storedCloud ? new Date(storedCloud) : null;
 	autoSyncEnabled.value = storedAutoSync === undefined ? true : storedAutoSync;
@@ -36,10 +39,18 @@ export async function hydrateSyncMetadata(): Promise<void> {
 		await setKV(AUTO_SYNC_KEY, flag);
 	});
 	watch(lastSyncedToLocalAt, async date => {
-		await setKV(LAST_SYNCED_TO_LOCAL_KEY, date?.toISOString());
+		if (date) {
+			await setKV(LAST_SYNCED_TO_LOCAL_KEY, date.toISOString());
+		} else {
+			await deleteKV(LAST_SYNCED_TO_LOCAL_KEY);
+		}
 	});
 	watch(lastSyncedToCloudAt, async date => {
-		await setKV(LAST_SYNCED_TO_CLOUD_KEY, date?.toISOString());
+		if (date) {
+			await setKV(LAST_SYNCED_TO_CLOUD_KEY, date.toISOString());
+		} else {
+			await deleteKV(LAST_SYNCED_TO_CLOUD_KEY);
+		}
 	});
 }
 
@@ -61,7 +72,7 @@ export function mergeNotesByModifiedAt(local: ReadonlyArray<NoteModel>, remote: 
 
 export function useNotesSync() {
 	const store = useNotesStore();
-	const { listFiles, findFile, readJSON, readJSONById, writeJSONById, writeJSON, deleteFile } = useGoogleDrive();
+	const { listFiles, findFile, readJSONById, writeJSONById, writeJSON, deleteFile } = useGoogleDrive();
 	const { isSignedIn } = useGoogleAuth();
 	const getFileName = (id: UUID) => `${store.fileNamePrefix}${id}.json`;
 
@@ -76,7 +87,7 @@ export function useNotesSync() {
 						notes.push(NoteModel.fromJSON(data));
 					}
 				} catch (err) {
-					console.warn(`Failed to read note file ${file.name}:`, err);
+					logWarn(`Failed to read note file ${file.name}`, err);
 				}
 			})
 		);
