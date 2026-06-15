@@ -33,7 +33,7 @@ export const useNotesStore = defineStore("notes", () => {
 			return notes.value;
 		}
 		const contentIds = contentMatchedIds.value;
-		return notes.value.filter(note => contains(note.title, trimmed) || (contentIds?.has(note.id) ?? false));
+		return notes.value.filter(note => contains(note.title, trimmed) || contentIds?.has(note.id));
 	});
 	const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt));
 	const archivedNotes = computed(() => searchResults.value.filter(note => note.archivedAt && !note.deletedAt));
@@ -49,7 +49,7 @@ export const useNotesStore = defineStore("notes", () => {
 		isSearching.value = true;
 		const matches = await notesRepository.search(content => contains(content, trimmed));
 		if (searchText.value.trim() === trimmed) {
-			contentMatchedIds.value = new Set<UUID>(Array.from(matches, id => id as UUID));
+			contentMatchedIds.value = matches as Set<UUID>;
 			isSearching.value = false;
 		}
 	});
