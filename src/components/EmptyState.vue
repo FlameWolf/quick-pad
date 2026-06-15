@@ -14,7 +14,7 @@
 		<div v-if="props.showActions" class="d-flex flex-column gap-2 align-items-center">
 			<div class="d-flex gap-2 justify-content-center flex-wrap">
 				<RouterLink to="/notes/new" class="btn btn-primary">Create a note</RouterLink>
-				<button class="btn btn-outline-secondary" @click="emit('import')">Import from files</button>
+				<button class="btn btn-outline-secondary" @click="emit(`import`)">Import from files</button>
 			</div>
 			<div class="d-flex gap-3 justify-content-center flex-wrap">
 				<RouterLink to="/notes/archive" class="btn btn-link btn-sm text-decoration-none">
