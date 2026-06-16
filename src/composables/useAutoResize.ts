@@ -1,29 +1,31 @@
 import { onMounted, onBeforeUnmount, watch, type Ref } from "vue";
 
-export function useAutoResize(textArea: Readonly<Ref<HTMLTextAreaElement | null>>, content: Ref<string>, enabled: Ref<boolean>) {
+export function useAutoResize(editor: Readonly<Ref<HTMLTextAreaElement | null>>, content: Ref<string>, enabled: Ref<boolean>) {
 	function adjustHeight() {
-		if (CSS.supports("field-sizing", "content")) {
+		if (CSS.supports("field-sizing", "content") || !enabled.value) {
 			return;
 		}
-		if (!enabled.value) {
+		const editorParent = editor.value?.parentElement;
+		if (!editorParent) {
 			return;
 		}
-		const editor = textArea.value;
-		const editorParent = editor?.parentElement;
-		if (!editor || !editorParent) {
-			return;
-		}
-		const editorClone = editor.cloneNode() as HTMLTextAreaElement;
+		const editorClone = editor.value.cloneNode() as HTMLTextAreaElement;
 		editorClone.classList.add("d-hidden");
 		editorClone.style.setProperty("height", "auto");
 		editorClone.value = content.value;
 		editorParent.appendChild(editorClone);
-		editor.style.setProperty("height", `calc(${editorClone.scrollHeight}px + 0.5rem)`);
+		editor.value.style.setProperty("height", `calc(${editorClone.scrollHeight}px + 0.5rem)`);
 		editorParent.removeChild(editorClone);
 	}
 
-	onMounted(() => window.addEventListener("resize", adjustHeight));
-	onBeforeUnmount(() => window.removeEventListener("resize", adjustHeight));
+	onMounted(() => {
+		window.addEventListener("resize", adjustHeight);
+	});
+
+	onBeforeUnmount(() => {
+		window.removeEventListener("resize", adjustHeight);
+	});
+
 	watch(content, adjustHeight);
 
 	return { adjustHeight };

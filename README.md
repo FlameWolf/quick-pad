@@ -103,7 +103,7 @@ Components and stores never touch `idb` directly. `storage/db.ts` is the only mo
 Shared, app-wide state lives in **module-level reactive singletons**. There is genuinely one of each (one theme, one selection, one sort preference, one sync session), so these are exposed as composables backed by module-scoped `ref`s rather than per-call instances — calling e.g. `useNoteSelection()` from two components shares the same state by design:
 
 - `useTheme`, `useConfirmDialog`, `useNoteSelection`, `useNoteSort`, `useNotesSync`, and `useGoogleAuth` are app-global singletons. Persistence watchers are registered once at module scope; `hydrate*()` functions only load initial values.
-- The richer note collection additionally uses a **Pinia store** (`stores/notes.ts`) for its larger action surface and devtools visibility, while keeping the same module-singleton state model.
+- The richer note collection additionally uses a **Pinia store** (`stores/notes.ts`) for its larger action surface while keeping the same module-singleton state model.
 
 ## Getting started
 

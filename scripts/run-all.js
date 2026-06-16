@@ -48,7 +48,7 @@ function shutdown() {
 			try {
 				process.kill(-child.pid, "SIGTERM");
 			} catch {
-				void 0;
+				console.error(`Failed to kill child process with ID: ${child.pid}`, err);
 			}
 		}
 	}

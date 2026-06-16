@@ -208,8 +208,8 @@ export async function revokeToken(token: string): Promise<void> {
 			headers: { "Content-Type": "application/x-www-form-urlencoded" },
 			body: new URLSearchParams({ token })
 		});
-	} catch (error) {
-		console.warn("Failed to revoke Google token:", error);
+	} catch (err) {
+		console.warn("Failed to revoke Google token:", err);
 	}
 }
 
