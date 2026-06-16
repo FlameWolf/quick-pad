@@ -18,8 +18,14 @@ export function useAutoResize(editor: Readonly<Ref<HTMLTextAreaElement | null>>,
 		editorParent.removeChild(editorClone);
 	}
 
-	onMounted(() => window.addEventListener("resize", adjustHeight));
-	onBeforeUnmount(() => window.removeEventListener("resize", adjustHeight));
+	onMounted(() => {
+		window.addEventListener("resize", adjustHeight);
+	});
+
+	onBeforeUnmount(() => {
+		window.removeEventListener("resize", adjustHeight);
+	});
+
 	watch(content, adjustHeight);
 
 	return { adjustHeight };
