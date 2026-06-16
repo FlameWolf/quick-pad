@@ -4,12 +4,13 @@ import DisplayNoteList from "@/components/DisplayNoteList.vue";
 import EditNote from "@/components/EditNote.vue";
 
 export const isNavigating = ref(false);
-export const listViewRoutes = ["/notes", "/notes/archive", "/notes/trash"];
+export const listViewRoutes = ["/notes", "/notes/favourite", "/notes/archive", "/notes/trash"];
 const scrollPositions = new Map<string, number>();
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
 	routes: [
 		{ path: "/", redirect: "/notes" },
+		{ path: "/favourite", redirect: "/notes/favourite" },
 		{ path: "/archive", redirect: "/notes/archive" },
 		{ path: "/trash", redirect: "/notes/trash" },
 		{
@@ -17,6 +18,13 @@ const router = createRouter({
 			component: DisplayNoteList,
 			props: {
 				view: "active"
+			}
+		},
+		{
+			path: "/notes/favourite",
+			component: DisplayNoteList,
+			props: {
+				view: "favourited"
 			}
 		},
 		{
