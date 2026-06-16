@@ -7,6 +7,8 @@ export interface NoteMetaJSON {
 	title: string;
 	createdAt: string;
 	modifiedAt?: string;
+	favedAt?: string;
+	pinnedAt?: string;
 	archivedAt?: string;
 	deletedAt?: string;
 	stateChangedAt?: string;
@@ -38,6 +40,8 @@ export class NoteModel {
 	content?: string;
 	createdAt: Date;
 	modifiedAt?: Date;
+	favedAt?: Date;
+	pinnedAt?: Date;
 	archivedAt?: Date;
 	deletedAt?: Date;
 	stateChangedAt?: Date;
@@ -71,6 +75,28 @@ export class NoteModel {
 		this.computeDerived();
 	}
 
+	fave() {
+		const now = new Date();
+		this.favedAt = now;
+		this.stateChangedAt = now;
+	}
+
+	unfave() {
+		this.favedAt = undefined;
+		this.stateChangedAt = new Date();
+	}
+
+	pin() {
+		const now = new Date();
+		this.pinnedAt = now;
+		this.stateChangedAt = now;
+	}
+
+	unpin() {
+		this.pinnedAt = undefined;
+		this.stateChangedAt = new Date();
+	}
+
 	archive() {
 		const now = new Date();
 		this.archivedAt = now;
@@ -99,6 +125,8 @@ export class NoteModel {
 			title: this.title,
 			createdAt: this.createdAt.toISOString(),
 			modifiedAt: this.modifiedAt?.toISOString(),
+			favedAt: this.favedAt?.toISOString(),
+			pinnedAt: this.pinnedAt?.toISOString(),
 			archivedAt: this.archivedAt?.toISOString(),
 			deletedAt: this.deletedAt?.toISOString(),
 			stateChangedAt: this.stateChangedAt?.toISOString(),
@@ -119,6 +147,8 @@ export class NoteModel {
 		const note = new NoteModel(data.title, data.content, data.id as UUID);
 		note.createdAt = parseValidDate(data.createdAt) ?? note.createdAt;
 		note.modifiedAt = parseValidDate(data.modifiedAt);
+		note.favedAt = parseValidDate(data.favedAt);
+		note.pinnedAt = parseValidDate(data.pinnedAt);
 		note.archivedAt = parseValidDate(data.archivedAt);
 		note.deletedAt = parseValidDate(data.deletedAt);
 		note.stateChangedAt = parseValidDate(data.stateChangedAt);
