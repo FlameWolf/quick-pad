@@ -7,10 +7,9 @@
 	import { useNotesSync } from "@/composables/useNotesSync";
 	import { NoteModel } from "@/models/NoteModel";
 	import { useFileIO } from "@/composables/useFileIO";
-	import { useAutoResize } from "@/composables/useAutoResize";
+	import { emptyString } from "@/constants/common";
 	import { getSentenceCount, getWordCount, getCharacterCount } from "@/utils/text-analysis";
 	import { debounce } from "@/utils/timing";
-	import { emptyString } from "@/constants/common";
 	import Toast from "@/components/Toast.vue";
 	import type { UUID } from "crypto";
 
@@ -37,7 +36,6 @@
 	const loadedContent = ref(emptyString);
 	const isContentLoaded = ref(isCreateMode.value);
 	const editTextArea = useTemplateRef("edit-text-area");
-	const { adjustHeight } = useAutoResize(editTextArea, editContent, isEditing);
 	const undoRedo = useUndoRedo(editContent.value);
 	const sentenceCount = computed(() => (isEditing.value ? getSentenceCount(editContent.value) : (existingNote.value?.sentenceCount ?? 0)));
 	const wordCount = computed(() => (isEditing.value ? getWordCount(editContent.value) : (existingNote.value?.wordCount ?? 0)));
@@ -66,6 +64,26 @@
 		}
 		return editTitle.value !== existingNote.value.title || editContent.value !== loadedContent.value;
 	});
+
+	function adjustTextAreaHeight() {
+		if (CSS.supports("field-sizing", "content")) {
+			return;
+		}
+		if (isEditing.value) {
+			const editor = editTextArea.value;
+			const editorParent = editor?.parentElement;
+			if (!editorParent) {
+				return;
+			}
+			const editorClone = editor.cloneNode() as HTMLTextAreaElement;
+			editorClone.classList.add("d-hidden");
+			editorClone.style.setProperty("height", "auto");
+			editorClone.value = editContent.value;
+			editorParent.appendChild(editorClone);
+			editor.style.setProperty("height", `calc(${editorClone.scrollHeight}px + 0.5rem)`);
+			editorParent.removeChild(editorClone);
+		}
+	}
 
 	const debouncedPushUndo = debounce((value: string) => undoRedo.push(value), 300);
 
@@ -108,7 +126,7 @@
 		editContent.value = loadedContent.value;
 		undoRedo.push(editContent.value);
 		isEditing.value = true;
-		setTimeout(adjustHeight);
+		setTimeout(adjustTextAreaHeight);
 	}
 
 	async function confirmDiscardChanges(): Promise<boolean> {
@@ -239,10 +257,12 @@
 
 	onMounted(() => {
 		window.addEventListener("beforeunload", onBeforeUnload);
+		window.addEventListener("resize", adjustTextAreaHeight);
 	});
 
 	onBeforeUnmount(() => {
 		debouncedPushUndo.cancel();
+		window.removeEventListener("resize", adjustTextAreaHeight);
 		window.removeEventListener("beforeunload", onBeforeUnload);
 	});
 
@@ -270,6 +290,8 @@
 		},
 		{ immediate: true }
 	);
+
+	watch(editContent, adjustTextAreaHeight);
 </script>
 
 <template>
