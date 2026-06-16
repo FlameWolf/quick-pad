@@ -100,6 +100,38 @@ export const useNotesStore = defineStore("notes", () => {
 		await notesRepository.saveManyMeta(targetNotes);
 	}
 
+	async function faveNote(id: UUID) {
+		await applyToNote(id, note => note.fave());
+	}
+
+	async function faveMultiple(ids: ReadonlyArray<UUID>) {
+		await applyToMany(ids, note => note.fave());
+	}
+
+	async function unfaveNote(id: UUID) {
+		await applyToNote(id, note => note.unfave());
+	}
+
+	async function unfaveMultiple(ids: ReadonlyArray<UUID>) {
+		await applyToMany(ids, note => note.unfave());
+	}
+
+	async function pinNote(id: UUID) {
+		await applyToNote(id, note => note.pin());
+	}
+
+	async function pinMultiple(ids: ReadonlyArray<UUID>) {
+		await applyToMany(ids, note => note.pin());
+	}
+
+	async function unpinNote(id: UUID) {
+		await applyToNote(id, note => note.unpin());
+	}
+
+	async function unpinMultiple(ids: ReadonlyArray<UUID>) {
+		await applyToMany(ids, note => note.unpin());
+	}
+
 	async function archiveNote(id: UUID) {
 		await applyToNote(id, note => note.archive());
 	}
@@ -195,6 +227,14 @@ export const useNotesStore = defineStore("notes", () => {
 		updateNote,
 		getNote,
 		getNoteContent,
+		faveNote,
+		faveMultiple,
+		unfaveNote,
+		unfaveMultiple,
+		pinNote,
+		pinMultiple,
+		unpinNote,
+		unpinMultiple,
 		archiveNote,
 		archiveMultiple,
 		unarchiveNote,
