@@ -61,7 +61,7 @@ export default defineConfig(({ command }) => ({
 								content: ["./index.html", "./src/**/*.{vue,js,ts,jsx,tsx}"],
 								defaultExtractor: content => content.match(/[\w-/:]+(?<!:)/g) || [],
 								safelist: {
-									standard: [/^btn-(outline-)?(primary|secondary|success|danger|warning|info|light|dark)$/]
+									standard: ["d-hidden", /^btn-(outline-)?(primary|secondary|success|danger|warning|info|light|dark)$/]
 								}
 							})
 						]

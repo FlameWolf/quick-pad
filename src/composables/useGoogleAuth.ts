@@ -2,7 +2,6 @@ import { ref, readonly, computed, toRaw, watch } from "vue";
 import { deleteKV, getKV, setKV } from "@/storage/db";
 import { AUTH_SIGNOUT_URL, AUTH_START_URL, AUTH_TOKEN_URL, CLIENT_ID, EXPIRY_KEY, SESSION_KEY, TOKEN_KEY, TOKEN_REFRESH_BUFFER_MS, USER_KEY } from "@/constants/auth";
 import { LAST_SYNCED_TO_CLOUD_KEY, LAST_SYNCED_TO_LOCAL_KEY } from "@/constants/sync";
-import { logWarn } from "@/utils/logger";
 
 type UserInfo = {
 	email: string;
@@ -174,15 +173,15 @@ export function useGoogleAuth() {
 					isSignedIn.value = true;
 					try {
 						await refreshFromServer();
-					} catch (error) {
-						logWarn("Failed to refresh access token after sign-in", error);
+					} catch (err) {
+						console.warn("Failed to refresh access token after sign-in", err);
 					}
 				}
 				finish();
 			}
 			window.addEventListener("message", onMessage);
 			if (!popup) {
-				logWarn("Sign-in popup was blocked by the browser.");
+				console.warn("Sign-in popup was blocked by the browser.");
 				finish();
 				return;
 			}
@@ -197,8 +196,8 @@ export function useGoogleAuth() {
 	async function signOut() {
 		try {
 			await fetch(AUTH_SIGNOUT_URL, { method: "POST", credentials: "include" });
-		} catch (error) {
-			logWarn("Failed to notify the server of sign-out", error);
+		} catch (err) {
+			console.warn("Failed to notify the server of sign-out", err);
 		}
 		await clearSession();
 	}

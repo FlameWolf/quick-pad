@@ -7,7 +7,6 @@ import { deleteKV, getKV, setKV } from "@/storage/db";
 import { debounce } from "@/utils/timing";
 import { emptyString } from "@/constants/common";
 import { AUTO_SYNC_KEY, DEBOUNCE_MS, LAST_SYNCED_TO_CLOUD_KEY, LAST_SYNCED_TO_LOCAL_KEY } from "@/constants/sync";
-import { logWarn } from "@/utils/logger";
 import type { NoteJSON } from "@/models/NoteModel";
 import type { UUID } from "crypto";
 
@@ -87,7 +86,7 @@ export function useNotesSync() {
 						notes.push(NoteModel.fromJSON(data));
 					}
 				} catch (err) {
-					logWarn(`Failed to read note file ${file.name}`, err);
+					console.warn(`Failed to read note file ${file.name}`, err);
 				}
 			})
 		);

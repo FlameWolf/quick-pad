@@ -1,6 +1,5 @@
 import { getKV, putNote, setKV, setKVRaw } from "./db";
 import { KV_MAPPINGS, LEGACY_NOTES_KEY, MIGRATION_FLAG, NOTE_PREFIX } from "@/constants/storage";
-import { logWarn } from "@/utils/logger";
 import type { NoteJSON } from "@/models/NoteModel";
 
 type Coercion = (typeof KV_MAPPINGS)[number][2];
@@ -36,8 +35,8 @@ export async function runMigration(): Promise<void> {
 					}
 				}
 			}
-		} catch (error) {
-			logWarn(`Failed to migrate legacy notes array from "${LEGACY_NOTES_KEY}"`, error);
+		} catch (err) {
+			console.warn(`Failed to migrate legacy notes array from "${LEGACY_NOTES_KEY}"`, err);
 		}
 	}
 	for (let i = 0; i < localStorage.length; i++) {
@@ -56,8 +55,8 @@ export async function runMigration(): Promise<void> {
 			if (note && typeof note.id === "string") {
 				await putNote(note);
 			}
-		} catch (error) {
-			logWarn(`Failed to migrate note from localStorage key "${k}"`, error);
+		} catch (err) {
+			console.warn(`Failed to migrate note from localStorage key "${k}"`, err);
 		}
 	}
 	for (const [lsKey, idbKey, type] of KV_MAPPINGS) {
@@ -67,8 +66,8 @@ export async function runMigration(): Promise<void> {
 		}
 		try {
 			await setKVRaw(idbKey, coerce(raw, type));
-		} catch (error) {
-			logWarn(`Failed to migrate localStorage key "${lsKey}" (type "${type}")`, error);
+		} catch (err) {
+			console.warn(`Failed to migrate localStorage key "${lsKey}" (type "${type}")`, err);
 		}
 	}
 	for (const k of noteKeysToRemove) {

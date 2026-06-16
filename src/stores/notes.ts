@@ -5,7 +5,6 @@ import { contains } from "@/utils/text-analysis";
 import { emptyString } from "@/constants/common";
 import { NOTE_PREFIX } from "@/constants/storage";
 import { TRASH_RETENTION_MS } from "@/constants/notes";
-import { logError } from "@/utils/logger";
 import type { NoteModel } from "@/models/NoteModel";
 import type { UUID } from "crypto";
 
@@ -15,9 +14,9 @@ const notes = ref<NoteModel[]>([]);
 export async function hydrateNotes(): Promise<void> {
 	try {
 		notes.value = await notesRepository.loadAll();
-	} catch (error) {
-		logError("Failed to load notes from storage", error);
+	} catch (err) {
 		notes.value = [];
+		console.error("Failed to load notes from storage", err);
 	} finally {
 		isLoading.value = false;
 	}
@@ -32,8 +31,7 @@ export const useNotesStore = defineStore("notes", () => {
 		if (!trimmed) {
 			return notes.value;
 		}
-		const contentIds = contentMatchedIds.value;
-		return notes.value.filter(note => contains(note.title, trimmed) || contentIds?.has(note.id));
+		return notes.value.filter(note => contains(note.title, trimmed) || contentMatchedIds.value?.has(note.id));
 	});
 	const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt));
 	const archivedNotes = computed(() => searchResults.value.filter(note => note.archivedAt && !note.deletedAt));
