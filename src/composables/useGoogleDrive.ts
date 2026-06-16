@@ -139,5 +139,13 @@ export function useGoogleDrive() {
 		return true;
 	}
 
-	return { listFiles, findFile, readJSON, readJSONById, writeJSONById, writeJSON, deleteFile };
+	return {
+		listFiles,
+		findFile,
+		readJSON,
+		readJSONById,
+		writeJSONById,
+		writeJSON,
+		deleteFile
+	};
 }

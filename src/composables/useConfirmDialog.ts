@@ -2,7 +2,6 @@ import { ref, readonly } from "vue";
 import { emptyString } from "@/constants/common";
 
 export type ConfirmVariant = "danger" | "primary" | "warning";
-
 export interface ConfirmOptions {
 	title: string;
 	message: string;
@@ -10,7 +9,6 @@ export interface ConfirmOptions {
 	cancelText?: string;
 	variant?: ConfirmVariant;
 }
-
 interface ConfirmState {
 	visible: boolean;
 	title: string;
@@ -20,6 +18,7 @@ interface ConfirmState {
 	variant: ConfirmVariant;
 }
 
+let resolver: ((value: boolean) => void) | null = null;
 const state = ref<ConfirmState>({
 	visible: false,
 	title: emptyString,
@@ -28,8 +27,6 @@ const state = ref<ConfirmState>({
 	cancelText: "Cancel",
 	variant: "primary"
 });
-
-let resolver: ((value: boolean) => void) | null = null;
 
 export function useConfirmDialog() {
 	function confirm(options: ConfirmOptions): Promise<boolean> {
