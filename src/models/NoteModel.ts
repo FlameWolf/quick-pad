@@ -87,6 +87,9 @@ export class NoteModel {
 	}
 
 	pin() {
+		if (this.archivedAt || this.deletedAt) {
+			return;
+		}
 		const now = new Date();
 		this.pinnedAt = now;
 		this.stateChangedAt = now;
@@ -99,6 +102,7 @@ export class NoteModel {
 
 	archive() {
 		const now = new Date();
+		this.pinnedAt = undefined;
 		this.archivedAt = now;
 		this.stateChangedAt = now;
 	}
