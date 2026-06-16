@@ -110,6 +110,7 @@ export class NoteModel {
 
 	trash() {
 		const now = new Date();
+		this.pinnedAt = undefined;
 		this.deletedAt = now;
 		this.stateChangedAt = now;
 	}
