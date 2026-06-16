@@ -34,6 +34,7 @@ export const useNotesStore = defineStore("notes", () => {
 		return notes.value.filter(note => contains(note.title, trimmed) || contentMatchedIds.value?.has(note.id));
 	});
 	const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt));
+	const favedNotes = computed(() => activeNotes.value.filter(note => note.favedAt));
 	const archivedNotes = computed(() => searchResults.value.filter(note => note.archivedAt && !note.deletedAt));
 	const trashedNotes = computed(() => searchResults.value.filter(note => note.deletedAt));
 
@@ -219,6 +220,7 @@ export const useNotesStore = defineStore("notes", () => {
 		searchText,
 		isSearching: readonly(isSearching),
 		activeNotes,
+		favedNotes,
 		archivedNotes,
 		trashedNotes,
 		isLoading: readonly(isLoading),

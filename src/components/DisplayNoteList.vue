@@ -12,9 +12,10 @@
 	import NoteCard from "@/components/NoteCard.vue";
 	import EmptyState from "@/components/EmptyState.vue";
 	import SortControls from "@/components/SortControls.vue";
+	import type { NoteModel } from "@/models/NoteModel";
 	import type { UUID } from "crypto";
 
-	type View = "active" | "archived" | "trash";
+	type View = "active" | "faved" | "archived" | "trash";
 
 	const props = defineProps<{ view?: View }>();
 	const view = computed<View>(() => props.view ?? "active");
@@ -27,6 +28,8 @@
 	const isSearchMode = computed(() => !!notesStore.searchText);
 	const sourceNotes = computed(() => {
 		switch (view.value) {
+			case "faved":
+				return notesStore.favedNotes;
 			case "archived":
 				return notesStore.archivedNotes;
 			case "trash":
@@ -52,6 +55,8 @@
 			return `No results found for "${notesStore.searchText}"`;
 		}
 		switch (view.value) {
+			case "faved":
+				return "No favourited notes";
 			case "archived":
 				return "No archived notes";
 			case "trash":
@@ -61,24 +66,31 @@
 		}
 	});
 	const selectionActions = computed<SelectionAction[]>(() => {
-		if (view.value === "archived") {
-			return [
-				{ key: "export", label: "Export Selected", variant: "primary" },
-				{ key: "unarchive", label: "Unarchive Selected", variant: "outline-primary" },
-				{ key: "trash", label: "Delete Selected", variant: "outline-danger" }
-			];
-		}
-		if (view.value === "trash") {
+		if(view.value === "trash") {
 			return [
 				{ key: "restore", label: "Restore Selected", variant: "outline-primary" },
 				{ key: "permanent", label: "Delete Permanently", variant: "outline-danger" }
 			];
 		}
-		return [
+		const defaultActions: SelectionAction[] = [
 			{ key: "export", label: "Export Selected", variant: "primary" },
 			{ key: "archive", label: "Archive Selected", variant: "outline-primary" },
 			{ key: "trash", label: "Delete Selected", variant: "outline-danger" }
 		];
+		switch (view.value) {
+			case "faved": {
+				defaultActions[1] = { key: "unfave", label: "Unfavourite Selected", variant: "outline-primary" };
+				break;
+			}
+			case "archived": {
+				defaultActions[1] = { key: "unarchive", label: "Unarchive Selected", variant: "outline-primary" };
+				break;
+			}
+			default: {
+				break;
+			}
+		}
+		return defaultActions;
 	});
 
 	function formatImportErrors(): string {
@@ -93,8 +105,12 @@
 		}
 	}
 
+	function getSelectedNotes(): NoteModel[] {
+		return sourceNotes.value.filter(n => isSelected(n.id));
+	}
+
 	function getSelectedIds(): UUID[] {
-		return sourceNotes.value.filter(n => isSelected(n.id)).map(n => n.id);
+		return getSelectedNotes().map(n => n.id);
 	}
 
 	async function handleImport() {
@@ -114,9 +130,16 @@
 		const noun = ids.length === 1 ? "note" : "notes";
 		switch (key) {
 			case "export": {
-				const selected = sourceNotes.value.filter(n => isSelected(n.id));
-				await exportNotes(selected);
+				await exportNotes(getSelectedNotes());
 				syncNotes = false;
+				break;
+			}
+			case "fave": {
+				await notesStore.faveMultiple(ids);
+				break;
+			}
+			case "unfave": {
+				await notesStore.unfaveMultiple(ids);
 				break;
 			}
 			case "archive": {
