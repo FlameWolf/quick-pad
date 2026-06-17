@@ -7,14 +7,16 @@
 	import { useNotesSync } from "@/composables/useNotesSync";
 	import { computed, onMounted, watch } from "vue";
 	import { emptyString } from "@/constants/common";
-	import SelectionActionBar, { type SelectionAction } from "@/components/SelectionActionBar.vue";
+	import { bulkActions } from "@/constants/actions";
+	import SelectionActionBar from "@/components/SelectionActionBar.vue";
 	import Toast from "@/components/Toast.vue";
 	import NoteCard from "@/components/NoteCard.vue";
 	import EmptyState from "@/components/EmptyState.vue";
 	import SortControls from "@/components/SortControls.vue";
+	import type { NoteModel } from "@/models/NoteModel";
 	import type { UUID } from "crypto";
 
-	type View = "active" | "archived" | "trash";
+	type View = "active" | "favourited" | "archived" | "trash";
 
 	const props = defineProps<{ view?: View }>();
 	const view = computed<View>(() => props.view ?? "active");
@@ -27,6 +29,8 @@
 	const isSearchMode = computed(() => !!notesStore.searchText);
 	const sourceNotes = computed(() => {
 		switch (view.value) {
+			case "favourited":
+				return notesStore.favedNotes;
 			case "archived":
 				return notesStore.archivedNotes;
 			case "trash":
@@ -39,19 +43,24 @@
 	const hasNotes = computed(() => sourceNotes.value.length > 0);
 	const allSelected = computed(() => sourceNotes.value.length > 0 && selectedCount.value === sourceNotes.value.length);
 	const pageTitle = computed(() => {
-		if (view.value === "archived") {
-			return "Archived";
+		switch (view.value) {
+			case "favourited":
+				return "Favourited";
+			case "archived":
+				return "Archived";
+			case "trash":
+				return "Trash";
+			default:
+				return "Notes";
 		}
-		if (view.value === "trash") {
-			return "Trash";
-		}
-		return "Notes";
 	});
 	const emptyMessage = computed(() => {
 		if (isSearchMode.value) {
 			return `No results found for "${notesStore.searchText}"`;
 		}
 		switch (view.value) {
+			case "favourited":
+				return "No favourited notes";
 			case "archived":
 				return "No archived notes";
 			case "trash":
@@ -61,24 +70,26 @@
 		}
 	});
 	const selectionActions = computed<SelectionAction[]>(() => {
-		if (view.value === "archived") {
-			return [
-				{ key: "export", label: "Export Selected", variant: "primary" },
-				{ key: "unarchive", label: "Unarchive Selected", variant: "outline-primary" },
-				{ key: "trash", label: "Delete Selected", variant: "outline-danger" }
-			];
-		}
 		if (view.value === "trash") {
-			return [
-				{ key: "restore", label: "Restore Selected", variant: "outline-primary" },
-				{ key: "permanent", label: "Delete Permanently", variant: "outline-danger" }
-			];
+			return bulkActions.filter(action => action.key === "restore" || action.key === "permanent");
 		}
-		return [
-			{ key: "export", label: "Export Selected", variant: "primary" },
-			{ key: "archive", label: "Archive Selected", variant: "outline-primary" },
-			{ key: "trash", label: "Delete Selected", variant: "outline-danger" }
-		];
+		const actionKeys = new Set<SelectionAction["key"]>(["export", "trash"]);
+		switch (view.value) {
+			case "favourited": {
+				actionKeys.add("unfave");
+				break;
+			}
+			case "archived": {
+				actionKeys.add("unarchive");
+				break;
+			}
+			default: {
+				actionKeys.add("fave");
+				actionKeys.add("archive");
+				break;
+			}
+		}
+		return bulkActions.filter(action => actionKeys.has(action.key));
 	});
 
 	function formatImportErrors(): string {
@@ -93,8 +104,12 @@
 		}
 	}
 
+	function getSelectedNotes(): NoteModel[] {
+		return sourceNotes.value.filter(n => isSelected(n.id));
+	}
+
 	function getSelectedIds(): UUID[] {
-		return sourceNotes.value.filter(n => isSelected(n.id)).map(n => n.id);
+		return getSelectedNotes().map(n => n.id);
 	}
 
 	async function handleImport() {
@@ -114,9 +129,16 @@
 		const noun = ids.length === 1 ? "note" : "notes";
 		switch (key) {
 			case "export": {
-				const selected = sourceNotes.value.filter(n => isSelected(n.id));
-				await exportNotes(selected);
+				await exportNotes(getSelectedNotes());
 				syncNotes = false;
+				break;
+			}
+			case "fave": {
+				await notesStore.faveMultiple(ids);
+				break;
+			}
+			case "unfave": {
+				await notesStore.unfaveMultiple(ids);
 				break;
 			}
 			case "archive": {
@@ -223,6 +245,12 @@
 				<template v-if="view === `active`">
 					<button class="btn btn-outline-secondary btn-sm" @click="handleImport">Import</button>
 					<button class="btn btn-outline-secondary btn-sm" @click="exportAllNotes">Export All</button>
+					<RouterLink to="/notes/favourite" class="btn btn-outline-secondary btn-sm">
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-star me-1" viewBox="0 0 16 16">
+							<path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.56.56 0 0 0-.163-.505L1.71 6.745l4.052-.576a.53.53 0 0 0 .393-.288L8 2.223l1.847 3.658a.53.53 0 0 0 .393.288l4.052.575-2.906 2.77a.56.56 0 0 0-.163.506l.694 3.957-3.686-1.894a.5.5 0 0 0-.461 0z"/>
+						</svg>
+						<span>Favourited</span>
+					</RouterLink>
 					<RouterLink to="/notes/archive" class="btn btn-outline-secondary btn-sm">
 						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-archive me-1" viewBox="0 0 16 16">
 							<path d="M0 2a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 1 12.5V5a1 1 0 0 1-1-1zm2 3v7.5A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5V5zm13-3H1v2h14zM5 7.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5"/>

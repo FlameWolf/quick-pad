@@ -34,6 +34,7 @@ export const useNotesStore = defineStore("notes", () => {
 		return notes.value.filter(note => contains(note.title, trimmed) || contentMatchedIds.value?.has(note.id));
 	});
 	const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt));
+	const favedNotes = computed(() => searchResults.value.filter(note => note.favedAt && !note.deletedAt));
 	const archivedNotes = computed(() => searchResults.value.filter(note => note.archivedAt && !note.deletedAt));
 	const trashedNotes = computed(() => searchResults.value.filter(note => note.deletedAt));
 
@@ -98,6 +99,30 @@ export const useNotesStore = defineStore("notes", () => {
 		await Promise.all(targetNotes.map(mutator));
 		targets.forEach(t => notes.value.splice(t.index, 1, t.note));
 		await notesRepository.saveManyMeta(targetNotes);
+	}
+
+	async function faveNote(id: UUID) {
+		await applyToNote(id, note => note.fave());
+	}
+
+	async function faveMultiple(ids: ReadonlyArray<UUID>) {
+		await applyToMany(ids, note => note.fave());
+	}
+
+	async function unfaveNote(id: UUID) {
+		await applyToNote(id, note => note.unfave());
+	}
+
+	async function unfaveMultiple(ids: ReadonlyArray<UUID>) {
+		await applyToMany(ids, note => note.unfave());
+	}
+
+	async function pinNote(id: UUID) {
+		await applyToNote(id, note => note.pin());
+	}
+
+	async function unpinNote(id: UUID) {
+		await applyToNote(id, note => note.unpin());
 	}
 
 	async function archiveNote(id: UUID) {
@@ -187,6 +212,7 @@ export const useNotesStore = defineStore("notes", () => {
 		searchText,
 		isSearching: readonly(isSearching),
 		activeNotes,
+		favedNotes,
 		archivedNotes,
 		trashedNotes,
 		isLoading: readonly(isLoading),
@@ -195,6 +221,12 @@ export const useNotesStore = defineStore("notes", () => {
 		updateNote,
 		getNote,
 		getNoteContent,
+		faveNote,
+		faveMultiple,
+		unfaveNote,
+		unfaveMultiple,
+		pinNote,
+		unpinNote,
 		archiveNote,
 		archiveMultiple,
 		unarchiveNote,
