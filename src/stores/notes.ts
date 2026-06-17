@@ -34,7 +34,7 @@ export const useNotesStore = defineStore("notes", () => {
 		return notes.value.filter(note => contains(note.title, trimmed) || contentMatchedIds.value?.has(note.id));
 	});
 	const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt));
-	const favedNotes = computed(() => activeNotes.value.filter(note => note.favedAt));
+	const favedNotes = computed(() => searchResults.value.filter(note => note.favedAt && !note.deletedAt));
 	const archivedNotes = computed(() => searchResults.value.filter(note => note.archivedAt && !note.deletedAt));
 	const trashedNotes = computed(() => searchResults.value.filter(note => note.deletedAt));
 
@@ -121,16 +121,8 @@ export const useNotesStore = defineStore("notes", () => {
 		await applyToNote(id, note => note.pin());
 	}
 
-	async function pinMultiple(ids: ReadonlyArray<UUID>) {
-		await applyToMany(ids, note => note.pin());
-	}
-
 	async function unpinNote(id: UUID) {
 		await applyToNote(id, note => note.unpin());
-	}
-
-	async function unpinMultiple(ids: ReadonlyArray<UUID>) {
-		await applyToMany(ids, note => note.unpin());
 	}
 
 	async function archiveNote(id: UUID) {
@@ -234,9 +226,7 @@ export const useNotesStore = defineStore("notes", () => {
 		unfaveNote,
 		unfaveMultiple,
 		pinNote,
-		pinMultiple,
 		unpinNote,
-		unpinMultiple,
 		archiveNote,
 		archiveMultiple,
 		unarchiveNote,

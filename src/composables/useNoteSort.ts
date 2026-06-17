@@ -27,12 +27,6 @@ export async function hydrateSortPrefs(): Promise<void> {
 }
 
 function compareNotes(a: NoteModel, b: NoteModel, field: SortField): number {
-	if (a.pinnedAt && !b.pinnedAt) {
-		return -1;
-	}
-	if (b.pinnedAt && !a.pinnedAt) {
-		return 1;
-	}
 	switch (field) {
 		case "title":
 			return a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
@@ -68,6 +62,12 @@ export function useNoteSort() {
 	function getSortedNotes(notes: ReadonlyArray<NoteModel>): NoteModel[] {
 		const multiplier = sortDirection.value === "asc" ? 1 : -1;
 		return notes.toSorted((a, b) => {
+			if (a.pinnedAt && !b.pinnedAt) {
+				return -1;
+			}
+			if (b.pinnedAt && !a.pinnedAt) {
+				return 1;
+			}
 			if (a.pinnedAt && b.pinnedAt) {
 				return b.pinnedAt.getTime() - a.pinnedAt.getTime();
 			}

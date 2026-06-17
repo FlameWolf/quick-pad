@@ -1,10 +1,4 @@
 <script setup lang="ts">
-	export interface SelectionAction {
-		key: string;
-		label: string;
-		variant: "primary" | "danger" | "outline-primary" | "outline-secondary" | "outline-danger";
-	}
-
 	const props = defineProps<{
 		selectedCount: number;
 		actions: SelectionAction[];

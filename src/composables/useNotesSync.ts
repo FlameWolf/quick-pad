@@ -4,7 +4,7 @@ import { useGoogleAuth } from "./useGoogleAuth";
 import { useNotesStore } from "@/stores/notes";
 import { NoteModel } from "@/models/NoteModel";
 import { deleteKV, getKV, setKV } from "@/storage/db";
-import { debounce } from "@/utils/timing";
+import { debounce, getTime } from "@/utils/timing";
 import { emptyString } from "@/constants/common";
 import { AUTO_SYNC_KEY, DEBOUNCE_MS, LAST_SYNCED_TO_CLOUD_KEY, LAST_SYNCED_TO_LOCAL_KEY } from "@/constants/sync";
 import type { NoteJSON } from "@/models/NoteModel";
@@ -54,7 +54,19 @@ export async function hydrateSyncMetadata(): Promise<void> {
 }
 
 function noteEffectiveTime(note: NoteModel): number {
-	return Math.max(note.createdAt.getTime(), note.modifiedAt?.getTime() ?? 0, note.archivedAt?.getTime() ?? 0, note.deletedAt?.getTime() ?? 0, note.stateChangedAt?.getTime() ?? 0);
+	return Math.max(note.createdAt.getTime(), getTime(note.modifiedAt), getTime(note.favedAt), getTime(note.pinnedAt), getTime(note.archivedAt), getTime(note.deletedAt), getTime(note.stateChangedAt));
+}
+
+function modifiedAtRemote(remote: NoteModel, local: NoteModel): boolean {
+	const remoteEffectiveTime = noteEffectiveTime(remote);
+	const localEffectiveTime = noteEffectiveTime(local);
+	if (remoteEffectiveTime > localEffectiveTime) {
+		return true;
+	}
+	if (remoteEffectiveTime === localEffectiveTime) {
+		return getTime(remote.createdAt) !== getTime(local.createdAt) || getTime(remote.modifiedAt) !== getTime(local.modifiedAt) || getTime(remote.favedAt) !== getTime(local.favedAt) || getTime(remote.pinnedAt) !== getTime(local.pinnedAt) || getTime(remote.archivedAt) !== getTime(local.archivedAt) || getTime(remote.deletedAt) !== getTime(local.deletedAt) || getTime(remote.stateChangedAt) !== getTime(local.stateChangedAt);
+	}
+	return false;
 }
 
 export function mergeNotesByModifiedAt(local: ReadonlyArray<NoteModel>, remote: ReadonlyArray<NoteModel>): NoteModel[] {
@@ -62,7 +74,7 @@ export function mergeNotesByModifiedAt(local: ReadonlyArray<NoteModel>, remote: 
 	const changes: NoteModel[] = [];
 	for (const remoteNote of remote) {
 		const localNote = localMap.get(remoteNote.id);
-		if (!localNote || noteEffectiveTime(remoteNote) > noteEffectiveTime(localNote)) {
+		if (!localNote || modifiedAtRemote(remoteNote, localNote)) {
 			changes.push(remoteNote);
 		}
 	}
@@ -116,16 +128,12 @@ export function useNotesSync() {
 			const remoteJSON = await readJSONById<NoteJSON>(remoteFile.id);
 			if (remoteJSON) {
 				const remoteNote = NoteModel.fromJSON(remoteJSON);
-				const remoteEffectiveTime = noteEffectiveTime(remoteNote);
-				const localEffectiveTime = noteEffectiveTime(note);
-				if (localEffectiveTime > remoteEffectiveTime) {
-					await writeJSONById(remoteFile.id, await buildUploadPayload(note));
-					return NoteUploadResult.Uploaded;
-				}
-				if (remoteEffectiveTime > localEffectiveTime) {
+				if (modifiedAtRemote(remoteNote, note)) {
 					await store.replaceNote(remoteNote);
 					return NoteUploadResult.Conflict;
 				}
+				await writeJSONById(remoteFile.id, await buildUploadPayload(note));
+				return NoteUploadResult.Uploaded;
 			}
 		} else {
 			await writeJSON(fileName, await buildUploadPayload(note));

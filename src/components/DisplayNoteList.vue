@@ -7,7 +7,8 @@
 	import { useNotesSync } from "@/composables/useNotesSync";
 	import { computed, onMounted, watch } from "vue";
 	import { emptyString } from "@/constants/common";
-	import SelectionActionBar, { type SelectionAction } from "@/components/SelectionActionBar.vue";
+	import { bulkActions } from "@/constants/actions";
+	import SelectionActionBar from "@/components/SelectionActionBar.vue";
 	import Toast from "@/components/Toast.vue";
 	import NoteCard from "@/components/NoteCard.vue";
 	import EmptyState from "@/components/EmptyState.vue";
@@ -42,13 +43,16 @@
 	const hasNotes = computed(() => sourceNotes.value.length > 0);
 	const allSelected = computed(() => sourceNotes.value.length > 0 && selectedCount.value === sourceNotes.value.length);
 	const pageTitle = computed(() => {
-		if (view.value === "archived") {
-			return "Archived";
+		switch (view.value) {
+			case "favourited":
+				return "Favourited";
+			case "archived":
+				return "Archived";
+			case "trash":
+				return "Trash";
+			default:
+				return "Notes";
 		}
-		if (view.value === "trash") {
-			return "Trash";
-		}
-		return "Notes";
 	});
 	const emptyMessage = computed(() => {
 		if (isSearchMode.value) {
@@ -67,30 +71,25 @@
 	});
 	const selectionActions = computed<SelectionAction[]>(() => {
 		if (view.value === "trash") {
-			return [
-				{ key: "restore", label: "Restore Selected", variant: "outline-primary" },
-				{ key: "permanent", label: "Delete Permanently", variant: "outline-danger" }
-			];
+			return bulkActions.filter(action => action.key === "restore" || action.key === "permanent");
 		}
-		const defaultActions: SelectionAction[] = [
-			{ key: "export", label: "Export Selected", variant: "primary" },
-			{ key: "archive", label: "Archive Selected", variant: "outline-primary" },
-			{ key: "trash", label: "Delete Selected", variant: "outline-danger" }
-		];
+		const actionKeys = new Set<SelectionAction["key"]>(["export", "trash"]);
 		switch (view.value) {
 			case "favourited": {
-				defaultActions[1] = { key: "unfave", label: "Unfavourite Selected", variant: "outline-primary" };
+				actionKeys.add("unfave");
 				break;
 			}
 			case "archived": {
-				defaultActions[1] = { key: "unarchive", label: "Unarchive Selected", variant: "outline-primary" };
+				actionKeys.add("unarchive");
 				break;
 			}
 			default: {
+				actionKeys.add("fave");
+				actionKeys.add("archive");
 				break;
 			}
 		}
-		return defaultActions;
+		return bulkActions.filter(action => actionKeys.has(action.key));
 	});
 
 	function formatImportErrors(): string {

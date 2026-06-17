@@ -76,6 +76,9 @@ export class NoteModel {
 	}
 
 	fave() {
+		if (this.deletedAt) {
+			return;
+		}
 		const now = new Date();
 		this.favedAt = now;
 		this.stateChangedAt = now;
