@@ -71,8 +71,7 @@ export function useNoteSort() {
 			if (a.pinnedAt && b.pinnedAt) {
 				return b.pinnedAt.getTime() - a.pinnedAt.getTime();
 			}
-			const result = compareNotes(a, b, sortBy.value);
-			return !(a.pinnedAt || b.pinnedAt) ? result * multiplier : result;
+			return compareNotes(a, b, sortBy.value) * multiplier;
 		});
 	}
 

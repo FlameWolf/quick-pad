@@ -119,7 +119,7 @@
 		}
 	}
 
-	async function handleSelectionAction(key: string) {
+	async function handleSelectionAction(key: SelectionAction["key"]) {
 		const ids = getSelectedIds();
 		if (ids.length === 0) {
 			return;

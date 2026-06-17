@@ -4,7 +4,7 @@
 		actions: SelectionAction[];
 	}>();
 	const emit = defineEmits<{
-		(e: "action", key: string): void;
+		(e: "action", key: SelectionAction["key"]): void;
 		(e: "cancel"): void;
 	}>();
 </script>

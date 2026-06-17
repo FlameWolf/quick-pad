@@ -4,7 +4,8 @@ import { useGoogleAuth } from "./useGoogleAuth";
 import { useNotesStore } from "@/stores/notes";
 import { NoteModel } from "@/models/NoteModel";
 import { deleteKV, getKV, setKV } from "@/storage/db";
-import { debounce, getTime } from "@/utils/timing";
+import { getTime } from "@/utils/dates";
+import { debounce } from "@/utils/timing";
 import { emptyString } from "@/constants/common";
 import { AUTO_SYNC_KEY, DEBOUNCE_MS, LAST_SYNCED_TO_CLOUD_KEY, LAST_SYNCED_TO_LOCAL_KEY } from "@/constants/sync";
 import type { NoteJSON } from "@/models/NoteModel";
@@ -64,7 +65,7 @@ function modifiedAtRemote(remote: NoteModel, local: NoteModel): boolean {
 		return true;
 	}
 	if (remoteEffectiveTime === localEffectiveTime) {
-		return getTime(remote.createdAt) !== getTime(local.createdAt) || getTime(remote.modifiedAt) !== getTime(local.modifiedAt) || getTime(remote.favedAt) !== getTime(local.favedAt) || getTime(remote.pinnedAt) !== getTime(local.pinnedAt) || getTime(remote.archivedAt) !== getTime(local.archivedAt) || getTime(remote.deletedAt) !== getTime(local.deletedAt) || getTime(remote.stateChangedAt) !== getTime(local.stateChangedAt);
+		return remote.createdAt.getTime() !== local.createdAt.getTime() || getTime(remote.modifiedAt) !== getTime(local.modifiedAt) || getTime(remote.favedAt) !== getTime(local.favedAt) || getTime(remote.pinnedAt) !== getTime(local.pinnedAt) || getTime(remote.archivedAt) !== getTime(local.archivedAt) || getTime(remote.deletedAt) !== getTime(local.deletedAt) || getTime(remote.stateChangedAt) !== getTime(local.stateChangedAt);
 	}
 	return false;
 }

@@ -1,5 +1,7 @@
 import { getCharacterCount, getSentenceCount, getSummary, getWordCount } from "@/utils/text-analysis";
 import { emptyString } from "@/constants/common";
+import { parseValidDate } from "@/utils/dates";
+import { isValidCount } from "@/utils/numbers";
 import type { UUID } from "crypto";
 
 export interface NoteMetaJSON {
@@ -20,18 +22,6 @@ export interface NoteMetaJSON {
 
 export interface NoteJSON extends NoteMetaJSON {
 	content?: string;
-}
-
-function parseValidDate(value: string | undefined): Date | undefined {
-	if (!value) {
-		return undefined;
-	}
-	const date = new Date(value);
-	return Number.isNaN(date.getTime()) ? undefined : date;
-}
-
-function isValidCount(value: unknown): value is number {
-	return typeof value === "number" && Number.isFinite(value) && value >= 0;
 }
 
 export class NoteModel {
