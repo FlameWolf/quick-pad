@@ -13,7 +13,10 @@
 	import Toast from "@/components/Toast.vue";
 	import type { UUID } from "crypto";
 
-	const props = defineProps<{ id?: UUID }>();
+	const props = defineProps<{
+		id?: UUID;
+		backRoute?: string;
+	}>();
 	const router = useRouter();
 	const route = useRoute();
 	const store = useNotesStore();
@@ -45,15 +48,7 @@
 	const isPinned = computed(() => !!existingNote.value?.pinnedAt && !existingNote.value?.deletedAt);
 	const isArchived = computed(() => !!existingNote.value?.archivedAt && !existingNote.value?.deletedAt);
 	const isTrashed = computed(() => !!existingNote.value?.deletedAt);
-	const backRoute = computed(() => {
-		if (isTrashed.value) {
-			return "/notes/trash";
-		}
-		if (isArchived.value) {
-			return "/notes/archive";
-		}
-		return "/notes";
-	});
+	const backRoute = computed(() => props.backRoute ?? "/notes");
 	const hasUnsavedChanges = computed(() => {
 		if (!isEditing.value) {
 			return false;
@@ -150,7 +145,7 @@
 		}
 		if (isCreateMode.value) {
 			isEditing.value = false;
-			router.push("/notes");
+			router.push(backRoute.value);
 		} else {
 			isEditing.value = false;
 			editTitle.value = existingNote.value?.title ?? emptyString;
@@ -181,7 +176,6 @@
 		if (!existingNote.value) {
 			return;
 		}
-		const returnTo = backRoute.value;
 		const ok = await confirm({
 			title: "Move note to Trash?",
 			message: "This note will be moved to Trash. You can restore it within 30 days.",
@@ -194,7 +188,7 @@
 		}
 		await store.trashNote(existingNote.value.id);
 		requestSync();
-		router.push(returnTo);
+		router.push(backRoute.value);
 	}
 
 	async function faveNote() {
@@ -235,7 +229,7 @@
 		}
 		await store.archiveNote(existingNote.value.id);
 		requestSync();
-		router.push("/notes");
+		router.push(backRoute.value);
 	}
 
 	async function unarchiveNote() {
@@ -244,7 +238,7 @@
 		}
 		await store.unarchiveNote(existingNote.value.id);
 		requestSync();
-		router.push("/notes/archive");
+		router.push(backRoute.value);
 	}
 
 	async function restoreNote() {
@@ -253,7 +247,7 @@
 		}
 		await store.restoreFromTrash(existingNote.value.id);
 		requestSync();
-		router.push("/notes/trash");
+		router.push(backRoute.value);
 	}
 
 	async function permanentlyDeleteNote() {
@@ -273,7 +267,7 @@
 		const existingNoteId = existingNote.value.id;
 		await store.permanentlyDelete(existingNoteId);
 		requestSync([existingNoteId]);
-		router.push("/notes/trash");
+		router.push(backRoute.value);
 	}
 
 	function formatDate(date?: Date): string {

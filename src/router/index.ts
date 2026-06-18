@@ -3,6 +3,12 @@ import { createRouter, createWebHistory } from "vue-router";
 import DisplayNoteList from "@/components/DisplayNoteList.vue";
 import EditNote from "@/components/EditNote.vue";
 
+declare module "vue-router" {
+	interface RouteMeta {
+		fromPath?: string;
+	}
+}
+
 export const isNavigating = ref(false);
 export const listViewRoutes = ["/notes", "/notes/favourite", "/notes/archive", "/notes/trash"];
 const scrollPositions = new Map<string, number>();
@@ -42,16 +48,24 @@ const router = createRouter({
 			}
 		},
 		{ path: "/notes/new", component: EditNote },
-		{ path: "/notes/:id", component: EditNote, props: true },
+		{
+			path: "/notes/:id",
+			component: EditNote,
+			props: route => ({
+				...route.params,
+				backRoute: route.meta.fromPath
+			})
+		},
 		{ path: "/privacy", component: () => import("@/components/PrivacyPolicy.vue") },
 		{ path: "/terms", component: () => import("@/components/TermsOfService.vue") }
 	]
 });
-router.beforeEach((_, from) => {
+router.beforeEach((to, from) => {
 	isNavigating.value = true;
 	const fromPath = from.path;
 	if (listViewRoutes.includes(fromPath)) {
 		scrollPositions.set(fromPath, window.scrollY);
+		to.meta.fromPath = fromPath;
 	}
 });
 router.afterEach((to, _) => {
