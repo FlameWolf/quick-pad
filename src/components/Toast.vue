@@ -41,13 +41,12 @@
 
 <template>
 	<Transition name="toast-slide">
-		<div v-if="visible" class="toast-container">
-			<div class="toast-notification rounded" :class="type">
+		<div v-if="props.visible" class="toast-container">
+			<div class="toast-notification rounded" :class="props.type">
 				<span class="toast-icon">
-					<Icon v-if="type === `success`" type="check2"/>
-					<Icon v-else type="exclamationTriangle"/>
+					<Icon :type="props.type === `success` ? `check2` : `exclamationTriangle`"/>
 				</span>
-				<span class="toast-text" v-html="message"></span>
+				<span class="toast-text" v-html="props.message"></span>
 				<button class="btn-close align-self-start ms-auto" @click="$emit(`dismiss`)"></button>
 			</div>
 		</div>

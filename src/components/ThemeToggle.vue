@@ -11,7 +11,6 @@
 </script>
 <template>
 	<button class="btn btn-secondary btn-sm" @click="toggleTheme" :aria-label="isDark ? `Switch to light theme` : `Switch to dark theme`">
-		<Icon v-if="isDark" type="moonStarsFill"/>
-		<Icon v-else type="sunFill"/>
+		<Icon :type="isDark ? `moonStarsFill` : `sunFill`"/>
 	</button>
 </template>
