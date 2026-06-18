@@ -235,32 +235,47 @@
 	<template v-else>
 		<div class="d-flex gap-2 mb-3 justify-content-end flex-wrap">
 			<template v-if="isSelectionMode">
-				<button class="btn btn-outline-secondary btn-sm" @click="toggleSelectAll">{{ allSelected ? "Deselect All" : "Select All" }}</button>
-				<button class="btn btn-outline-secondary btn-sm" @click="exitSelectionMode">Cancel</button>
+				<button class="btn btn-outline-secondary btn-sm" @click="toggleSelectAll">
+					<Icon type="listCheck"/>
+					<span class="d-none d-sm-inline ms-2">{{ allSelected ? "Deselect All" : "Select All" }}</span>
+				</button>
+				<button class="btn btn-outline-secondary btn-sm" @click="exitSelectionMode">
+					<Icon type="xCircle"/>
+					<span class="d-none d-sm-inline ms-2">Cancel</span>
+				</button>
 			</template>
 			<template v-else>
 				<SortControls :sort-by="sortBy" :sort-direction="sortDirection" @change-field="setSortBy" @toggle-direction="toggleSortDirection"/>
-				<button class="btn btn-outline-secondary btn-sm" @click="enterSelectionMode">Select</button>
+				<button class="btn btn-outline-secondary btn-sm" @click="enterSelectionMode">
+					<Icon type="check2Square"/>
+					<span class="d-none d-sm-inline ms-2">Select</span>
+				</button>
 				<template v-if="view === `active`">
-					<button class="btn btn-outline-secondary btn-sm" @click="handleImport">Import</button>
-					<button class="btn btn-outline-secondary btn-sm" @click="exportAllNotes">Export All</button>
+					<button class="btn btn-outline-secondary btn-sm" @click="handleImport">
+						<Icon type="boxArrowDownRight"/>
+						<span class="d-none d-sm-inline ms-2">Import</span>
+					</button>
+					<button class="btn btn-outline-secondary btn-sm" @click="exportAllNotes">
+						<Icon type="boxArrowUpRight"/>
+						<span class="d-none d-sm-inline ms-2">Export All</span>
+					</button>
 					<RouterLink to="/notes/favourite" class="btn btn-outline-secondary btn-sm">
 						<Icon type="star"/>
-						<span class="ms-2">Favourited</span>
+						<span class="d-none d-sm-inline ms-2">Favourited</span>
 					</RouterLink>
 					<RouterLink to="/notes/archive" class="btn btn-outline-secondary btn-sm">
 						<Icon type="archive"/>
-						<span class="ms-2">Archived</span>
+						<span class="d-none d-sm-inline ms-2">Archived</span>
 					</RouterLink>
 					<RouterLink to="/notes/trash" class="btn btn-outline-secondary btn-sm">
 						<Icon type="trash"/>
-						<span class="ms-2">Trash</span>
+						<span class="d-none d-sm-inline ms-2">Trash</span>
 					</RouterLink>
 				</template>
 				<template v-if="view === `trash`">
 					<button class="btn btn-outline-danger btn-sm" @click="handleEmptyTrash">
 						<Icon type="trashFill"/>
-						<span class="ms-2">Empty Trash</span>
+						<span class="d-none d-sm-inline ms-2">Empty Trash</span>
 					</button>
 				</template>
 			</template>
