@@ -3,6 +3,12 @@ import { createRouter, createWebHistory } from "vue-router";
 import DisplayNoteList from "@/components/DisplayNoteList.vue";
 import EditNote from "@/components/EditNote.vue";
 
+declare module "vue-router" {
+	interface RouteMeta {
+		fromPath?: string;
+	}
+}
+
 export const isNavigating = ref(false);
 export const listViewRoutes = ["/notes", "/notes/favourite", "/notes/archive", "/notes/trash"];
 const scrollPositions = new Map<string, number>();

@@ -42,9 +42,3 @@ interface LegalSection {
 	heading: string;
 	blocks: LegalBlock[];
 }
-
-export module "vue-router" {
-	interface RouteMeta {
-		fromPath?: string;
-	}
-}
