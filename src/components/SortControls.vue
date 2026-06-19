@@ -22,7 +22,7 @@
 			<option value="wordCount">Words</option>
 			<option value="characterCount">Characters</option>
 		</select>
-		<button class="btn btn-outline-secondary btn-sm" @click="emit(`toggleDirection`)" :aria-label="isAscending ? `Sort ascending, click to switch to descending` : `Sort descending, click to switch to ascending`" :title="isAscending ? `Ascending` : `Descending`">
+		<button class="btn btn-outline-secondary btn-sm" @click="emit(`toggleDirection`)" :title="isAscending ? `Ascending` : `Descending`" :aria-label="isAscending ? `Sort ascending, click to switch to descending` : `Sort descending, click to switch to ascending`">
 			<Icon :type="isAscending ? `sortDown` : `sortUp`"/>
 		</button>
 	</div>

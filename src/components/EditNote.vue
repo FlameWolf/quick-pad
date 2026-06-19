@@ -24,6 +24,7 @@
 	const { exportNote } = useFileIO();
 	const { confirm } = useConfirmDialog();
 	const { requestSync } = useNotesSync();
+	const fromView = computed(() => (route.query.from as View) ?? "active");
 	const isCreateMode = computed(() => route.path === "/notes/new");
 	const existingNote = computed(() => (props.id && !isCreateMode.value ? store.getNote(props.id) : undefined));
 	const isCopying = ref(false);
@@ -230,7 +231,9 @@
 		}
 		await store.archiveNote(existingNote.value.id);
 		requestSync();
-		router.push(backRoute.value);
+		if (fromView.value !== "favourited") {
+			router.push(backRoute.value);
+		}
 	}
 
 	async function unarchiveNote() {
@@ -239,7 +242,9 @@
 		}
 		await store.unarchiveNote(existingNote.value.id);
 		requestSync();
-		router.push(backRoute.value);
+		if (fromView.value !== "favourited") {
+			router.push(backRoute.value);
+		}
 	}
 
 	async function restoreNote() {
@@ -333,60 +338,77 @@
 			<div class="d-flex flex-wrap gap-2" v-if="!isCreateMode && !isEditing && isTrashed">
 				<button class="btn btn-outline-primary btn-sm" @click="restoreNote" title="Restore" aria-label="Restore">
 					<Icon type="reply"/>
+					<span class="d-none d-sm-inline ms-2">Restore</span>
 				</button>
 				<button class="btn btn-outline-secondary btn-sm" v-if="existingNote" @click="exportNote(existingNote)" title="Export" aria-label="Export">
 					<Icon type="download"/>
+					<span class="d-none d-sm-inline ms-2">Export</span>
 				</button>
 				<button class="btn btn-outline-danger btn-sm" @click="permanentlyDeleteNote" title="Delete Permanently" aria-label="Delete Permanently">
 					<Icon type="trashFill"/>
+					<span class="d-none d-sm-inline ms-2">Delete Permanently</span>
 				</button>
 			</div>
 			<div class="d-flex flex-wrap gap-2" v-else-if="!isCreateMode && !isEditing">
 				<button class="btn btn-outline-primary btn-sm" @click="startEditing" title="Edit" aria-label="Edit">
 					<Icon type="pen"/>
+					<span class="d-none d-sm-inline ms-2">Edit</span>
 				</button>
 				<button class="btn btn-outline-secondary btn-sm" @click="copyToClipboard" title="Copy to clipboard" aria-label="Copy to clipboard">
 					<Icon type="copy"/>
+					<span class="d-none d-sm-inline ms-2">Copy to clipboard</span>
 				</button>
 				<button class="btn btn-outline-secondary btn-sm" v-if="!isFaved" @click="faveNote" title="Favourite" aria-label="Favourite">
 					<Icon type="star"/>
+					<span class="d-none d-sm-inline ms-2">Favourite</span>
 				</button>
 				<button class="btn btn-outline-secondary btn-sm" v-else @click="unfaveNote" title="Unfavourite" aria-label="Unfavourite">
 					<Icon type="starFill"/>
+					<span class="d-none d-sm-inline ms-2">Unfavourite</span>
 				</button>
 				<template v-if="!isArchived">
 					<button class="btn btn-outline-secondary btn-sm" v-if="!isPinned" @click="pinNote" title="Pin" aria-label="Pin">
 						<Icon type="pinAngle"/>
+						<span class="d-none d-sm-inline ms-2">Pin</span>
 					</button>
 					<button class="btn btn-outline-secondary btn-sm" v-else @click="unpinNote" title="Unpin" aria-label="Unpin">
 						<Icon type="pinAngleFill"/>
+						<span class="d-none d-sm-inline ms-2">Unpin</span>
 					</button>
 				</template>
 				<button class="btn btn-outline-secondary btn-sm" v-if="existingNote" @click="exportNote(existingNote)" title="Download" aria-label="Download">
 					<Icon type="download"/>
+					<span class="d-none d-sm-inline ms-2">Download</span>
 				</button>
 				<button class="btn btn-outline-secondary btn-sm" v-if="isArchived" @click="unarchiveNote" title="Unarchive" aria-label="Unarchive">
 					<Icon type="boxArrowUp"/>
+					<span class="d-none d-sm-inline ms-2">Unarchive</span>
 				</button>
 				<button class="btn btn-outline-secondary btn-sm" v-else @click="archiveNote" title="Archive" aria-label="Archive">
 					<Icon type="archive"/>
+					<span class="d-none d-sm-inline ms-2">Archive</span>
 				</button>
 				<button class="btn btn-outline-danger btn-sm" @click="deleteNote" title="Delete" aria-label="Delete">
 					<Icon type="trash"/>
+					<span class="d-none d-sm-inline ms-2">Delete</span>
 				</button>
 			</div>
 			<div class="d-flex flex-wrap gap-2" v-if="isEditing">
 				<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canUndo.value" @click="doUndo" title="Undo" aria-label="Undo">
 					<Icon type="arrowCounterclockwise"/>
+					<span class="d-none d-sm-inline ms-2">Undo</span>
 				</button>
 				<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canRedo.value" @click="doRedo" title="Redo" aria-label="Redo">
 					<Icon type="arrowClockwise"/>
+					<span class="d-none d-sm-inline ms-2">Redo</span>
 				</button>
 				<button class="btn btn-primary btn-sm" :disabled="!hasUnsavedChanges" @click="saveNote" title="Save" aria-label="Save">
 					<Icon type="floppy"/>
+					<span class="d-none d-sm-inline ms-2">Save</span>
 				</button>
 				<button class="btn btn-outline-secondary btn-sm" @click="cancelEditing" title="Cancel" aria-label="Cancel">
 					<Icon type="xLg"/>
+					<span class="d-none d-sm-inline ms-2">Cancel</span>
 				</button>
 			</div>
 		</div>

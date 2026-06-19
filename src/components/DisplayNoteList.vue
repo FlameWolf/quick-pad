@@ -5,7 +5,7 @@
 	import { useNoteSort } from "@/composables/useNoteSort";
 	import { useConfirmDialog } from "@/composables/useConfirmDialog";
 	import { useNotesSync } from "@/composables/useNotesSync";
-	import { computed, onMounted, watch } from "vue";
+	import { computed, onMounted, provide, watch } from "vue";
 	import { emptyString } from "@/constants/common";
 	import { bulkActions } from "@/constants/actions";
 	import Icon from "@/components/Icon.vue";
@@ -16,8 +16,6 @@
 	import SortControls from "@/components/SortControls.vue";
 	import type { NoteModel } from "@/models/NoteModel";
 	import type { UUID } from "crypto";
-
-	type View = "active" | "favourited" | "archived" | "trash";
 
 	const props = defineProps<{ view?: View }>();
 	const view = computed<View>(() => props.view ?? "active");
@@ -43,6 +41,7 @@
 	const sortedNotes = computed(() => getSortedNotes(sourceNotes.value));
 	const hasNotes = computed(() => sourceNotes.value.length > 0);
 	const allSelected = computed(() => sourceNotes.value.length > 0 && selectedCount.value === sourceNotes.value.length);
+	const selectAllText = computed(() => allSelected.value ? "Deselect All" : "Select All");
 	const pageTitle = computed(() => {
 		switch (view.value) {
 			case "favourited":
@@ -210,6 +209,8 @@
 		requestSync(trashedNoteIds);
 	}
 
+	provide("currentView", view);
+
 	onMounted(() => {
 		exitSelectionMode();
 	});
@@ -235,45 +236,45 @@
 	<template v-else>
 		<div class="d-flex gap-2 mb-3 justify-content-end flex-wrap">
 			<template v-if="isSelectionMode">
-				<button class="btn btn-outline-secondary btn-sm" @click="toggleSelectAll">
-					<Icon type="listCheck"/>
-					<span class="d-none d-sm-inline ms-2">{{ allSelected ? "Deselect All" : "Select All" }}</span>
+				<button class="btn btn-outline-secondary btn-sm" @click="toggleSelectAll" :title="selectAllText" :aria-label="selectAllText">
+					<Icon :type="allSelected ? `list` : `listCheck`"/>
+					<span class="d-none d-sm-inline ms-2">{{ selectAllText }}</span>
 				</button>
-				<button class="btn btn-outline-secondary btn-sm" @click="exitSelectionMode">
+				<button class="btn btn-outline-secondary btn-sm" @click="exitSelectionMode" title="Cancel" aria-label="Cancel">
 					<Icon type="xCircle"/>
 					<span class="d-none d-sm-inline ms-2">Cancel</span>
 				</button>
 			</template>
 			<template v-else>
 				<SortControls :sort-by="sortBy" :sort-direction="sortDirection" @change-field="setSortBy" @toggle-direction="toggleSortDirection"/>
-				<button class="btn btn-outline-secondary btn-sm" @click="enterSelectionMode">
+				<button class="btn btn-outline-secondary btn-sm" @click="enterSelectionMode" title="Select" aria-label="Select">
 					<Icon type="check2Square"/>
 					<span class="d-none d-sm-inline ms-2">Select</span>
 				</button>
 				<template v-if="view === `active`">
-					<button class="btn btn-outline-secondary btn-sm" @click="handleImport">
+					<button class="btn btn-outline-secondary btn-sm" @click="handleImport" title="Import" aria-label="Import">
 						<Icon type="boxArrowDownRight"/>
 						<span class="d-none d-sm-inline ms-2">Import</span>
 					</button>
-					<button class="btn btn-outline-secondary btn-sm" @click="exportAllNotes">
+					<button class="btn btn-outline-secondary btn-sm" @click="exportAllNotes" title="Export All" aria-label="Export All">
 						<Icon type="boxArrowUpRight"/>
 						<span class="d-none d-sm-inline ms-2">Export All</span>
 					</button>
-					<RouterLink to="/notes/favourite" class="btn btn-outline-secondary btn-sm">
+					<RouterLink to="/notes/favourite" class="btn btn-outline-secondary btn-sm" title="Favourited" aria-label="Favourited">
 						<Icon type="star"/>
 						<span class="d-none d-sm-inline ms-2">Favourited</span>
 					</RouterLink>
-					<RouterLink to="/notes/archive" class="btn btn-outline-secondary btn-sm">
+					<RouterLink to="/notes/archive" class="btn btn-outline-secondary btn-sm" title="Archived" aria-label="Archived">
 						<Icon type="archive"/>
 						<span class="d-none d-sm-inline ms-2">Archived</span>
 					</RouterLink>
-					<RouterLink to="/notes/trash" class="btn btn-outline-secondary btn-sm">
+					<RouterLink to="/notes/trash" class="btn btn-outline-secondary btn-sm" title="Trash" aria-label="Trash">
 						<Icon type="trash"/>
 						<span class="d-none d-sm-inline ms-2">Trash</span>
 					</RouterLink>
 				</template>
 				<template v-if="view === `trash`">
-					<button class="btn btn-outline-danger btn-sm" @click="handleEmptyTrash">
+					<button class="btn btn-outline-danger btn-sm" @click="handleEmptyTrash" title="Empty Trash" aria-label="Empty Trash">
 						<Icon type="trashFill"/>
 						<span class="d-none d-sm-inline ms-2">Empty Trash</span>
 					</button>
