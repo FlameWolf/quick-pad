@@ -236,7 +236,7 @@
 		<div class="d-flex gap-2 mb-3 justify-content-end flex-wrap">
 			<template v-if="isSelectionMode">
 				<button class="btn btn-outline-secondary btn-sm" @click="toggleSelectAll">
-					<Icon type="listCheck"/>
+					<Icon :type="allSelected ? `list` : `listCheck`"/>
 					<span class="d-none d-sm-inline ms-2">{{ allSelected ? "Deselect All" : "Select All" }}</span>
 				</button>
 				<button class="btn btn-outline-secondary btn-sm" @click="exitSelectionMode">
