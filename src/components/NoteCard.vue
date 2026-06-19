@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { computed } from "vue";
+	import { computed, inject, type ComputedRef } from "vue";
 	import { emptyString } from "@/constants/common";
 	import Icon from "@/components/Icon.vue";
 	import type { NoteModel } from "@/models/NoteModel";
@@ -10,6 +10,7 @@
 		selectionMode: boolean;
 		selected: boolean;
 	}>();
+	const currentView = inject<ComputedRef<View>>("currentView");
 	const emit = defineEmits<{ toggleSelect: [id: UUID] }>();
 	const note = computed(() => props.note);
 
@@ -28,7 +29,7 @@
 	}
 </script>
 <template>
-	<RouterLink :to="`/notes/${note.id}`" class="card note-card text-decoration-none position-relative" :class="{ selected: props.selectionMode && props.selected }" @click.capture="onClick">
+	<RouterLink :to="{ path: `/notes/${note.id}`, query: { from: currentView } }" class="card note-card text-decoration-none position-relative" :class="{ selected: props.selectionMode && props.selected }" @click.capture="onClick">
 		<div class="d-flex gap-2 small position-absolute top-0 p-2 status-badge">
 			<Icon v-if="note.pinnedAt" type="pinAngleFill"/>
 			<Icon v-if="note.favedAt" type="starFill"/>

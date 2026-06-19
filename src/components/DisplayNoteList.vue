@@ -5,7 +5,7 @@
 	import { useNoteSort } from "@/composables/useNoteSort";
 	import { useConfirmDialog } from "@/composables/useConfirmDialog";
 	import { useNotesSync } from "@/composables/useNotesSync";
-	import { computed, onMounted, watch } from "vue";
+	import { computed, onMounted, provide, watch } from "vue";
 	import { emptyString } from "@/constants/common";
 	import { bulkActions } from "@/constants/actions";
 	import Icon from "@/components/Icon.vue";
@@ -16,8 +16,6 @@
 	import SortControls from "@/components/SortControls.vue";
 	import type { NoteModel } from "@/models/NoteModel";
 	import type { UUID } from "crypto";
-
-	type View = "active" | "favourited" | "archived" | "trash";
 
 	const props = defineProps<{ view?: View }>();
 	const view = computed<View>(() => props.view ?? "active");
@@ -210,6 +208,8 @@
 		await notesStore.permanentlyDeleteMultiple(trashedNoteIds);
 		requestSync(trashedNoteIds);
 	}
+
+	provide("currentView", view);
 
 	onMounted(() => {
 		exitSelectionMode();

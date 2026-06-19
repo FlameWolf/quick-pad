@@ -24,6 +24,7 @@
 	const { exportNote } = useFileIO();
 	const { confirm } = useConfirmDialog();
 	const { requestSync } = useNotesSync();
+	const fromView = computed(() => (route.query.from as View) ?? "active");
 	const isCreateMode = computed(() => route.path === "/notes/new");
 	const existingNote = computed(() => (props.id && !isCreateMode.value ? store.getNote(props.id) : undefined));
 	const isCopying = ref(false);
@@ -230,7 +231,9 @@
 		}
 		await store.archiveNote(existingNote.value.id);
 		requestSync();
-		router.push(backRoute.value);
+		if (fromView.value !== "favourited") {
+			router.push(backRoute.value);
+		}
 	}
 
 	async function unarchiveNote() {
@@ -239,7 +242,9 @@
 		}
 		await store.unarchiveNote(existingNote.value.id);
 		requestSync();
-		router.push(backRoute.value);
+		if (fromView.value !== "favourited") {
+			router.push(backRoute.value);
+		}
 	}
 
 	async function restoreNote() {
