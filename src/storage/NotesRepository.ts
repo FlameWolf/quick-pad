@@ -4,16 +4,15 @@ import type { UUID } from "crypto";
 
 class NotesRepository {
 	async loadAll(): Promise<NoteModel[]> {
-		const raw = await db.getAllNotes();
-		return raw.map(NoteModel.fromJSON);
+		return (await db.getAllNotes()).map(NoteModel.fromJSON);
 	}
 
-	loadContent(id: UUID): Promise<string | undefined> {
-		return db.getNoteContent(id);
+	async loadContent(id: UUID): Promise<string | undefined> {
+		return await db.getNoteContent(id);
 	}
 
-	search(predicate: (content: string) => boolean): Promise<Set<string>> {
-		return db.searchContents(predicate);
+	async search(predicate: (content: string) => boolean): Promise<Set<string>> {
+		return await db.searchContents(predicate);
 	}
 
 	async saveFull(note: NoteModel): Promise<void> {
@@ -26,20 +25,20 @@ class NotesRepository {
 		notes.forEach(note => (note.content = undefined));
 	}
 
-	saveMeta(note: NoteModel): Promise<void> {
-		return db.putNoteMeta(note.toMetaJSON());
+	async saveMeta(note: NoteModel): Promise<void> {
+		return await db.putNoteMeta(note.toMetaJSON());
 	}
 
-	saveManyMeta(notes: NoteModel[]): Promise<void> {
-		return db.putNotesMeta(notes.map(note => note.toMetaJSON()));
+	async saveManyMeta(notes: NoteModel[]): Promise<void> {
+		return await db.putNotesMeta(notes.map(note => note.toMetaJSON()));
 	}
 
-	remove(id: UUID): Promise<void> {
-		return db.deleteNote(id);
+	async remove(id: UUID): Promise<void> {
+		return await db.deleteNote(id);
 	}
 
-	removeMany(ids: UUID[]): Promise<void> {
-		return db.deleteNotes(ids);
+	async removeMany(ids: UUID[]): Promise<void> {
+		return await db.deleteNotes(ids);
 	}
 }
 
