@@ -161,17 +161,13 @@
 		if (isCreateMode.value) {
 			const note = new NoteModel(title, content);
 			await store.addNote(note);
-			isEditing.value = false;
-			requestSync();
 			router.push(`/notes/${note.id}`);
-			return;
-		}
-		if (existingNote.value) {
+		} else if (existingNote.value) {
 			await store.updateNote({ id: existingNote.value.id, title, content });
 			loadedContent.value = content;
-			requestSync();
 		}
 		isEditing.value = false;
+		requestSync();
 	}
 
 	async function deleteNote() {
