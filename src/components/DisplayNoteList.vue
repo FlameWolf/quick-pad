@@ -1,11 +1,13 @@
 <script setup lang="ts">
+	import { computed, onMounted, watch } from "vue";
+	import { onBeforeRouteLeave } from "vue-router";
 	import { useNotesStore } from "@/stores/notes";
+	import { useAppStore } from "@/stores/app";
 	import { useFileIO } from "@/composables/useFileIO";
 	import { useNoteSelection } from "@/composables/useNoteSelection";
 	import { useNoteSort } from "@/composables/useNoteSort";
 	import { useConfirmDialog } from "@/composables/useConfirmDialog";
 	import { useNotesSync } from "@/composables/useNotesSync";
-	import { computed, onMounted, provide, watch } from "vue";
 	import { emptyString } from "@/constants/common";
 	import { bulkActions } from "@/constants/actions";
 	import Icon from "@/components/Icon.vue";
@@ -20,6 +22,7 @@
 	const props = defineProps<{ view?: View }>();
 	const view = computed<View>(() => props.view ?? "active");
 	const notesStore = useNotesStore();
+	const appStore = useAppStore();
 	const { importFiles, importErrors, dismissErrors, exportNotes, exportAllNotes } = useFileIO();
 	const { isSelectionMode, selectedCount, enterSelectionMode, exitSelectionMode, toggleSelection, isSelected, selectAll, clearSelection } = useNoteSelection();
 	const { sortBy, sortDirection, setSortBy, toggleSortDirection, getSortedNotes } = useNoteSort();
@@ -41,7 +44,7 @@
 	const sortedNotes = computed(() => getSortedNotes(sourceNotes.value));
 	const hasNotes = computed(() => sourceNotes.value.length > 0);
 	const allSelected = computed(() => sourceNotes.value.length > 0 && selectedCount.value === sourceNotes.value.length);
-	const selectAllText = computed(() => allSelected.value ? "Deselect All" : "Select All");
+	const selectAllText = computed(() => (allSelected.value ? "Deselect All" : "Select All"));
 	const pageTitle = computed(() => {
 		switch (view.value) {
 			case "favourited":
@@ -209,10 +212,12 @@
 		requestSync(trashedNoteIds);
 	}
 
-	provide("currentView", view);
-
 	onMounted(() => {
 		exitSelectionMode();
+	});
+
+	onBeforeRouteLeave(() => {
+		appStore.setLastView(view.value);
 	});
 
 	watch(view, exitSelectionMode);
