@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { icons } from "@/constants/icons";
+	import { icons } from "@/content/icons";
 
 	const props = defineProps<{
 		type: keyof typeof icons;

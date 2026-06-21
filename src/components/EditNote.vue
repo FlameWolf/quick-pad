@@ -2,6 +2,7 @@
 	import { ref, computed, onBeforeUnmount, onMounted, watch, useTemplateRef } from "vue";
 	import { useRouter, useRoute, onBeforeRouteLeave } from "vue-router";
 	import { useNotesStore } from "@/stores/notes";
+	import { useAppStore } from "@/stores/app";
 	import { useUndoRedo } from "@/composables/useUndoRedo";
 	import { useConfirmDialog } from "@/composables/useConfirmDialog";
 	import { useNotesSync } from "@/composables/useNotesSync";
@@ -20,13 +21,13 @@
 	}>();
 	const router = useRouter();
 	const route = useRoute();
-	const store = useNotesStore();
+	const notesStore = useNotesStore();
+	const appStore = useAppStore();
 	const { exportNote } = useFileIO();
 	const { confirm } = useConfirmDialog();
 	const { requestSync } = useNotesSync();
-	const fromView = computed(() => (route.query.from as View) ?? "active");
 	const isCreateMode = computed(() => route.path === "/notes/new");
-	const existingNote = computed(() => (props.id && !isCreateMode.value ? store.getNote(props.id) : undefined));
+	const existingNote = computed(() => (props.id && !isCreateMode.value ? notesStore.getNote(props.id) : undefined));
 	const isCopying = ref(false);
 	const copyResult = ref<{
 		status: "success" | "error";
@@ -160,10 +161,10 @@
 		const content = editContent.value;
 		if (isCreateMode.value) {
 			const note = new NoteModel(title, content);
-			await store.addNote(note);
+			await notesStore.addNote(note);
 			router.push(`/notes/${note.id}`);
 		} else if (existingNote.value) {
-			await store.updateNote({ id: existingNote.value.id, title, content });
+			await notesStore.updateNote({ id: existingNote.value.id, title, content });
 			loadedContent.value = content;
 		}
 		isEditing.value = false;
@@ -184,7 +185,7 @@
 		if (!ok) {
 			return;
 		}
-		await store.trashNote(existingNote.value.id);
+		await notesStore.trashNote(existingNote.value.id);
 		requestSync();
 		router.push(backRoute.value);
 	}
@@ -193,7 +194,7 @@
 		if (!existingNote.value) {
 			return;
 		}
-		await store.faveNote(existingNote.value.id);
+		await notesStore.faveNote(existingNote.value.id);
 		requestSync();
 	}
 
@@ -201,7 +202,7 @@
 		if (!existingNote.value) {
 			return;
 		}
-		await store.unfaveNote(existingNote.value.id);
+		await notesStore.unfaveNote(existingNote.value.id);
 		requestSync();
 	}
 
@@ -209,7 +210,7 @@
 		if (!existingNote.value) {
 			return;
 		}
-		await store.pinNote(existingNote.value.id);
+		await notesStore.pinNote(existingNote.value.id);
 		requestSync();
 	}
 
@@ -217,7 +218,7 @@
 		if (!existingNote.value) {
 			return;
 		}
-		await store.unpinNote(existingNote.value.id);
+		await notesStore.unpinNote(existingNote.value.id);
 		requestSync();
 	}
 
@@ -225,9 +226,9 @@
 		if (!existingNote.value) {
 			return;
 		}
-		await store.archiveNote(existingNote.value.id);
+		await notesStore.archiveNote(existingNote.value.id);
 		requestSync();
-		if (fromView.value !== "favourited") {
+		if (appStore.lastView !== "favourited") {
 			router.push(backRoute.value);
 		}
 	}
@@ -236,9 +237,9 @@
 		if (!existingNote.value) {
 			return;
 		}
-		await store.unarchiveNote(existingNote.value.id);
+		await notesStore.unarchiveNote(existingNote.value.id);
 		requestSync();
-		if (fromView.value !== "favourited") {
+		if (appStore.lastView !== "favourited") {
 			router.push(backRoute.value);
 		}
 	}
@@ -247,7 +248,7 @@
 		if (!existingNote.value) {
 			return;
 		}
-		await store.restoreFromTrash(existingNote.value.id);
+		await notesStore.restoreFromTrash(existingNote.value.id);
 		requestSync();
 		router.push(backRoute.value);
 	}
@@ -267,7 +268,7 @@
 			return;
 		}
 		const existingNoteId = existingNote.value.id;
-		await store.permanentlyDelete(existingNoteId);
+		await notesStore.permanentlyDelete(existingNoteId);
 		requestSync([existingNoteId]);
 		router.push(backRoute.value);
 	}
@@ -311,7 +312,7 @@
 			editContent.value = emptyString;
 			isEditing.value = isCreateMode.value;
 			if (id && !isCreateMode.value) {
-				loadedContent.value = (await store.getNoteContent(id)) ?? emptyString;
+				loadedContent.value = (await notesStore.getNoteContent(id)) ?? emptyString;
 			} else {
 				loadedContent.value = emptyString;
 			}
