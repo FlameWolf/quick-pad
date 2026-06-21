@@ -1,6 +1,7 @@
 <script setup lang="ts">
 	import { ref, computed, onBeforeUnmount, onMounted, watch, useTemplateRef } from "vue";
 	import { useRouter, useRoute, onBeforeRouteLeave } from "vue-router";
+	import { listViewRoutes } from "@/router";
 	import { useNotesStore } from "@/stores/notes";
 	import { useAppStore } from "@/stores/app";
 	import { useUndoRedo } from "@/composables/useUndoRedo";
@@ -287,6 +288,9 @@
 	}
 
 	onMounted(() => {
+		if (!listViewRoutes.includes(backRoute.value)) {
+			appStore.setLastView(null);
+		}
 		window.addEventListener("beforeunload", onBeforeUnload);
 		window.addEventListener("resize", adjustTextAreaHeight);
 	});
