@@ -9,7 +9,10 @@ export const useAppStore = defineStore("app", () => {
 		lastView.value = view;
 	}
 
-	function setFontcaleFactor(factor: number) {
+	function setFontScaleFactor(factor: number) {
+		if (factor < 0 || factor > 10) {
+			return;
+		}
 		fontScaleFactor.value = factor;
 	}
 
@@ -17,6 +20,6 @@ export const useAppStore = defineStore("app", () => {
 		lastView,
 		fontScaleFactor,
 		setLastView,
-		setFontcaleFactor
+		setFontScaleFactor
 	};
 });
