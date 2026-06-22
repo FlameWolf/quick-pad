@@ -88,14 +88,8 @@
 	}
 
 	function setFontScaling(operator: "+" | "-") {
-		const rootElement = document.documentElement;
 		const multiplier = operator === "+" ? 1 : -1;
 		appStore.setFontScaleFactor(appStore.fontScaleFactor + 1 * multiplier);
-		if (appStore.fontScaleFactor === 0) {
-			rootElement.style.removeProperty("--font-scale-factor");
-			return;
-		}
-		rootElement.style.setProperty("--font-scale-factor", appStore.fontScaleFactor.toString());
 	}
 
 	function onContentInput(e: Event) {
@@ -337,6 +331,19 @@
 	);
 
 	watch(editContent, adjustTextAreaHeight);
+
+	watch(
+		() => appStore.fontScaleFactor,
+		factor => {
+			const rootElement = document.documentElement;
+			if (factor === 0) {
+				rootElement.style.removeProperty("--font-scale-factor");
+				return;
+			}
+			rootElement.style.setProperty("--font-scale-factor", factor.toString());
+		},
+		{ immediate: true }
+	);
 </script>
 
 <template>
