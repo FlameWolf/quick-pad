@@ -56,6 +56,9 @@
 	<div v-if="isNavigating" class="nav-overlay"></div>
 </template>
 <style>
+	:root {
+		--font-scale-factor: 0;
+	}
 	body {
 		min-height: 100vh;
 	}

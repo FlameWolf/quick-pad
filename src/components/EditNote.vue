@@ -65,6 +65,7 @@
 		}
 		return editTitle.value !== existingNote.value.title || editContent.value !== loadedContent.value;
 	});
+	const debouncedPushUndo = debounce((value: string) => undoRedo.push(value), 300);
 
 	function adjustTextAreaHeight() {
 		if (CSS.supports("field-sizing", "content")) {
@@ -86,7 +87,10 @@
 		}
 	}
 
-	const debouncedPushUndo = debounce((value: string) => undoRedo.push(value), 300);
+	function setFontScaling(operator: "+" | "-") {
+		const multiplier = operator === "+" ? 1 : -1;
+		appStore.setFontScaleFactor(appStore.fontScaleFactor + 1 * multiplier);
+	}
 
 	function onContentInput(e: Event) {
 		const value = (e.target as HTMLTextAreaElement).value;
@@ -327,6 +331,19 @@
 	);
 
 	watch(editContent, adjustTextAreaHeight);
+
+	watch(
+		() => appStore.fontScaleFactor,
+		factor => {
+			const rootElement = document.documentElement;
+			if (factor === 0) {
+				rootElement.style.removeProperty("--font-scale-factor");
+				return;
+			}
+			rootElement.style.setProperty("--font-scale-factor", factor.toString());
+		},
+		{ immediate: true }
+	);
 </script>
 
 <template>
@@ -336,6 +353,14 @@
 				<Icon type="chevronLeft"/>
 				<span class="ms-2">Back</span>
 			</RouterLink>
+			<div class="d-flex flex-wrap gap-2 ms-auto">
+				<button class="btn btn-outline-secondary btn-sm" @click="setFontScaling(`+`)" title="Increase font size" aria-label="Increase font size">
+					<span>A+</span>
+				</button>
+				<button class="btn btn-outline-secondary btn-sm" @click="setFontScaling(`-`)" title="Decrease font size" aria-label="Decrease font size">
+					<span>A-</span>
+				</button>
+			</div>
 			<div class="d-flex flex-wrap gap-2" v-if="!isCreateMode && !isEditing && isTrashed">
 				<button class="btn btn-outline-primary btn-sm" @click="restoreNote" title="Restore" aria-label="Restore">
 					<Icon type="reply"/>
@@ -438,6 +463,10 @@
 	.edit-note {
 		max-width: calc(100vw - 2rem);
 		margin: 0 auto;
+	}
+	.note-content,
+	.note-textarea {
+		font-size: calc(1rem + var(--font-scale-factor) * 0.25rem);
 	}
 	.note-content {
 		white-space: pre-wrap;
