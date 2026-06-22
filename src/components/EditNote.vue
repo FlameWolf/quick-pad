@@ -355,10 +355,10 @@
 			</RouterLink>
 			<div class="d-flex flex-wrap gap-2 ms-auto">
 				<button class="btn btn-outline-secondary btn-sm" @click="setFontScaling(`+`)" title="Increase font size" aria-label="Increase font size">
-					<span>A+</span>
+					<Icon type="aPlus"/>
 				</button>
 				<button class="btn btn-outline-secondary btn-sm" @click="setFontScaling(`-`)" title="Decrease font size" aria-label="Decrease font size">
-					<span>A-</span>
+					<Icon type="aMinus"/>
 				</button>
 			</div>
 			<div class="d-flex flex-wrap gap-2" v-if="!isCreateMode && !isEditing && isTrashed">
@@ -466,7 +466,7 @@
 	}
 	.note-content,
 	.note-textarea {
-		font-size: calc(1rem + var(--font-scale-factor) * 0.25rem);
+		font-size: calc(1rem + var(--font-scale-factor) * 1pt);
 	}
 	.note-content {
 		white-space: pre-wrap;
