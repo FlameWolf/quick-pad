@@ -7,6 +7,7 @@
 	import { useUndoRedo } from "@/composables/useUndoRedo";
 	import { useConfirmDialog } from "@/composables/useConfirmDialog";
 	import { useNotesSync } from "@/composables/useNotesSync";
+	import { useNoteDraft } from "@/composables/useNoteDraft";
 	import { NoteModel } from "@/models/NoteModel";
 	import { useFileIO } from "@/composables/useFileIO";
 	import { emptyString } from "@/constants/common";
@@ -27,6 +28,7 @@
 	const { exportNote } = useFileIO();
 	const { confirm } = useConfirmDialog();
 	const { requestSync } = useNotesSync();
+	const { saveDraft, loadDraft, clearDraft } = useNoteDraft();
 	const isCreateMode = computed(() => route.path === "/notes/new");
 	const existingNote = computed(() => (props.id && !isCreateMode.value ? notesStore.getNote(props.id) : undefined));
 	const isCopying = ref(false);
@@ -65,7 +67,18 @@
 		}
 		return editTitle.value !== existingNote.value.title || editContent.value !== loadedContent.value;
 	});
+	const draftId = computed(() => (isCreateMode.value ? "new" : props.id));
 	const debouncedPushUndo = debounce((value: string) => undoRedo.push(value), 300);
+	const persistDraft = debounce(() => {
+		if (!draftId.value) {
+			return;
+		}
+		if (hasUnsavedChanges.value) {
+			saveDraft(draftId.value, editTitle.value, editContent.value);
+		} else {
+			clearDraft(draftId.value);
+		}
+	}, 500);
 
 	function adjustTextAreaHeight() {
 		if (CSS.supports("field-sizing", "content")) {
@@ -150,6 +163,7 @@
 			if (!ok) {
 				return;
 			}
+			clearDraft(draftId.value as string);
 		}
 		if (isCreateMode.value) {
 			isEditing.value = false;
@@ -164,6 +178,7 @@
 	async function saveNote() {
 		const title = editTitle.value.trim() || "Untitled";
 		const content = editContent.value;
+		clearDraft(draftId.value as string);
 		if (isCreateMode.value) {
 			const note = new NoteModel(title, content);
 			await notesStore.addNote(note);
@@ -278,6 +293,33 @@
 		router.push(backRoute.value);
 	}
 
+	async function restoreDraft() {
+		const draft = draftId.value ? loadDraft(draftId.value) : null;
+		const baselineTitle = existingNote.value?.title ?? emptyString;
+		if (draft && (draft.title !== baselineTitle || draft.content !== loadedContent.value)) {
+			const ok = await confirm({
+				title: "Restore unsaved draft?",
+				message: `An unsaved draft from ${new Date(draft.savedAt).toLocaleString()} was found for this note.`,
+				confirmText: "Restore",
+				cancelText: "Discard draft"
+			});
+			if (ok) {
+				editTitle.value = draft.title;
+				editContent.value = draft.content;
+				isEditing.value = true;
+			} else {
+				clearDraft(draftId.value as string);
+			}
+		}
+	}
+
+	function flushDraft() {
+		persistDraft.cancel();
+		if (draftId.value && isEditing.value && hasUnsavedChanges.value) {
+			saveDraft(draftId.value, editTitle.value, editContent.value);
+		}
+	}
+
 	function formatDate(date?: Date): string {
 		if (!date) {
 			return emptyString;
@@ -297,10 +339,13 @@
 		}
 		window.addEventListener("beforeunload", onBeforeUnload);
 		window.addEventListener("resize", adjustTextAreaHeight);
+		window.addEventListener("pagehide", flushDraft);
 	});
 
 	onBeforeUnmount(() => {
+		persistDraft.cancel();
 		debouncedPushUndo.cancel();
+		window.removeEventListener("pagehide", flushDraft);
 		window.removeEventListener("resize", adjustTextAreaHeight);
 		window.removeEventListener("beforeunload", onBeforeUnload);
 	});
@@ -309,7 +354,11 @@
 		if (!hasUnsavedChanges.value) {
 			return true;
 		}
-		return await confirmDiscardChanges();
+		const ok = await confirmDiscardChanges();
+		if (ok) {
+			clearDraft(draftId.value as string);
+		}
+		return ok;
 	});
 
 	watch(
@@ -326,11 +375,15 @@
 			}
 			isContentLoaded.value = true;
 			undoRedo.reset(loadedContent.value);
+			await restoreDraft();
 		},
 		{ immediate: true }
 	);
 
-	watch(editContent, adjustTextAreaHeight);
+	watch([editTitle, editContent], () => {
+		adjustTextAreaHeight();
+		persistDraft();
+	});
 
 	watch(
 		() => appStore.fontScaleFactor,
