@@ -304,9 +304,10 @@
 				cancelText: "Discard draft"
 			});
 			if (ok) {
+				isEditing.value = true;
 				editTitle.value = draft.title;
 				editContent.value = draft.content;
-				isEditing.value = true;
+				undoRedo.push(editContent.value);
 			} else {
 				clearDraft(draftId.value as string);
 			}
