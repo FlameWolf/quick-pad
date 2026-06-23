@@ -19,6 +19,13 @@
 	import type { NoteModel } from "@/models/NoteModel";
 	import type { UUID } from "crypto";
 
+	type NoteSection = {
+		key: string;
+		notes: NoteModel[];
+		divider?: string;
+		showNewCard?: boolean;
+	};
+
 	const props = defineProps<{ view?: View }>();
 	const view = computed<View>(() => props.view ?? "active");
 	const notesStore = useNotesStore();
@@ -42,6 +49,32 @@
 		}
 	});
 	const sortedNotes = computed(() => getSortedNotes(sourceNotes.value));
+	const noteSections = computed<NoteSection[]>(() => {
+		if (view.value === "favourited") {
+			const sections: NoteSection[] = [
+				{
+					key: "active",
+					notes: sortedNotes.value.filter(n => !n.archivedAt)
+				}
+			];
+			const archived = sortedNotes.value.filter(n => n.archivedAt);
+			if (archived.length) {
+				sections.push({
+					key: "archived",
+					notes: archived,
+					divider: "ARCHIVE"
+				});
+			}
+			return sections;
+		}
+		return [
+			{
+				key: "all",
+				notes: sortedNotes.value,
+				showNewCard: view.value === "active"
+			}
+		];
+	});
 	const hasNotes = computed(() => sourceNotes.value.length > 0);
 	const allSelected = computed(() => sourceNotes.value.length > 0 && selectedCount.value === sourceNotes.value.length);
 	const selectAllText = computed(() => (allSelected.value ? "Deselect All" : "Select All"));
@@ -286,14 +319,21 @@
 				</template>
 			</template>
 		</div>
-		<div class="notes-grid">
-			<RouterLink v-if="view === `active` && !isSelectionMode" to="/notes/new" class="card note-card new-note-card text-decoration-none">
-				<div class="card-body d-flex align-items-center justify-content-center">
-					<span class="fs-1 text-muted">+</span>
-				</div>
-			</RouterLink>
-			<NoteCard v-for="note in sortedNotes" :key="note.id" :note="note" :selection-mode="isSelectionMode" :selected="isSelected(note.id)" @toggle-select="toggleSelection"/>
-		</div>
+		<template v-for="section in noteSections" :key="section.key">
+			<div v-if="section.divider" class="d-flex align-items-center my-4">
+				<div class="flex-grow-1 border-bottom"></div>
+				<span class="px-3 text-muted small">{{ section.divider }}</span>
+				<div class="flex-grow-1 border-bottom"></div>
+			</div>
+			<div class="notes-grid">
+				<RouterLink v-if="section.showNewCard && !isSelectionMode" to="/notes/new" class="card note-card new-note-card text-decoration-none">
+					<div class="card-body d-flex align-items-center justify-content-center">
+						<span class="fs-1 text-muted">+</span>
+					</div>
+				</RouterLink>
+				<NoteCard v-for="note in section.notes" :key="note.id" :note="note" :selection-mode="isSelectionMode" :selected="isSelected(note.id)" @toggle-select="toggleSelection"/>
+			</div>
+		</template>
 		<SelectionActionBar v-if="isSelectionMode && selectedCount > 0" :selected-count="selectedCount" :actions="selectionActions" @action="handleSelectionAction" @cancel="exitSelectionMode"/>
 	</template>
 	<Toast v-if="importErrors?.length" :message="formatImportErrors()" type="error" :visible="!!importErrors.length" :timeStamp="Date.now()" @dismiss="dismissErrors"/>

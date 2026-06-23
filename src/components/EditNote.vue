@@ -433,7 +433,7 @@
 				</button>
 				<button class="btn btn-outline-secondary btn-sm" @click="copyToClipboard" title="Copy to clipboard" aria-label="Copy to clipboard">
 					<Icon type="copy"/>
-					<span class="d-none d-sm-inline ms-2">Copy to clipboard</span>
+					<span class="d-none d-sm-inline ms-2">Copy</span>
 				</button>
 				<button class="btn btn-outline-secondary btn-sm" v-if="!isFaved" @click="faveNote" title="Favourite" aria-label="Favourite">
 					<Icon type="star"/>
