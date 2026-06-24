@@ -14,7 +14,7 @@
 	import { getSentenceCount, getWordCount, getCharacterCount } from "@/utils/text-analysis";
 	import { debounce } from "@/utils/timing";
 	import Icon from "@/components/Icon.vue";
-	import Toast from "@/components/Toast.vue";
+	import Toast, { type ToastDetails } from "@/components/Toast.vue";
 	import type { UUID } from "crypto";
 
 	const props = defineProps<{
@@ -32,11 +32,7 @@
 	const isCreateMode = computed(() => route.path === "/notes/new");
 	const existingNote = computed(() => (props.id && !isCreateMode.value ? notesStore.getNote(props.id) : undefined));
 	const isCopying = ref(false);
-	const copyResult = ref<{
-		type: "success" | "error";
-		timeStamp: number;
-		message: string;
-	}>({
+	const copyResult = ref<ToastDetails>({
 		type: "success",
 		timeStamp: 0,
 		message: emptyString

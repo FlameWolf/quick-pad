@@ -1,13 +1,15 @@
 <script setup lang="ts">
-	import { onMounted, watch } from "vue";
+	import { onMounted, onUnmounted, watch } from "vue";
 	import Icon from "@/components/Icon.vue";
 
-	let dismissTimeout: NodeJS.Timeout | null = null;
-	const props = defineProps<{
-		message: string;
+	export type ToastDetails = {
 		type: "success" | "error";
 		timeStamp: number;
-	}>();
+		message: string;
+	};
+
+	let dismissTimeout: NodeJS.Timeout | null = null;
+	const props = defineProps<ToastDetails>();
 	const emit = defineEmits<{
 		dismiss: [];
 	}>();
@@ -19,22 +21,26 @@
 		}
 	}
 
-	function resetDismissTimeout() {
-		clearDismissTimeout();
+	function setDismissTimeout() {
 		dismissTimeout = setTimeout(() => emit("dismiss"), 5000);
 	}
 
 	watch(
 		() => props.timeStamp,
-		val => {
-			if (val && props.type === "success") {
-				resetDismissTimeout();
+		() => {
+			clearDismissTimeout();
+			if (props.type === "success") {
+				setDismissTimeout();
 			}
 		}
 	);
 
 	onMounted(() => {
-		resetDismissTimeout();
+		setDismissTimeout();
+	});
+
+	onUnmounted(() => {
+		clearDismissTimeout();
 	});
 </script>
 
@@ -85,7 +91,7 @@
 	.toast-text {
 		flex: 1;
 		max-height: 25vh;
-		overflow-y: scroll;
+		overflow-y: auto;
 	}
 	.toast-slide-enter-active,
 	.toast-slide-leave-active {
