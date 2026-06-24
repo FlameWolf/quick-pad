@@ -1,10 +1,11 @@
 <script setup lang="ts">
 	import "bootstrap/dist/css/bootstrap.min.css";
-	import { RouterView } from "vue-router";
 	import { onMounted } from "vue";
-	import { useNotesSync } from "@/composables/useNotesSync";
-	import { useNotesStore } from "@/stores/notes";
+	import { RouterView } from "vue-router";
 	import { isNavigating } from "@/router";
+	import { useNotesStore } from "@/stores/notes";
+	import { useNotesSync } from "@/composables/useNotesSync";
+	import { useNoteDraft } from "@/composables/useNoteDraft";
 	import Toast from "@/components/Toast.vue";
 	import ConfirmDialog from "@/components/ConfirmDialog.vue";
 	import SearchBar from "@/components/SearchBar.vue";
@@ -15,12 +16,14 @@
 
 	const notesStore = useNotesStore();
 	const { lastSyncMessage, dismissMessage, requestSync } = useNotesSync();
+	const { purgeStaleDrafts } = useNoteDraft();
 
 	onMounted(async () => {
 		const purgedIds = await notesStore.purgeExpiredTrash();
 		if (purgedIds.length > 0) {
 			requestSync(purgedIds);
 		}
+		purgeStaleDrafts();
 	});
 </script>
 <template>
