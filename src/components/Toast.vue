@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { onMounted, onUnmounted, watch } from "vue";
+	import { onUnmounted, watch } from "vue";
 	import Icon from "@/components/Icon.vue";
 
 	export type ToastDetails = {
@@ -32,12 +32,9 @@
 			if (props.type === "success") {
 				setDismissTimeout();
 			}
-		}
+		},
+		{ immediate: true }
 	);
-
-	onMounted(() => {
-		setDismissTimeout();
-	});
 
 	onUnmounted(() => {
 		clearDismissTimeout();
