@@ -494,7 +494,7 @@
 			</div>
 		</div>
 		<template v-if="!isEditing && existingNote">
-			<h2 class="mb-3">{{ existingNote.title }}</h2>
+			<h2 class="note-title mb-3">{{ existingNote.title }}</h2>
 			<div class="text-muted small mb-3" v-if="existingNote.modifiedAt || existingNote.createdAt">{{ existingNote.modifiedAt ? `Modified ${formatDate(existingNote.modifiedAt)}` : `Created ${formatDate(existingNote.createdAt)}` }}</div>
 			<div v-if="!isContentLoaded" class="d-flex justify-content-center py-3">
 				<div class="spinner-border" role="status" aria-label="Loading note"></div>
@@ -519,19 +519,21 @@
 		max-width: calc(100vw - 2rem);
 		margin: 0 auto;
 	}
+	.note-title,
+	.note-content {
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
 	.note-content,
 	.note-textarea {
 		font-size: calc(1rem + var(--font-scale-factor) * 1pt);
 	}
 	.note-content {
-		white-space: pre-wrap;
-		word-break: break-word;
 		line-height: 1.7;
 	}
 	.note-textarea {
 		line-height: 1.7;
 		field-sizing: content;
-		min-height: 18.75rem;
 		resize: vertical;
 	}
 	textarea.form-control {
