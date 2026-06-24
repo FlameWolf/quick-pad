@@ -336,7 +336,7 @@
 		</template>
 		<SelectionActionBar v-if="isSelectionMode && selectedCount > 0" :selected-count="selectedCount" :actions="selectionActions" @action="handleSelectionAction" @cancel="exitSelectionMode"/>
 	</template>
-	<Toast v-if="importErrors?.length" :message="formatImportErrors()" type="error" :visible="!!importErrors.length" :timeStamp="Date.now()" @dismiss="dismissErrors"/>
+	<Toast v-if="importErrors?.length" :message="formatImportErrors()" type="error" :timeStamp="Date.now()" @dismiss="dismissErrors"/>
 </template>
 
 <style>

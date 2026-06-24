@@ -33,10 +33,12 @@
 	const existingNote = computed(() => (props.id && !isCreateMode.value ? notesStore.getNote(props.id) : undefined));
 	const isCopying = ref(false);
 	const copyResult = ref<{
-		status: "success" | "error";
+		type: "success" | "error";
+		timeStamp: number;
 		message: string;
 	}>({
-		status: "success",
+		type: "success",
+		timeStamp: 0,
 		message: emptyString
 	});
 	const isEditing = ref(isCreateMode.value);
@@ -124,13 +126,15 @@
 			.writeText(loadedContent.value)
 			.then(() => {
 				copyResult.value = {
-					status: "success",
+					type: "success",
+					timeStamp: Date.now(),
 					message: "Copied to clipboard"
 				};
 			})
 			.catch(err => {
 				copyResult.value = {
-					status: "error",
+					type: "error",
+					timeStamp: Date.now(),
 					message: `Failed to copy: ${(err as Error).message}`
 				};
 			});
@@ -507,7 +511,7 @@
 			<span class="badge text-bg-secondary" v-if="characterCount">{{ characterCount }} characters</span>
 		</div>
 	</div>
-	<Toast v-if="isCopying" :message="copyResult.message" :type="copyResult.status" :visible="isCopying" :timeStamp="Date.now()" @dismiss="isCopying = false"/>
+	<Toast v-if="isCopying" v-bind="copyResult" @dismiss="isCopying = false"/>
 </template>
 
 <style>

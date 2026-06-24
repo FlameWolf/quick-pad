@@ -51,7 +51,7 @@
 		</div>
 	</footer>
 	<ScrollButtons/>
-	<Toast v-if="lastSyncMessage" :message="lastSyncMessage.text" :type="lastSyncMessage.type" :visible="!!lastSyncMessage" :timeStamp="lastSyncMessage.timeStamp" @dismiss="dismissMessage"/>
+	<Toast v-if="lastSyncMessage" :message="lastSyncMessage.text" :type="lastSyncMessage.type" :timeStamp="lastSyncMessage.timeStamp" @dismiss="dismissMessage"/>
 	<ConfirmDialog/>
 	<div v-if="isNavigating" class="nav-overlay"></div>
 </template>

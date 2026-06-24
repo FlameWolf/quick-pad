@@ -6,7 +6,6 @@
 	const props = defineProps<{
 		message: string;
 		type: "success" | "error";
-		visible: boolean;
 		timeStamp: number;
 	}>();
 	const emit = defineEmits<{
@@ -41,7 +40,7 @@
 
 <template>
 	<Transition name="toast-slide">
-		<div v-if="props.visible" class="toast-container">
+		<div class="toast-container">
 			<div class="toast-notification rounded" :class="props.type">
 				<span class="toast-icon">
 					<Icon :type="props.type === `success` ? `check2` : `exclamationTriangle`"/>
