@@ -3,6 +3,7 @@
 	import { onMounted } from "vue";
 	import { RouterView } from "vue-router";
 	import { isNavigating } from "@/router";
+	import { hydrateNotes, useNotesStore } from "@/stores/notes";
 	import { useNotesSync } from "@/composables/useNotesSync";
 	import { useNoteDraft } from "@/composables/useNoteDraft";
 	import Toast from "@/components/Toast.vue";
@@ -13,10 +14,16 @@
 	import ScrollButtons from "@/components/ScrollButtons.vue";
 	import Icon from "@/components/Icon.vue";
 
-	const { lastSyncMessage, dismissMessage } = useNotesSync();
+	const { purgeExpiredTrash } = useNotesStore();
+	const { dismissMessage, lastSyncMessage, requestSync } = useNotesSync();
 	const { purgeStaleDrafts } = useNoteDraft();
 
-	onMounted(() => {
+	onMounted(async () => {
+		await hydrateNotes();
+		const purgedIds = await purgeExpiredTrash();
+		if (purgedIds.length > 0) {
+			requestSync(purgedIds);
+		}
 		purgeStaleDrafts();
 	});
 </script>
