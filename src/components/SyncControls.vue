@@ -1,7 +1,7 @@
 <script setup lang="ts">
 	import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
-	import { useGoogleAuth } from "@/composables/useGoogleAuth";
-	import { useNotesSync } from "@/composables/useNotesSync";
+	import { hydrateAuthState, useGoogleAuth } from "@/composables/useGoogleAuth";
+	import { hydrateSyncMetadata, useNotesSync } from "@/composables/useNotesSync";
 	import { useConfirmDialog } from "@/composables/useConfirmDialog";
 	import Icon from "@/components/Icon.vue";
 
@@ -77,7 +77,7 @@
 		{ immediate: true }
 	);
 
-	onMounted(() => {
+	onMounted(async () => {
 		if (isConfigured.value) {
 			readyTimeout = setTimeout(() => {
 				if (!isReady.value) {
@@ -85,6 +85,8 @@
 				}
 			}, 6000);
 		}
+		await hydrateAuthState();
+		await hydrateSyncMetadata();
 		tryRestoreSession();
 	});
 

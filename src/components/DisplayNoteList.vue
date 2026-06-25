@@ -1,7 +1,7 @@
 <script setup lang="ts">
 	import { computed, onMounted, watch } from "vue";
 	import { onBeforeRouteLeave } from "vue-router";
-	import { useNotesStore } from "@/stores/notes";
+	import { hydrateNotes, useNotesStore } from "@/stores/notes";
 	import { useAppStore } from "@/stores/app";
 	import { useFileIO } from "@/composables/useFileIO";
 	import { useNoteSelection } from "@/composables/useNoteSelection";
@@ -245,7 +245,12 @@
 		requestSync(trashedNoteIds);
 	}
 
-	onMounted(() => {
+	onMounted(async () => {
+		await hydrateNotes();
+		const purgedIds = await notesStore.purgeExpiredTrash();
+		if (purgedIds.length > 0) {
+			requestSync(purgedIds);
+		}
 		exitSelectionMode();
 	});
 

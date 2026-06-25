@@ -1,7 +1,7 @@
 <script setup lang="ts">
-	import { computed } from "vue";
+	import { computed, onMounted } from "vue";
+	import { hydrateSortPrefs, type SortField, type SortDirection } from "@/composables/useNoteSort";
 	import Icon from "@/components/Icon.vue";
-	import type { SortField, SortDirection } from "@/composables/useNoteSort";
 
 	const props = defineProps<{ sortBy: SortField; sortDirection: SortDirection }>();
 	const emit = defineEmits<{ changeField: [field: SortField]; toggleDirection: [] }>();
@@ -10,6 +10,10 @@
 	function onSortFieldChange(e: Event) {
 		emit("changeField", (e.target as HTMLSelectElement).value as SortField);
 	}
+
+	onMounted(async () => {
+		await hydrateSortPrefs();
+	});
 </script>
 <template>
 	<div class="d-flex gap-1 align-items-center sort-controls">
