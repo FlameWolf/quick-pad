@@ -3,8 +3,10 @@
 	import { onMounted } from "vue";
 	import { RouterView } from "vue-router";
 	import { isNavigating } from "@/router";
-	import { useNotesStore } from "@/stores/notes";
-	import { useNotesSync } from "@/composables/useNotesSync";
+	import { hydrateNotes, useNotesStore } from "@/stores/notes";
+	import { hydrateAuthState } from "@/composables/useGoogleAuth";
+	import { hydrateSortPrefs } from "@/composables/useNoteSort";
+	import { hydrateSyncMetadata, useNotesSync } from "@/composables/useNotesSync";
 	import { useNoteDraft } from "@/composables/useNoteDraft";
 	import Toast from "@/components/Toast.vue";
 	import ConfirmDialog from "@/components/ConfirmDialog.vue";
@@ -18,10 +20,21 @@
 	const { lastSyncMessage, dismissMessage, requestSync } = useNotesSync();
 	const { purgeStaleDrafts } = useNoteDraft();
 
+	async function hydrateAll() {
+		try {
+			await Promise.all([hydrateSortPrefs(), hydrateSyncMetadata(), hydrateAuthState(), hydrateNotes()]);
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
 	onMounted(async () => {
-		const purgedIds = await notesStore.purgeExpiredTrash();
-		if (purgedIds.length > 0) {
-			requestSync(purgedIds);
+		if (await hydrateAll()) {
+			const purgedIds = await notesStore.purgeExpiredTrash();
+			if (purgedIds.length > 0) {
+				requestSync(purgedIds);
+			}
 		}
 		purgeStaleDrafts();
 	});

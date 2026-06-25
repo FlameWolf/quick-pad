@@ -30,11 +30,11 @@
 <template>
 	<RouterLink :to="`/notes/${note.id}`" class="card note-card text-decoration-none position-relative" :class="{ selected: props.selectionMode && props.selected }" @click.capture="onClick">
 		<div class="d-flex gap-2 small position-absolute top-0 p-2 status-badge">
-			<Icon v-if="note.pinnedAt" type="pinAngleFill" />
-			<Icon v-if="note.favedAt" type="starFill" />
+			<Icon v-if="note.pinnedAt" type="pinAngleFill"/>
+			<Icon v-if="note.favedAt" type="starFill"/>
 		</div>
 		<div class="card-body d-flex flex-column">
-			<input v-if="props.selectionMode" type="checkbox" class="form-check-input selection-checkbox rounded-circle" :checked="props.selected" />
+			<input v-if="props.selectionMode" type="checkbox" class="form-check-input selection-checkbox rounded-circle" :checked="props.selected"/>
 			<div class="d-flex gap-1 mb-2">
 				<div class="text-truncate">{{ note.title }}</div>
 				<div class="badge align-self-center text-muted border ms-auto">{{ formatDate(note.modifiedAt ?? note.createdAt) }}</div>
