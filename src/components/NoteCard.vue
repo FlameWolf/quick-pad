@@ -48,32 +48,3 @@
 		</div>
 	</RouterLink>
 </template>
-<style>
-	.card.note-card {
-		height: 12rem;
-	}
-	.note-card {
-		transition: box-shadow 0.15s ease;
-		overflow: hidden;
-	}
-	.note-card:hover {
-		filter: drop-shadow(0 0 0.75rem var(--bs-body-color));
-	}
-	.note-card.selected {
-		border-color: var(--bs-primary);
-		background-color: var(--bs-primary-bg-subtle);
-	}
-	.status-badge {
-		background-color: rgb(from var(--bs-body-bg) r g b / 0.75);
-		border-bottom-right-radius: 0.5rem;
-	}
-	.selection-checkbox {
-		position: absolute;
-		top: 0.5rem;
-		right: 0.5rem;
-		width: 1.25rem;
-		height: 1.25rem;
-		cursor: pointer;
-		pointer-events: none;
-	}
-</style>

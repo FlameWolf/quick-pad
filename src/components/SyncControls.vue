@@ -160,24 +160,3 @@
 		</button>
 	</template>
 </template>
-<style>
-	.sync-dropdown {
-		position: absolute;
-		top: calc(100% + 0.25rem);
-		right: 0;
-	}
-	.sync-dropdown-item {
-		min-height: 2.5rem;
-		display: flex;
-		align-items: center;
-		white-space: normal;
-	}
-	.sync-dropdown-item:disabled {
-		opacity: 0.6;
-	}
-	.sync-backdrop {
-		position: fixed;
-		inset: 0;
-		background: transparent;
-	}
-</style>

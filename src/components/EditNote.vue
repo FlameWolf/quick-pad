@@ -509,30 +509,3 @@
 	</div>
 	<Toast v-if="isCopying" v-bind="copyResult" @dismiss="isCopying = false"/>
 </template>
-
-<style>
-	.edit-note {
-		max-width: calc(100vw - 2rem);
-		margin: 0 auto;
-	}
-	.note-title,
-	.note-content {
-		white-space: pre-wrap;
-		word-break: break-word;
-	}
-	.note-content,
-	.note-textarea {
-		font-size: calc(1rem + var(--font-scale-factor) * 1pt);
-	}
-	.note-content {
-		line-height: 1.7;
-	}
-	.note-textarea {
-		line-height: 1.7;
-		field-sizing: content;
-		resize: vertical;
-	}
-	textarea.form-control {
-		min-height: 18.75rem;
-	}
-</style>

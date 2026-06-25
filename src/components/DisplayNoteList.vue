@@ -343,18 +343,3 @@
 	</template>
 	<Toast v-if="importErrors?.length" :message="formatImportErrors()" type="error" :timeStamp="Date.now()" @dismiss="dismissErrors"/>
 </template>
-
-<style>
-	.notes-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-		gap: 0.75rem;
-	}
-	.new-note-card {
-		border-style: dashed;
-		opacity: 0.7;
-	}
-	.new-note-card:hover {
-		opacity: 1;
-	}
-</style>

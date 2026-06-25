@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import "bootstrap/dist/css/bootstrap.min.css";
+	import "@/styles.css";
 	import { onMounted } from "vue";
 	import { RouterView } from "vue-router";
 	import { isNavigating } from "@/router";
@@ -52,31 +52,3 @@
 	<ConfirmDialog/>
 	<div v-if="isNavigating" class="nav-overlay"></div>
 </template>
-<style>
-	:root {
-		--font-scale-factor: 0;
-	}
-	body {
-		min-height: 100vh;
-	}
-	.container {
-		max-width: unset;
-		padding: unset;
-	}
-	.logo {
-		height: 1.5rem;
-		filter: invert(0.5);
-	}
-	.bi {
-		vertical-align: -0.125rem;
-		max-width: 0.875rem;
-		max-height: 0.875rem;
-	}
-	.nav-overlay {
-		position: fixed;
-		inset: 0;
-		width: 100vw;
-		height: 100vh;
-		cursor: wait;
-	}
-</style>

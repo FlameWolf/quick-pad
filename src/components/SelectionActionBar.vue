@@ -18,22 +18,3 @@
 		</div>
 	</div>
 </template>
-
-<style>
-	.selection-action-bar {
-		position: fixed;
-		bottom: 0;
-		left: 0;
-		right: 0;
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: space-between;
-		gap: 0.75rem;
-		padding: 0.75rem 1rem;
-		padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0));
-		background-color: var(--bs-body-bg);
-		border-top: 1pt solid var(--bs-border-color);
-		filter: drop-shadow(0 0 0.5rem var(--bs-body-color));
-	}
-</style>

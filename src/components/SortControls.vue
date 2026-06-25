@@ -31,11 +31,3 @@
 		</button>
 	</div>
 </template>
-<style>
-	.sort-controls {
-		margin-right: auto;
-	}
-	.sort-select {
-		width: auto;
-	}
-</style>
