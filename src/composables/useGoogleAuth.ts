@@ -18,28 +18,6 @@ const user = ref<UserInfo | null>(null);
 const isReady = ref(false);
 const isSignedIn = ref(false);
 
-watch([accessToken, tokenExpiresAt], async ([token, expiresAt]) => {
-	if (!token || !expiresAt) {
-		await deleteKV(TOKEN_KEY);
-		await deleteKV(EXPIRY_KEY);
-		return;
-	}
-	if (token !== cachedToken || expiresAt !== cachedExpiry) {
-		await setKV(TOKEN_KEY, token);
-		await setKV(EXPIRY_KEY, expiresAt);
-	}
-});
-
-watch(user, async info => {
-	if (!info) {
-		await deleteKV(USER_KEY);
-		return;
-	}
-	if (info && (info.email !== cachedUser?.email || info.name !== cachedUser?.name)) {
-		await setKV(USER_KEY, toRaw(info));
-	}
-});
-
 export async function hydrateAuthState(): Promise<void> {
 	cachedToken = (await getKV(TOKEN_KEY)) ?? null;
 	cachedExpiry = (await getKV(EXPIRY_KEY)) ?? 0;
@@ -52,6 +30,26 @@ export async function hydrateAuthState(): Promise<void> {
 	} else {
 		cachedUser = null;
 	}
+	watch([accessToken, tokenExpiresAt], async ([token, expiresAt]) => {
+		if (!token || !expiresAt) {
+			await deleteKV(TOKEN_KEY);
+			await deleteKV(EXPIRY_KEY);
+			return;
+		}
+		if (token !== cachedToken || expiresAt !== cachedExpiry) {
+			await setKV(TOKEN_KEY, token);
+			await setKV(EXPIRY_KEY, expiresAt);
+		}
+	});
+	watch(user, async info => {
+		if (!info) {
+			await deleteKV(USER_KEY);
+			return;
+		}
+		if (info && (info.email !== cachedUser?.email || info.name !== cachedUser?.name)) {
+			await setKV(USER_KEY, toRaw(info));
+		}
+	});
 }
 
 export function useGoogleAuth() {
