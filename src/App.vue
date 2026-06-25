@@ -1,10 +1,12 @@
 <script setup lang="ts">
 	import "bootstrap/dist/css/bootstrap.min.css";
-	import { onMounted } from "vue";
+	import { onBeforeMount, onMounted } from "vue";
 	import { RouterView } from "vue-router";
 	import { isNavigating } from "@/router";
-	import { useNotesStore } from "@/stores/notes";
-	import { useNotesSync } from "@/composables/useNotesSync";
+	import { hydrateNotes, useNotesStore } from "@/stores/notes";
+	import { hydrateAuthState } from "@/composables/useGoogleAuth";
+	import { hydrateSortPrefs } from "@/composables/useNoteSort";
+	import { hydrateSyncMetadata, useNotesSync } from "@/composables/useNotesSync";
 	import { useNoteDraft } from "@/composables/useNoteDraft";
 	import Toast from "@/components/Toast.vue";
 	import ConfirmDialog from "@/components/ConfirmDialog.vue";
@@ -17,6 +19,10 @@
 	const notesStore = useNotesStore();
 	const { lastSyncMessage, dismissMessage, requestSync } = useNotesSync();
 	const { purgeStaleDrafts } = useNoteDraft();
+
+	onBeforeMount(async () => {
+		await Promise.all([hydrateSortPrefs(), hydrateSyncMetadata(), hydrateAuthState(), hydrateNotes()]);
+	});
 
 	onMounted(async () => {
 		const purgedIds = await notesStore.purgeExpiredTrash();
