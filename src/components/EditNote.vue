@@ -175,7 +175,7 @@
 	async function saveNote() {
 		const title = editTitle.value.trim() || "Untitled";
 		const content = editContent.value;
-		clearDraft(draftId.value);
+		isEditing.value = false;
 		if (isCreateMode.value) {
 			const note = new NoteModel(title, content);
 			await notesStore.addNote(note);
@@ -184,7 +184,7 @@
 			await notesStore.updateNote({ id: existingNote.value.id, title, content });
 			loadedContent.value = content;
 		}
-		isEditing.value = false;
+		clearDraft(draftId.value);
 		requestSync();
 	}
 
