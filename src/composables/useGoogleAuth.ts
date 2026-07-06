@@ -23,6 +23,7 @@ export async function hydrateAuthState(): Promise<void> {
 	if (hydrated) {
 		return;
 	}
+	hydrated = true;
 	cachedToken = (await getKV(TOKEN_KEY)) ?? null;
 	cachedExpiry = (await getKV(EXPIRY_KEY)) ?? 0;
 	const stored = await getKV(USER_KEY);
@@ -54,7 +55,6 @@ export async function hydrateAuthState(): Promise<void> {
 			await setKV(USER_KEY, toRaw(info));
 		}
 	});
-	hydrated = true;
 }
 
 export function useGoogleAuth() {

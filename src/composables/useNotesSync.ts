@@ -29,6 +29,7 @@ export async function hydrateSyncMetadata(): Promise<void> {
 	if (hydrated) {
 		return;
 	}
+	hydrated = true;
 	const storedLocal = await getKV(LAST_SYNCED_TO_LOCAL_KEY);
 	const storedCloud = await getKV(LAST_SYNCED_TO_CLOUD_KEY);
 	const storedAutoSync = await getKV(AUTO_SYNC_KEY);
@@ -52,7 +53,6 @@ export async function hydrateSyncMetadata(): Promise<void> {
 			await deleteKV(LAST_SYNCED_TO_CLOUD_KEY);
 		}
 	});
-	hydrated = true;
 }
 
 function noteEffectiveTime(note: NoteModel): number {
