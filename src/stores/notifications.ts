@@ -26,8 +26,8 @@ function createNotification(type: Notification["type"], message: string) {
 			deleteNotification(notification.id);
 		}, 5000);
 	}
-	if (notifications.value.length === maxNotifications) {
-		notifications.value.shift();
+	if (notifications.value.length >= maxNotifications) {
+		deleteNotification(notifications.value[0]!.id);
 	}
 	notifications.value.push(notification);
 }
