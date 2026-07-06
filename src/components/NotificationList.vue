@@ -2,9 +2,9 @@
 	import { computed } from "vue";
 	import { useNotificationsStore } from "@/stores/notifications";
 
-	const { notifications, removeNotification } = useNotificationsStore();
+	const notificationsStore = useNotificationsStore();
 	const sortedNotifications = computed(() => {
-		return notifications.toSorted((a, b) => b.timeStamp - a.timeStamp);
+		return notificationsStore.notifications.toSorted((a, b) => b.timeStamp - a.timeStamp);
 	});
 </script>
 <template>
@@ -13,7 +13,7 @@
 			<div class="alert fade show" :class="`alert-${notification.type}`" role="alert">
 				<div class="d-flex">
 					<div class="me-auto" v-html="notification.message"></div>
-					<button class="btn-close ms-2" @click="removeNotification(notification.id)" aria-label="Close"></button>
+					<button class="btn-close ms-2" @click="notificationsStore.removeNotification(notification.id)" aria-label="Close"></button>
 				</div>
 			</div>
 		</template>

@@ -12,28 +12,36 @@ export type NotificationList = Array<Notification>;
 
 const notifications = ref<NotificationList>([]);
 
-function createNotification(type: Notification["type"], message: string): Notification {
-	return {
+function createNotification(type: Notification["type"], message: string) {
+	const notification = {
 		id: crypto.randomUUID() as UUID,
 		type,
 		timeStamp: Date.now(),
 		message
 	};
+	notifications.value.push(notification);
+}
+
+function deleteNotification(id: UUID) {
+	const index = notifications.value.findIndex(notification => notification.id === id);
+	if (index !== -1) {
+		notifications.value.splice(index, 1);
+	}
 }
 
 export const useNotificationsStore = defineStore("notifications", () => {
 	function addNotification(type: Notification["type"], message: string) {
 		const existingNotification = notifications.value.find(n => n.message === message && n.type === type);
 		if (existingNotification) {
-			removeNotification(existingNotification.id);
+			deleteNotification(existingNotification.id);
+			setTimeout(() => createNotification(type, message), 250);
+			return;
 		}
-		const notification = createNotification(type, message);
-		notifications.value.push(notification);
-		return notification.id;
+		createNotification(type, message);
 	}
 
 	function removeNotification(id: UUID) {
-		notifications.value = notifications.value.filter(notification => notification.id !== id);
+		deleteNotification(id);
 	}
 
 	watch(
