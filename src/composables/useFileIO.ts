@@ -64,9 +64,7 @@ export function useFileIO() {
 						});
 					}
 				}
-				if (errors.length) {
-					importErrors.value = errors;
-				}
+				importErrors.value = errors;
 				resolve(count);
 			});
 			input.click();
