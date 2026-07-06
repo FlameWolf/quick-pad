@@ -2,6 +2,7 @@ import { ref, readonly, computed, watch } from "vue";
 import { useGoogleDrive } from "./useGoogleDrive";
 import { useGoogleAuth } from "./useGoogleAuth";
 import { useNotesStore } from "@/stores/notes";
+import { useNotificationsStore } from "@/stores/notifications";
 import { NoteModel } from "@/models/NoteModel";
 import { deleteKV, getKV, setKV } from "@/storage/db";
 import { getTime } from "@/utils/dates";
@@ -20,11 +21,6 @@ const isSyncing = ref(false);
 const lastSyncedToLocalAt = ref<Date | null>(null);
 const lastSyncedToCloudAt = ref<Date | null>(null);
 const autoSyncEnabled = ref<boolean>(true);
-const lastSyncMessage = ref<{
-	text: string;
-	type: "success" | "error";
-	timeStamp: number;
-} | null>(null);
 const syncError = ref<string | null>(null);
 const pendingPurges = new Set<UUID>();
 
@@ -84,6 +80,7 @@ export function mergeNotesByModifiedAt(local: ReadonlyArray<NoteModel>, remote: 
 
 export function useNotesSync() {
 	const store = useNotesStore();
+	const { addNotification } = useNotificationsStore();
 	const { listFiles, findFile, readJSONById, writeJSONById, writeJSON, deleteFile } = useGoogleDrive();
 	const { isSignedIn } = useGoogleAuth();
 	const getFileName = (id: UUID) => `${store.fileNamePrefix}${id}.json`;
@@ -161,11 +158,7 @@ export function useNotesSync() {
 				await store.replaceMultiple(changes);
 				downloaded += changeCount;
 			}
-			lastSyncMessage.value = {
-				text: `Fetching remote notes (${remoteCount} loaded)`,
-				type: "success",
-				timeStamp: Date.now()
-			};
+			addNotification("success", `Fetching remote notes (${remoteCount} loaded)`);
 		} while (pageToken);
 		await purgeRemoteFiles(await store.purgeExpiredTrash());
 		lastSyncedToLocalAt.value = syncStartedAt;
@@ -194,14 +187,10 @@ export function useNotesSync() {
 			const pushResult = await runPush(purged, force);
 			const empty = pullResult.remoteCount === 0 && store.notes.length === 0;
 			const changes = pushResult.conflicts + pullResult.downloaded;
-			lastSyncMessage.value = {
-				text: empty ? "Nothing to sync" : `Synced${changes > 0 ? ` (pulled ${changes} change${changes > 1 ? "s" : emptyString} from cloud)` : emptyString}`,
-				type: "success",
-				timeStamp: Date.now()
-			};
+			addNotification("success", empty ? "Nothing to sync" : `Synced${changes > 0 ? ` (pulled ${changes} change${changes > 1 ? "s" : emptyString} from cloud)` : emptyString}`);
 		} catch (err: any) {
 			syncError.value = err?.message ?? "Sync failed";
-			lastSyncMessage.value = { text: `Sync failed: ${syncError.value}`, type: "error", timeStamp: Date.now() };
+			addNotification("danger", `Sync failed: ${syncError.value}`);
 		} finally {
 			isSyncing.value = false;
 		}
@@ -223,18 +212,10 @@ export function useNotesSync() {
 		if (isSignedIn.value && autoSyncEnabled.value) {
 			saveToCloud()
 				.then(() => {
-					lastSyncMessage.value = {
-						text: "Synced to cloud",
-						type: "success",
-						timeStamp: Date.now()
-					};
+					addNotification("success", "Synced to cloud");
 				})
 				.catch(() => {
-					lastSyncMessage.value = {
-						text: "Sync failed",
-						type: "error",
-						timeStamp: Date.now()
-					};
+					addNotification("danger", "Sync failed");
 				});
 		}
 	}, DEBOUNCE_MS);
@@ -260,10 +241,6 @@ export function useNotesSync() {
 		}
 	}
 
-	function dismissMessage() {
-		lastSyncMessage.value = null;
-	}
-
 	return {
 		isSyncing: readonly(isSyncing),
 		lastSyncedAt: computed(() => {
@@ -272,10 +249,8 @@ export function useNotesSync() {
 		}),
 		syncError: readonly(syncError),
 		autoSyncEnabled: readonly(autoSyncEnabled),
-		lastSyncMessage: readonly(lastSyncMessage),
 		doPullAndPush,
 		requestSync,
-		setAutoSync,
-		dismissMessage
+		setAutoSync
 	};
 }

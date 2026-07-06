@@ -32,6 +32,7 @@ export function useFileIO() {
 
 	function importFiles(): Promise<number> {
 		return new Promise(resolve => {
+			const errors: typeof importErrors.value = [];
 			const input = document.createElement("input");
 			input.type = "file";
 			input.multiple = true;
@@ -44,7 +45,7 @@ export function useFileIO() {
 				let count = 0;
 				for (const file of files) {
 					if (!(await isTextFile(file))) {
-						importErrors.value?.push({
+						errors.push({
 							fileName: file.name,
 							message: "Unsupported file type"
 						});
@@ -57,20 +58,19 @@ export function useFileIO() {
 						await store.addNote(note);
 						count++;
 					} catch (err) {
-						importErrors.value?.push({
+						errors.push({
 							fileName: file.name,
 							message: "Failed to read file"
 						});
 					}
 				}
+				if (errors.length) {
+					importErrors.value = errors;
+				}
 				resolve(count);
 			});
 			input.click();
 		});
-	}
-
-	function dismissErrors() {
-		importErrors.value = [];
 	}
 
 	async function exportNote(note: NoteModel) {
@@ -107,7 +107,6 @@ export function useFileIO() {
 	return {
 		importFiles,
 		importErrors,
-		dismissErrors,
 		exportNote,
 		exportNotes,
 		exportAllNotes

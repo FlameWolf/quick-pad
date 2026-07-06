@@ -2,6 +2,7 @@
 	import { computed, onMounted, watch } from "vue";
 	import { onBeforeRouteLeave } from "vue-router";
 	import { useNotesStore } from "@/stores/notes";
+	import { useNotificationsStore } from "@/stores/notifications";
 	import { useAppStore } from "@/stores/app";
 	import { useFileIO } from "@/composables/useFileIO";
 	import { useNoteSelection } from "@/composables/useNoteSelection";
@@ -11,11 +12,10 @@
 	import { emptyString } from "@/constants/common";
 	import { bulkActions } from "@/constants/actions";
 	import Icon from "@/components/Icon.vue";
-	import SelectionActionBar from "@/components/SelectionActionBar.vue";
-	import Toast from "@/components/Toast.vue";
-	import NoteCard from "@/components/NoteCard.vue";
 	import EmptyState from "@/components/EmptyState.vue";
 	import SortControls from "@/components/SortControls.vue";
+	import NoteCard from "@/components/NoteCard.vue";
+	import SelectionActionBar from "@/components/SelectionActionBar.vue";
 	import type { NoteModel } from "@/models/NoteModel";
 	import type { UUID } from "crypto";
 
@@ -29,8 +29,9 @@
 	const props = defineProps<{ view?: View }>();
 	const view = computed<View>(() => props.view ?? "active");
 	const notesStore = useNotesStore();
+	const notificationsStore = useNotificationsStore();
 	const appStore = useAppStore();
-	const { importFiles, importErrors, dismissErrors, exportNotes, exportAllNotes } = useFileIO();
+	const { importFiles, importErrors, exportNotes, exportAllNotes } = useFileIO();
 	const { isSelectionMode, selectedCount, enterSelectionMode, exitSelectionMode, toggleSelection, isSelected, selectAll, clearSelection } = useNoteSelection();
 	const { sortBy, sortDirection, setSortBy, toggleSortDirection, getSortedNotes } = useNoteSort();
 	const { confirm } = useConfirmDialog();
@@ -253,6 +254,16 @@
 		appStore.setLastView(view.value);
 	});
 
+	watch(
+		importErrors,
+		errors => {
+			if (errors?.length) {
+				notificationsStore.addNotification("danger", formatImportErrors());
+			}
+		},
+		{ deep: true }
+	);
+
 	watch(view, exitSelectionMode);
 </script>
 
@@ -336,5 +347,4 @@
 		</template>
 		<SelectionActionBar v-if="isSelectionMode && selectedCount > 0" :selected-count="selectedCount" :actions="selectionActions" @action="handleSelectionAction" @cancel="exitSelectionMode"/>
 	</template>
-	<Toast v-if="importErrors?.length" :message="formatImportErrors()" type="error" :timeStamp="Date.now()" @dismiss="dismissErrors"/>
 </template>

@@ -4,7 +4,7 @@ import type { UUID } from "crypto";
 
 export type Notification = {
 	id: UUID;
-	type: "success" | "info" | "warning" | "error";
+	type: "success" | "info" | "warning" | "danger";
 	timeStamp: number;
 	message: string;
 };
@@ -23,6 +23,10 @@ function createNotification(type: Notification["type"], message: string): Notifi
 
 export const useNotificationsStore = defineStore("notifications", () => {
 	function addNotification(type: Notification["type"], message: string) {
+		const existingNotification = notifications.value.find(n => n.message === message && n.type === type);
+		if (existingNotification) {
+			removeNotification(existingNotification.id);
+		}
 		const notification = createNotification(type, message);
 		notifications.value.push(notification);
 		return notification.id;
@@ -36,7 +40,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
 		notifications,
 		newNotifications => {
 			newNotifications.forEach(notification => {
-				if (notification.type !== "error") {
+				if (notification.type !== "danger") {
 					setTimeout(() => {
 						removeNotification(notification.id);
 					}, 5000);

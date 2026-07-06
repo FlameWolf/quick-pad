@@ -6,16 +6,16 @@
 	import { hydrateNotes, useNotesStore } from "@/stores/notes";
 	import { useNotesSync } from "@/composables/useNotesSync";
 	import { useNoteDraft } from "@/composables/useNoteDraft";
-	import Toast from "@/components/Toast.vue";
-	import ConfirmDialog from "@/components/ConfirmDialog.vue";
+	import Icon from "@/components/Icon.vue";
 	import SearchBar from "@/components/SearchBar.vue";
 	import SyncControls from "@/components/SyncControls.vue";
 	import ThemeToggle from "@/components/ThemeToggle.vue";
 	import ScrollButtons from "@/components/ScrollButtons.vue";
-	import Icon from "@/components/Icon.vue";
+	import NotificationList from "@/components/NotificationList.vue";
+	import ConfirmDialog from "@/components/ConfirmDialog.vue";
 
 	const { purgeExpiredTrash } = useNotesStore();
-	const { dismissMessage, lastSyncMessage, requestSync } = useNotesSync();
+	const { requestSync } = useNotesSync();
 	const { purgeStaleDrafts } = useNoteDraft();
 
 	onMounted(async () => {
@@ -55,7 +55,7 @@
 		</div>
 	</footer>
 	<ScrollButtons/>
-	<Toast v-if="lastSyncMessage" :message="lastSyncMessage.text" :type="lastSyncMessage.type" :timeStamp="lastSyncMessage.timeStamp" @dismiss="dismissMessage"/>
+	<NotificationList/>
 	<ConfirmDialog/>
 	<div v-if="isNavigating" class="nav-overlay"></div>
 </template>

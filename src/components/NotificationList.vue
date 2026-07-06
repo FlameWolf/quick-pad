@@ -2,26 +2,20 @@
 	import { computed } from "vue";
 	import { useNotificationsStore } from "@/stores/notifications";
 
-	const notificationsStore = useNotificationsStore();
+	const { notifications, removeNotification } = useNotificationsStore();
 	const sortedNotifications = computed(() => {
-		return notificationsStore.notifications.toSorted((a, b) => b.timeStamp - a.timeStamp);
+		return notifications.toSorted((a, b) => b.timeStamp - a.timeStamp);
 	});
 </script>
 <template>
-	<div class="notification-list">
-		<div v-for="notification in sortedNotifications" :key="notification.id" class="notification-item">
-			<p>{{ notification.message }}</p>
-			<button @click="notificationsStore.removeNotification(notification.id)">Dismiss</button>
-		</div>
+	<div class="d-flex flex-column gap-1 notification-list position-fixed end-0 bottom-0 me-1 mb-1">
+		<template v-for="notification in sortedNotifications" :key="notification.id" class="notification-item">
+			<div class="alert fade show" :class="`alert-${notification.type}`" role="alert">
+				<div class="d-flex">
+					<div class="me-auto" v-html="notification.message"></div>
+					<button class="btn-close ms-2" @click="removeNotification(notification.id)" aria-label="Close"></button>
+				</div>
+			</div>
+		</template>
 	</div>
 </template>
-<style>
-	.notification-list {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-		inset: 0;
-		right: 1rem;
-		bottom: 1rem;
-	}
-</style>
