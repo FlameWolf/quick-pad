@@ -2,8 +2,8 @@
 	import { computed, onMounted, watch } from "vue";
 	import { onBeforeRouteLeave } from "vue-router";
 	import { useNotesStore } from "@/stores/notes";
-	import { useNotificationsStore } from "@/stores/notifications";
 	import { useAppStore } from "@/stores/app";
+	import { useNotificationsStore } from "@/stores/notifications";
 	import { useFileIO } from "@/composables/useFileIO";
 	import { useNoteSelection } from "@/composables/useNoteSelection";
 	import { useNoteSort } from "@/composables/useNoteSort";
@@ -29,8 +29,8 @@
 	const props = defineProps<{ view?: View }>();
 	const view = computed<View>(() => props.view ?? "active");
 	const notesStore = useNotesStore();
-	const notificationsStore = useNotificationsStore();
 	const appStore = useAppStore();
+	const { addNotification } = useNotificationsStore();
 	const { importFiles, importErrors, exportNotes, exportAllNotes } = useFileIO();
 	const { isSelectionMode, selectedCount, enterSelectionMode, exitSelectionMode, toggleSelection, isSelected, selectAll, clearSelection } = useNoteSelection();
 	const { sortBy, sortDirection, setSortBy, toggleSortDirection, getSortedNotes } = useNoteSort();
@@ -258,7 +258,7 @@
 		importErrors,
 		errors => {
 			if (errors?.length) {
-				notificationsStore.addNotification("danger", formatImportErrors());
+				addNotification("danger", formatImportErrors());
 			}
 		},
 		{ deep: true }

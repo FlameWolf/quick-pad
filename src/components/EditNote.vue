@@ -3,14 +3,14 @@
 	import { useRouter, useRoute, onBeforeRouteLeave } from "vue-router";
 	import { listViewRoutes } from "@/router";
 	import { useNotesStore } from "@/stores/notes";
-	import { useNotificationsStore } from "@/stores/notifications";
 	import { useAppStore } from "@/stores/app";
-	import { useUndoRedo } from "@/composables/useUndoRedo";
+	import { useNotificationsStore } from "@/stores/notifications";
+	import { useFileIO } from "@/composables/useFileIO";
 	import { useConfirmDialog } from "@/composables/useConfirmDialog";
 	import { useNotesSync } from "@/composables/useNotesSync";
 	import { useNoteDraft } from "@/composables/useNoteDraft";
+	import { useUndoRedo } from "@/composables/useUndoRedo";
 	import { NoteModel } from "@/models/NoteModel";
-	import { useFileIO } from "@/composables/useFileIO";
 	import { emptyString } from "@/constants/common";
 	import { getSentenceCount, getWordCount, getCharacterCount } from "@/utils/text-analysis";
 	import { debounce } from "@/utils/timing";
@@ -24,8 +24,8 @@
 	const router = useRouter();
 	const route = useRoute();
 	const notesStore = useNotesStore();
-	const { addNotification } = useNotificationsStore();
 	const appStore = useAppStore();
+	const { addNotification } = useNotificationsStore();
 	const { exportNote } = useFileIO();
 	const { confirm } = useConfirmDialog();
 	const { requestSync } = useNotesSync();
