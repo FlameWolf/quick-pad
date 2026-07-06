@@ -1,14 +1,19 @@
-import { ref } from "vue";
 import { useNotesStore } from "@/stores/notes";
+import { useNotificationsStore } from "@/stores/notifications";
 import { NoteModel } from "@/models/NoteModel";
 import { isTextFile } from "@/utils/file-detection";
 import { emptyString } from "@/constants/common";
 
-const JSZip = (await import("jszip")).default;
-const importErrors = ref<Array<{
+interface ImportError {
 	fileName: string;
 	message: string;
-}> | void>([]);
+}
+
+const JSZip = (await import("jszip")).default;
+
+function formatImportErrors(errors: ImportError[]): string {
+	return [`Import failed for the following file`, errors.length === 1 ? emptyString : "s", ":<hr/>", `<ul>${errors.map(err => `<li>${err.fileName}: ${err.message}</li>`).join(emptyString)}</ul>`].join(emptyString);
+}
 
 function triggerDownload(blob: Blob, filename: string) {
 	const url = URL.createObjectURL(blob);
@@ -29,9 +34,11 @@ function sanitizeFilename(name: string): string {
 
 export function useFileIO() {
 	const store = useNotesStore();
+	const { addNotification } = useNotificationsStore();
 
 	function importFiles(): Promise<number> {
 		return new Promise(resolve => {
+			const errors: ImportError[] = [];
 			const input = document.createElement("input");
 			input.type = "file";
 			input.multiple = true;
@@ -44,7 +51,7 @@ export function useFileIO() {
 				let count = 0;
 				for (const file of files) {
 					if (!(await isTextFile(file))) {
-						importErrors.value?.push({
+						errors.push({
 							fileName: file.name,
 							message: "Unsupported file type"
 						});
@@ -57,20 +64,19 @@ export function useFileIO() {
 						await store.addNote(note);
 						count++;
 					} catch (err) {
-						importErrors.value?.push({
+						errors.push({
 							fileName: file.name,
 							message: "Failed to read file"
 						});
 					}
 				}
+				if (errors.length) {
+					addNotification("danger", formatImportErrors(errors));
+				}
 				resolve(count);
 			});
 			input.click();
 		});
-	}
-
-	function dismissErrors() {
-		importErrors.value = [];
 	}
 
 	async function exportNote(note: NoteModel) {
@@ -106,8 +112,6 @@ export function useFileIO() {
 
 	return {
 		importFiles,
-		importErrors,
-		dismissErrors,
 		exportNote,
 		exportNotes,
 		exportAllNotes

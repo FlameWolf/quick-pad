@@ -4,17 +4,17 @@
 	import { listViewRoutes } from "@/router";
 	import { useNotesStore } from "@/stores/notes";
 	import { useAppStore } from "@/stores/app";
-	import { useUndoRedo } from "@/composables/useUndoRedo";
+	import { useNotificationsStore } from "@/stores/notifications";
+	import { useFileIO } from "@/composables/useFileIO";
 	import { useConfirmDialog } from "@/composables/useConfirmDialog";
 	import { useNotesSync } from "@/composables/useNotesSync";
 	import { useNoteDraft } from "@/composables/useNoteDraft";
+	import { useUndoRedo } from "@/composables/useUndoRedo";
 	import { NoteModel } from "@/models/NoteModel";
-	import { useFileIO } from "@/composables/useFileIO";
 	import { emptyString } from "@/constants/common";
 	import { getSentenceCount, getWordCount, getCharacterCount } from "@/utils/text-analysis";
 	import { debounce } from "@/utils/timing";
 	import Icon from "@/components/Icon.vue";
-	import Toast, { type ToastDetails } from "@/components/Toast.vue";
 	import type { UUID } from "crypto";
 
 	const props = defineProps<{
@@ -25,18 +25,13 @@
 	const route = useRoute();
 	const notesStore = useNotesStore();
 	const appStore = useAppStore();
+	const { addNotification } = useNotificationsStore();
 	const { exportNote } = useFileIO();
 	const { confirm } = useConfirmDialog();
 	const { requestSync } = useNotesSync();
 	const { saveDraft, loadDraft, clearDraft } = useNoteDraft();
 	const isCreateMode = computed(() => route.path === "/notes/new");
 	const existingNote = computed(() => (props.id && !isCreateMode.value ? notesStore.getNote(props.id) : undefined));
-	const isCopying = ref(false);
-	const copyResult = ref<ToastDetails>({
-		type: "success",
-		timeStamp: 0,
-		message: emptyString
-	});
 	const isEditing = ref(isCreateMode.value);
 	const editTitle = ref(existingNote.value?.title ?? emptyString);
 	const editContent = ref(emptyString);
@@ -117,22 +112,13 @@
 	}
 
 	function copyToClipboard() {
-		isCopying.value = true;
 		navigator.clipboard
 			.writeText(loadedContent.value)
 			.then(() => {
-				copyResult.value = {
-					type: "success",
-					timeStamp: Date.now(),
-					message: "Copied to clipboard"
-				};
+				addNotification("success", "Copied to clipboard");
 			})
 			.catch(err => {
-				copyResult.value = {
-					type: "error",
-					timeStamp: Date.now(),
-					message: `Failed to copy: ${(err as Error).message}`
-				};
+				addNotification("danger", `Failed to copy: ${(err as Error).message}`);
 			});
 	}
 
@@ -509,5 +495,4 @@
 		<span class="badge text-bg-secondary" v-if="wordCount">{{ wordCount }} words</span>
 		<span class="badge text-bg-secondary" v-if="characterCount">{{ characterCount }} characters</span>
 	</div>
-	<Toast v-if="isCopying" v-bind="copyResult" @dismiss="isCopying = false"/>
 </template>

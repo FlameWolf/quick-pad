@@ -8,14 +8,12 @@
 	import { useNoteSort } from "@/composables/useNoteSort";
 	import { useConfirmDialog } from "@/composables/useConfirmDialog";
 	import { useNotesSync } from "@/composables/useNotesSync";
-	import { emptyString } from "@/constants/common";
 	import { bulkActions } from "@/constants/actions";
 	import Icon from "@/components/Icon.vue";
-	import SelectionActionBar from "@/components/SelectionActionBar.vue";
-	import Toast from "@/components/Toast.vue";
-	import NoteCard from "@/components/NoteCard.vue";
 	import EmptyState from "@/components/EmptyState.vue";
 	import SortControls from "@/components/SortControls.vue";
+	import NoteCard from "@/components/NoteCard.vue";
+	import SelectionActionBar from "@/components/SelectionActionBar.vue";
 	import type { NoteModel } from "@/models/NoteModel";
 	import type { UUID } from "crypto";
 
@@ -30,7 +28,7 @@
 	const view = computed<View>(() => props.view ?? "active");
 	const notesStore = useNotesStore();
 	const appStore = useAppStore();
-	const { importFiles, importErrors, dismissErrors, exportNotes, exportAllNotes } = useFileIO();
+	const { importFiles, exportNotes, exportAllNotes } = useFileIO();
 	const { isSelectionMode, selectedCount, enterSelectionMode, exitSelectionMode, toggleSelection, isSelected, selectAll, clearSelection } = useNoteSelection();
 	const { sortBy, sortDirection, setSortBy, toggleSortDirection, getSortedNotes } = useNoteSort();
 	const { confirm } = useConfirmDialog();
@@ -127,10 +125,6 @@
 		}
 		return bulkActions.filter(action => actionKeys.has(action.key));
 	});
-
-	function formatImportErrors(): string {
-		return [`Import failed for the following file`, importErrors.value?.length === 1 ? emptyString : "s", ":<hr/>", `<ul>${importErrors.value?.map(err => `<li>${err.fileName}: ${err.message}</li>`).join(emptyString)}</ul>`].join(emptyString);
-	}
 
 	function toggleSelectAll() {
 		if (allSelected.value) {
@@ -336,5 +330,4 @@
 		</template>
 		<SelectionActionBar v-if="isSelectionMode && selectedCount > 0" :selected-count="selectedCount" :actions="selectionActions" @action="handleSelectionAction" @cancel="exitSelectionMode"/>
 	</template>
-	<Toast v-if="importErrors?.length" :message="formatImportErrors()" type="error" :timeStamp="Date.now()" @dismiss="dismissErrors"/>
 </template>
