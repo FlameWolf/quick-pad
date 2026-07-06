@@ -17,6 +17,7 @@ enum NoteUploadResult {
 	Conflict = "conflict"
 }
 
+let hydrated = false;
 const isSyncing = ref(false);
 const lastSyncedToLocalAt = ref<Date | null>(null);
 const lastSyncedToCloudAt = ref<Date | null>(null);
@@ -25,6 +26,9 @@ const syncError = ref<string | null>(null);
 const pendingPurges = new Set<UUID>();
 
 export async function hydrateSyncMetadata(): Promise<void> {
+	if (hydrated) {
+		return;
+	}
 	const storedLocal = await getKV(LAST_SYNCED_TO_LOCAL_KEY);
 	const storedCloud = await getKV(LAST_SYNCED_TO_CLOUD_KEY);
 	const storedAutoSync = await getKV(AUTO_SYNC_KEY);
@@ -48,6 +52,7 @@ export async function hydrateSyncMetadata(): Promise<void> {
 			await deleteKV(LAST_SYNCED_TO_CLOUD_KEY);
 		}
 	});
+	hydrated = true;
 }
 
 function noteEffectiveTime(note: NoteModel): number {
