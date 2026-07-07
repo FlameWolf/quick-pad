@@ -8,7 +8,7 @@
 	});
 </script>
 <template>
-	<div class="d-flex flex-column notification-list position-fixed end-0 bottom-0 me-2 mb-2">
+	<div class="d-flex flex-column gap-2 notification-list position-fixed end-0 bottom-0 me-2 mb-2">
 		<template v-for="notification in sortedNotifications" :key="notification.id">
 			<div class="alert m-0" :class="`alert-${notification.type}`" role="alert">
 				<div class="d-flex">
