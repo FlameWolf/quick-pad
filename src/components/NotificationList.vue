@@ -10,9 +10,9 @@
 <template>
 	<div class="d-flex flex-column gap-2 notification-list position-fixed end-0 bottom-0 me-2 mb-2">
 		<template v-for="notification in sortedNotifications" :key="notification.id">
-			<div class="alert m-0" :class="`alert-${notification.type}`" role="alert">
+			<div class="alert m-0 ms-auto" :class="`alert-${notification.type}`" role="alert">
 				<div class="d-flex">
-					<div class="me-auto" v-html="notification.message"></div>
+					<div v-html="notification.message"></div>
 					<button class="btn-close ms-2" @click="notificationsStore.removeNotification(notification.id)" aria-label="Close"></button>
 				</div>
 			</div>
