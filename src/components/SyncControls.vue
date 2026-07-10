@@ -8,11 +8,12 @@
 	import Icon from "@/components/Icon.vue";
 
 	let readyTimeout: ReturnType<typeof setTimeout> | null = null;
-	const syncMenuToggle = useTemplateRef("sync-menu-toggle");
+	const syncMenuTrigger = useTemplateRef("sync-menu-trigger");
+	const syncMenuDropdown = useTemplateRef("sync-menu-dropdown");
 	const { isLoading, purgeExpiredTrash } = useNotesStore();
 	const { isSignedIn, isReady, isConfigured, user, tryRestoreSession, signIn, signOut } = useGoogleAuth();
 	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, doPullAndPush, requestSync, setAutoSync } = useNotesSync();
-	const { show: showSyncMenu, toggle: toggleSyncMenu } = useDropdown(syncMenuToggle);
+	const { show: showSyncMenu, toggle: toggleSyncMenu } = useDropdown(syncMenuTrigger, syncMenuDropdown);
 	const { confirm } = useConfirmDialog();
 	const authTimedOut = ref(false);
 
@@ -117,7 +118,7 @@
 		<template v-if="isReady">
 			<template v-if="isSignedIn">
 				<div class="position-relative">
-					<button ref="sync-menu-toggle" class="d-flex flex-nowrap btn btn-outline-secondary btn-sm" @click="toggleSyncMenu" :disabled="isSyncing" :title="syncError ? `Sync error: ${syncError}` : `Google Drive Sync`" aria-label="Google Drive Sync">
+					<button ref="sync-menu-trigger" class="d-flex flex-nowrap btn btn-outline-secondary btn-sm" @click="toggleSyncMenu" :disabled="isSyncing" :title="syncError ? `Sync error: ${syncError}` : `Google Drive Sync`" aria-label="Google Drive Sync">
 						<span v-if="isSyncing">
 							<div class="spinner-border spinner-border-sm" role="status"></div>
 						</span>
@@ -132,7 +133,7 @@
 						</span>
 						<span class="d-none d-md-inline ms-2">{{ user?.name ?? "Sync" }}</span>
 					</button>
-					<div v-if="showSyncMenu" class="dropdown-menu show sync-dropdown">
+					<div ref="sync-menu-dropdown" v-if="showSyncMenu" class="dropdown-menu show sync-dropdown">
 						<div class="dropdown-header text-muted small px-3 py-1 text-truncate">{{ user?.email }}</div>
 						<div class="dropdown-divider"></div>
 						<label class="dropdown-item sync-dropdown-item d-flex align-items-center gap-2 mb-0">
