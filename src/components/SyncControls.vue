@@ -1,27 +1,22 @@
 <script setup lang="ts">
-	import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
+	import { ref, computed, watch, onMounted, onBeforeUnmount, useTemplateRef } from "vue";
+	import { useNotesStore } from "@/stores/notes";
 	import { hydrateAuthState, useGoogleAuth } from "@/composables/useGoogleAuth";
 	import { hydrateSyncMetadata, useNotesSync } from "@/composables/useNotesSync";
+	import { useDropdown } from "@/composables/useDropdown";
 	import { useConfirmDialog } from "@/composables/useConfirmDialog";
 	import Icon from "@/components/Icon.vue";
 
 	let readyTimeout: ReturnType<typeof setTimeout> | null = null;
+	const syncMenuToggle = useTemplateRef("sync-menu-toggle");
+	const { isLoading, purgeExpiredTrash } = useNotesStore();
 	const { isSignedIn, isReady, isConfigured, user, tryRestoreSession, signIn, signOut } = useGoogleAuth();
-	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, doPullAndPush, setAutoSync } = useNotesSync();
+	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, doPullAndPush, requestSync, setAutoSync } = useNotesSync();
+	const { show: showSyncMenu, toggle: toggleSyncMenu } = useDropdown(syncMenuToggle);
 	const { confirm } = useConfirmDialog();
-	const showSyncMenu = ref(false);
 	const authTimedOut = ref(false);
 
-	function toggleSyncMenu() {
-		showSyncMenu.value = !showSyncMenu.value;
-	}
-
-	function closeSyncMenu() {
-		showSyncMenu.value = false;
-	}
-
 	async function handleSync(force = false) {
-		closeSyncMenu();
 		if (!force) {
 			await doPullAndPush();
 			return;
@@ -39,8 +34,16 @@
 	}
 
 	async function handleSignOut() {
-		closeSyncMenu();
-		await signOut();
+		const ok = await confirm({
+			title: "Sign Out",
+			message: "Are you sure you want to sign out? This will stop syncing your notes with Google Drive.",
+			confirmText: "Sign Out",
+			cancelText: "Cancel",
+			variant: "warning"
+		});
+		if (ok) {
+			await signOut();
+		}
 	}
 
 	async function handleToggleAutoSync() {
@@ -68,13 +71,26 @@
 	});
 
 	watch(
-		isSignedIn,
-		async signedIn => {
-			if (signedIn && autoSyncEnabled.value) {
+		[isSignedIn, autoSyncEnabled],
+		async ([signedIn, autoSync]) => {
+			if (signedIn && autoSync) {
 				await doPullAndPush();
 			}
 		},
 		{ immediate: true }
+	);
+
+	watch(
+		() => isLoading,
+		async loading => {
+			if (loading) {
+				return;
+			}
+			const purgedIds = await purgeExpiredTrash();
+			if (purgedIds.length > 0) {
+				requestSync(purgedIds);
+			}
+		}
 	);
 
 	onMounted(async () => {
@@ -101,7 +117,7 @@
 		<template v-if="isReady">
 			<template v-if="isSignedIn">
 				<div class="position-relative">
-					<button class="d-flex flex-nowrap btn btn-outline-secondary btn-sm" @click="toggleSyncMenu" :disabled="isSyncing" :title="syncError ? `Sync error: ${syncError}` : `Google Drive Sync`" aria-label="Google Drive Sync">
+					<button ref="sync-menu-toggle" class="d-flex flex-nowrap btn btn-outline-secondary btn-sm" @click="toggleSyncMenu" :disabled="isSyncing" :title="syncError ? `Sync error: ${syncError}` : `Google Drive Sync`" aria-label="Google Drive Sync">
 						<span v-if="isSyncing">
 							<div class="spinner-border spinner-border-sm" role="status"></div>
 						</span>
@@ -140,7 +156,6 @@
 						</button>
 					</div>
 				</div>
-				<div v-if="showSyncMenu" class="sync-backdrop" @click="closeSyncMenu"></div>
 			</template>
 			<template v-else>
 				<button class="btn btn-outline-primary btn-sm" @click="signIn" aria-label="Sign in with Google">
