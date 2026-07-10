@@ -3,8 +3,7 @@
 	import { onMounted } from "vue";
 	import { RouterView } from "vue-router";
 	import { isNavigating } from "@/router";
-	import { hydrateNotes, useNotesStore } from "@/stores/notes";
-	import { useNotesSync } from "@/composables/useNotesSync";
+	import { hydrateNotes } from "@/stores/notes";
 	import { useNoteDraft } from "@/composables/useNoteDraft";
 	import Icon from "@/components/Icon.vue";
 	import SearchBar from "@/components/SearchBar.vue";
@@ -14,16 +13,10 @@
 	import NotificationList from "@/components/NotificationList.vue";
 	import ConfirmDialog from "@/components/ConfirmDialog.vue";
 
-	const { purgeExpiredTrash } = useNotesStore();
-	const { requestSync } = useNotesSync();
 	const { purgeStaleDrafts } = useNoteDraft();
 
 	onMounted(async () => {
 		await hydrateNotes();
-		const purgedIds = await purgeExpiredTrash();
-		if (purgedIds.length > 0) {
-			requestSync(purgedIds);
-		}
 		purgeStaleDrafts();
 	});
 </script>
