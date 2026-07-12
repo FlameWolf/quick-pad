@@ -9,11 +9,10 @@
 
 	let readyTimeout: ReturnType<typeof setTimeout> | null = null;
 	const syncMenuTrigger = useTemplateRef("sync-menu-trigger");
-	const syncMenuDropdown = useTemplateRef("sync-menu-dropdown");
 	const { isLoading, purgeExpiredTrash } = useNotesStore();
 	const { isSignedIn, isReady, isConfigured, user, tryRestoreSession, signIn, signOut } = useGoogleAuth();
 	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, doPullAndPush, requestSync, setAutoSync } = useNotesSync();
-	const { show: showSyncMenu, toggle: toggleSyncMenu } = useDropdown(syncMenuTrigger, syncMenuDropdown);
+	const { show: showSyncMenu, toggle: toggleSyncMenu } = useDropdown(syncMenuTrigger);
 	const { confirm } = useConfirmDialog();
 	const authTimedOut = ref(false);
 
@@ -133,7 +132,7 @@
 						</span>
 						<span class="d-none d-md-inline ms-2">{{ user?.name ?? "Sync" }}</span>
 					</button>
-					<div ref="sync-menu-dropdown" v-if="showSyncMenu" class="dropdown-menu show sync-dropdown">
+					<div v-if="showSyncMenu" class="dropdown-menu show sync-dropdown">
 						<div class="dropdown-header text-muted small px-3 py-1 text-truncate">{{ user?.email }}</div>
 						<div class="dropdown-divider"></div>
 						<label class="dropdown-item sync-dropdown-item d-flex align-items-center gap-2 mb-0">

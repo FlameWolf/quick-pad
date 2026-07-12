@@ -1,8 +1,6 @@
 import { onMounted, onUnmounted, readonly, ref, type TemplateRef } from "vue";
 
-const listenerOptions: AddEventListenerOptions = { capture: true };
-
-export function useDropdown(trigger: TemplateRef<HTMLElement>, dropdown: TemplateRef<HTMLElement>, initialState: boolean = false) {
+export function useDropdown(trigger: TemplateRef<HTMLElement>, initialState: boolean = false) {
 	const show = ref(initialState);
 
 	function toggle() {
@@ -11,27 +9,22 @@ export function useDropdown(trigger: TemplateRef<HTMLElement>, dropdown: Templat
 
 	function clickedOutside(event: MouseEvent) {
 		const triggerElement = trigger.value;
-		const dropdownElement = dropdown.value;
-		if (!triggerElement || !dropdownElement || !show.value) {
+		if (!triggerElement || !show.value) {
 			return;
 		}
 		const target = event.target as Node;
 		if (triggerElement === target || triggerElement.contains(target)) {
 			return;
 		}
-		if (!dropdownElement.contains(target)) {
-			event.preventDefault();
-			event.stopPropagation();
-		}
 		show.value = false;
 	}
 
 	onMounted(() => {
-		document.addEventListener("click", clickedOutside, listenerOptions);
+		document.addEventListener("click", clickedOutside);
 	});
 
 	onUnmounted(() => {
-		document.removeEventListener("click", clickedOutside, listenerOptions);
+		document.removeEventListener("click", clickedOutside);
 	});
 
 	return {
