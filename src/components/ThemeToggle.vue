@@ -7,7 +7,7 @@
 	const isDark = computed(() => activeTheme.value === Theme.Dark);
 </script>
 <template>
-	<button class="btn btn-secondary btn-sm" @click="toggleTheme" :aria-label="isDark ? `Switch to light theme` : `Switch to dark theme`">
+	<button class="btn btn-secondary btn-sm" @click="toggleTheme" :aria-label="`Switch to ${isDark ? Theme.Light : Theme.Dark} theme`">
 		<Icon :type="isDark ? `moonStarsFill` : `sunFill`"/>
 	</button>
 </template>

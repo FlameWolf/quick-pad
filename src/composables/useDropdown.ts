@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted, readonly, ref, type TemplateRef } from "vue";
+import { onBeforeUnmount, onMounted, readonly, ref, type TemplateRef } from "vue";
 
 export function useDropdown(trigger: TemplateRef<HTMLElement>, initialState: boolean = false) {
 	const show = ref(initialState);
@@ -23,7 +23,7 @@ export function useDropdown(trigger: TemplateRef<HTMLElement>, initialState: boo
 		document.addEventListener("click", clickedOutside);
 	});
 
-	onUnmounted(() => {
+	onBeforeUnmount(() => {
 		document.removeEventListener("click", clickedOutside);
 	});
 

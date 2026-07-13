@@ -493,7 +493,7 @@
 			<textarea ref="edit-text-area" :value="editContent" @input="onContentInput" class="form-control note-textarea" placeholder="Start writing..." rows="12"></textarea>
 		</template>
 	</div>
-	<hr :class="isEditing ? `mt-1` : emptyString"/>
+	<hr :class="{ [`mt-1`]: isEditing }"/>
 	<div class="d-flex flex-wrap gap-2 mt-3" v-if="hasContent">
 		<span class="badge text-bg-secondary" v-if="sentenceCount">{{ sentenceCount }} sentences</span>
 		<span class="badge text-bg-secondary" v-if="wordCount">{{ wordCount }} words</span>
