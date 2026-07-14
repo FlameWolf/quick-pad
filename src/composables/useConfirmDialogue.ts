@@ -49,7 +49,7 @@ export function useConfirmDialogue() {
 	function onConfirm() {
 		const r = resolver;
 		resolver = null;
-		state.value = { ...state.value, visible: false };
+		state.value.visible = false;
 		if (r) {
 			r(true);
 		}
@@ -58,7 +58,7 @@ export function useConfirmDialogue() {
 	function onCancel() {
 		const r = resolver;
 		resolver = null;
-		state.value = { ...state.value, visible: false };
+		state.value.visible = false;
 		if (r) {
 			r(false);
 		}

@@ -51,10 +51,7 @@ const router = createRouter({
 		{
 			path: "/notes/:id",
 			component: EditNote,
-			props: route => ({
-				...route.params,
-				backRoute: route.meta.fromPath
-			})
+			props: route => Object.assign(route.params, { backRoute: route.meta.fromPath })
 		},
 		{ path: "/privacy", component: () => import("@/components/PrivacyPolicy.vue") },
 		{ path: "/terms", component: () => import("@/components/TermsOfService.vue") }
