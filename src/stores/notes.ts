@@ -54,17 +54,15 @@ export const useNotesStore = defineStore("notes", () => {
 	});
 
 	async function addNote(note: NoteModel) {
-		await notesRepository.saveFull(note);
 		notes.value.push(note);
+		await notesRepository.saveFull(note);
 	}
 
 	async function updateNote(data: { id: UUID; title: string; content: string }) {
-		const index = notes.value.findIndex(note => note.id === data.id);
-		if (index !== -1) {
-			const existingNote = notes.value[index] as NoteModel;
-			existingNote.update(data.title, data.content);
-			await notesRepository.saveFull(existingNote);
-			notes.value[index] = existingNote;
+		const note = notes.value.find(note => note.id === data.id);
+		if (note) {
+			note.update(data.title, data.content);
+			await notesRepository.saveFull(note);
 		}
 	}
 
@@ -77,27 +75,17 @@ export const useNotesStore = defineStore("notes", () => {
 	};
 
 	async function applyToNote(id: UUID, mutator: (note: NoteModel) => void) {
-		const index = notes.value.findIndex(note => note.id === id);
-		if (index === -1) {
-			return;
+		const note = notes.value.find(note => note.id === id);
+		if (note) {
+			mutator(note);
+			await notesRepository.saveMeta(note);
 		}
-		const note = notes.value[index] as NoteModel;
-		await Promise.resolve(mutator(note));
-		notes.value[index] = note;
-		await notesRepository.saveMeta(note);
 	}
 
-	async function applyToMany(ids: ReadonlyArray<UUID>, mutator: (note: NoteModel) => void | Promise<void>) {
-		const idSet = new Set<UUID>(ids);
-		const targets = notes.value.reduce((acc: Array<{ index: number; note: NoteModel }>, curr: NoteModel, index) => {
-			if (idSet.has(curr.id)) {
-				acc.push({ index, note: curr });
-			}
-			return acc;
-		}, []);
-		const targetNotes = targets.map(x => x.note);
-		await Promise.all(targetNotes.map(mutator));
-		targets.forEach(t => notes.value.splice(t.index, 1, t.note));
+	async function applyToMany(ids: ReadonlyArray<UUID>, mutator: (note: NoteModel) => void): Promise<void> {
+		const idSet = new Set(ids);
+		const targetNotes = notes.value.filter(note => idSet.has(note.id));
+		targetNotes.forEach(mutator);
 		await notesRepository.saveManyMeta(targetNotes);
 	}
 
@@ -198,13 +186,13 @@ export const useNotesStore = defineStore("notes", () => {
 	}
 
 	async function replaceNote(updatedNote: NoteModel) {
-		await notesRepository.saveFull(updatedNote);
 		addOrUpdate(updatedNote);
+		await notesRepository.saveFull(updatedNote);
 	}
 
 	async function replaceMultiple(updatedNotes: NoteModel[]) {
-		await notesRepository.saveManyFull(updatedNotes);
 		updatedNotes.forEach(addOrUpdate);
+		await notesRepository.saveManyFull(updatedNotes);
 	}
 
 	return {
