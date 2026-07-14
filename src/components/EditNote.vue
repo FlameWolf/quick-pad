@@ -6,7 +6,7 @@
 	import { useAppStore } from "@/stores/app";
 	import { useNotificationsStore } from "@/stores/notifications";
 	import { useFileIO } from "@/composables/useFileIO";
-	import { useConfirmDialog } from "@/composables/useConfirmDialog";
+	import { useConfirmDialogue } from "@/composables/useConfirmDialogue";
 	import { useNotesSync } from "@/composables/useNotesSync";
 	import { useNoteDraft } from "@/composables/useNoteDraft";
 	import { useUndoRedo } from "@/composables/useUndoRedo";
@@ -27,7 +27,7 @@
 	const appStore = useAppStore();
 	const { addNotification } = useNotificationsStore();
 	const { exportNote } = useFileIO();
-	const { confirm } = useConfirmDialog();
+	const { confirm } = useConfirmDialogue();
 	const { requestSync } = useNotesSync();
 	const { saveDraft, loadDraft, clearDraft } = useNoteDraft();
 	const isCreateMode = computed(() => route.path === "/notes/new");

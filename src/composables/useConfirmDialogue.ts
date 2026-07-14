@@ -28,7 +28,7 @@ const state = ref<ConfirmState>({
 	variant: "primary"
 });
 
-export function useConfirmDialog() {
+export function useConfirmDialogue() {
 	function confirm(options: ConfirmOptions): Promise<boolean> {
 		return new Promise(resolve => {
 			if (resolver) {
