@@ -4,7 +4,7 @@
 	import { hydrateAuthState, useGoogleAuth } from "@/composables/useGoogleAuth";
 	import { hydrateSyncMetadata, useNotesSync } from "@/composables/useNotesSync";
 	import { useDropdown } from "@/composables/useDropdown";
-	import { useConfirmDialog } from "@/composables/useConfirmDialog";
+	import { useConfirmDialogue } from "@/composables/useConfirmDialogue";
 	import Icon from "@/components/Icon.vue";
 
 	let readyTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -13,7 +13,7 @@
 	const { isSignedIn, isReady, isConfigured, user, tryRestoreSession, signIn, signOut } = useGoogleAuth();
 	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, doPullAndPush, requestSync, setAutoSync } = useNotesSync();
 	const { show: showSyncMenu, toggle: toggleSyncMenu } = useDropdown(syncMenuTrigger);
-	const { confirm } = useConfirmDialog();
+	const { confirm } = useConfirmDialogue();
 	const authTimedOut = ref(false);
 
 	async function handleSync(force = false) {

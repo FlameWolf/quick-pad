@@ -11,7 +11,7 @@
 	import ThemeToggle from "@/components/ThemeToggle.vue";
 	import ScrollButtons from "@/components/ScrollButtons.vue";
 	import NotificationList from "@/components/NotificationList.vue";
-	import ConfirmDialog from "@/components/ConfirmDialog.vue";
+	import ConfirmDialogue from "@/components/ConfirmDialogue.vue";
 
 	const { purgeStaleDrafts } = useNoteDraft();
 
@@ -49,6 +49,6 @@
 	</footer>
 	<ScrollButtons/>
 	<NotificationList/>
-	<ConfirmDialog/>
+	<ConfirmDialogue/>
 	<div v-if="isNavigating" class="nav-overlay"></div>
 </template>
