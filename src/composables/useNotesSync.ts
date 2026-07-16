@@ -1,6 +1,6 @@
 import { ref, readonly, computed, watch } from "vue";
-import { useGoogleDrive } from "./useGoogleDrive";
-import { useGoogleAuth } from "./useGoogleAuth";
+import { useGoogleDrive } from "@/composables/useGoogleDrive";
+import { useGoogleAuth } from "@/composables/useGoogleAuth";
 import { useNotesStore } from "@/stores/notes";
 import { useNotificationsStore } from "@/stores/notifications";
 import { NoteModel } from "@/models/NoteModel";
