@@ -28,42 +28,42 @@ const state = ref<ConfirmState>({
 	variant: "primary"
 });
 
+function confirm(options: ConfirmOptions): Promise<boolean> {
+	return new Promise(resolve => {
+		if (resolver) {
+			resolver(false);
+		}
+		state.value = {
+			visible: true,
+			title: options.title,
+			message: options.message,
+			confirmText: options.confirmText ?? "Confirm",
+			cancelText: options.cancelText ?? "Cancel",
+			variant: options.variant ?? "primary"
+		};
+		resolver = resolve;
+	});
+}
+
+function onConfirm() {
+	const r = resolver;
+	resolver = null;
+	state.value.visible = false;
+	if (r) {
+		r(true);
+	}
+}
+
+function onCancel() {
+	const r = resolver;
+	resolver = null;
+	state.value.visible = false;
+	if (r) {
+		r(false);
+	}
+}
+
 export function useConfirmDialogue() {
-	function confirm(options: ConfirmOptions): Promise<boolean> {
-		return new Promise(resolve => {
-			if (resolver) {
-				resolver(false);
-			}
-			state.value = {
-				visible: true,
-				title: options.title,
-				message: options.message,
-				confirmText: options.confirmText ?? "Confirm",
-				cancelText: options.cancelText ?? "Cancel",
-				variant: options.variant ?? "primary"
-			};
-			resolver = resolve;
-		});
-	}
-
-	function onConfirm() {
-		const r = resolver;
-		resolver = null;
-		state.value.visible = false;
-		if (r) {
-			r(true);
-		}
-	}
-
-	function onCancel() {
-		const r = resolver;
-		resolver = null;
-		state.value.visible = false;
-		if (r) {
-			r(false);
-		}
-	}
-
 	return {
 		state: readonly(state),
 		confirm,
