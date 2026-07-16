@@ -2,14 +2,14 @@ import { readonly, ref } from "vue";
 import { defineStore } from "pinia";
 import type { UUID } from "crypto";
 
-export type Notification = {
+type Notification = {
 	id: UUID;
 	type: "success" | "info" | "warning" | "danger";
 	timeStamp: number;
 	message: string;
 	removeTimer?: ReturnType<typeof setTimeout>;
 };
-export type NotificationList = Array<Notification>;
+type NotificationList = Array<Notification>;
 
 export const useNotificationsStore = defineStore("notifications", () => {
 	const notifications = ref<NotificationList>([]);

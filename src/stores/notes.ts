@@ -29,8 +29,8 @@ export async function hydrateNotes(): Promise<void> {
 
 export const useNotesStore = defineStore("notes", () => {
 	const searchText = ref<string>(emptyString);
-	const contentMatchedIds = ref<Set<UUID> | null>(null);
 	const isSearching = ref(false);
+	const contentMatchedIds = ref<Set<UUID> | null>(null);
 	const searchResults = computed(() => {
 		const trimmed = searchText.value.trim();
 		if (!trimmed) {
