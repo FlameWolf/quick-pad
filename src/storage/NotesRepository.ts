@@ -1,4 +1,4 @@
-import * as db from "./db";
+import * as db from "@/storage/db";
 import { NoteModel } from "@/models/NoteModel";
 import type { UUID } from "crypto";
 
