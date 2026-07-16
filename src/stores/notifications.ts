@@ -1,4 +1,4 @@
-import { ref } from "vue";
+import { readonly, ref } from "vue";
 import { defineStore } from "pinia";
 import type { UUID } from "crypto";
 
@@ -11,52 +11,51 @@ export type Notification = {
 };
 export type NotificationList = Array<Notification>;
 
-const maxNotifications = 5;
-const notifications = ref<NotificationList>([]);
-
-function createNotification(type: Notification["type"], message: string) {
-	const notification: Notification = {
-		id: crypto.randomUUID() as UUID,
-		type,
-		timeStamp: Date.now(),
-		message
-	};
-	if (type !== "danger") {
-		notification.removeTimer = setTimeout(() => {
-			deleteNotification(notification.id);
-		}, 5000);
-	}
-	if (notifications.value.length >= maxNotifications) {
-		deleteNotification(notifications.value[0]!.id);
-	}
-	notifications.value.push(notification);
-}
-
-function deleteNotification(id: UUID) {
-	const index = notifications.value.findIndex(n => n.id === id);
-	if (index !== -1) {
-		clearTimeout(notifications.value[index]!.removeTimer);
-		notifications.value.splice(index, 1);
-	}
-}
-
 export const useNotificationsStore = defineStore("notifications", () => {
+	const notifications = ref<NotificationList>([]);
+
+	function createNotification(type: Notification["type"], message: string) {
+		const notification: Notification = {
+			id: crypto.randomUUID() as UUID,
+			type,
+			timeStamp: Date.now(),
+			message
+		};
+		if (type !== "danger") {
+			notification.removeTimer = setTimeout(() => {
+				deleteNotification(notification);
+			}, 5000);
+		}
+		if (notifications.value.length >= 5) {
+			deleteNotification(notifications.value[0]!);
+		}
+		notifications.value.push(notification);
+	}
+
+	function deleteNotification(notification: Notification) {
+		clearTimeout(notification.removeTimer);
+		notifications.value.splice(notifications.value.indexOf(notification), 1);
+	}
+
 	function addNotification(type: Notification["type"], message: string) {
 		const existingNotification = notifications.value.find(n => n.message === message && n.type === type);
 		if (!existingNotification) {
 			createNotification(type, message);
 			return;
 		}
-		deleteNotification(existingNotification.id);
+		deleteNotification(existingNotification);
 		setTimeout(() => createNotification(type, message), 250);
 	}
 
 	function removeNotification(id: UUID) {
-		deleteNotification(id);
+		const notification = notifications.value.find(n => n.id === id);
+		if (notification) {
+			deleteNotification(notification);
+		}
 	}
 
 	return {
-		notifications,
+		notifications: readonly(notifications),
 		addNotification,
 		removeNotification
 	};

@@ -8,10 +8,15 @@ import { TRASH_RETENTION_MS } from "@/constants/notes";
 import type { NoteModel } from "@/models/NoteModel";
 import type { UUID } from "crypto";
 
+let hydrated = false;
 const isLoading = ref(true);
 const notes = ref<NoteModel[]>([]);
 
 export async function hydrateNotes(): Promise<void> {
+	if (hydrated) {
+		return;
+	}
+	hydrated = true;
 	try {
 		notes.value = await notesRepository.loadAll();
 	} catch (err) {
@@ -37,21 +42,6 @@ export const useNotesStore = defineStore("notes", () => {
 	const favedNotes = computed(() => searchResults.value.filter(note => note.favedAt && !note.deletedAt));
 	const archivedNotes = computed(() => searchResults.value.filter(note => note.archivedAt && !note.deletedAt));
 	const trashedNotes = computed(() => searchResults.value.filter(note => note.deletedAt));
-
-	watch(searchText, async query => {
-		const trimmed = query.trim();
-		contentMatchedIds.value = null;
-		if (!trimmed) {
-			isSearching.value = false;
-			return;
-		}
-		isSearching.value = true;
-		const matches = await notesRepository.search(content => contains(content, trimmed));
-		if (searchText.value.trim() === trimmed) {
-			contentMatchedIds.value = matches as Set<UUID>;
-			isSearching.value = false;
-		}
-	});
 
 	async function addNote(note: NoteModel) {
 		notes.value.push(note);
@@ -195,8 +185,23 @@ export const useNotesStore = defineStore("notes", () => {
 		await notesRepository.saveManyFull(updatedNotes);
 	}
 
+	watch(searchText, async query => {
+		const trimmed = query.trim();
+		contentMatchedIds.value = null;
+		if (!trimmed) {
+			isSearching.value = false;
+			return;
+		}
+		isSearching.value = true;
+		const matches = await notesRepository.search(content => contains(content, trimmed));
+		if (searchText.value.trim() === trimmed) {
+			contentMatchedIds.value = matches as Set<UUID>;
+			isSearching.value = false;
+		}
+	});
+
 	return {
-		notes,
+		notes: readonly(notes),
 		searchText,
 		isSearching: readonly(isSearching),
 		activeNotes,

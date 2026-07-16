@@ -1,4 +1,4 @@
-import { ref, watch } from "vue";
+import { ref } from "vue";
 import { defineStore } from "pinia";
 import { emptyString } from "@/constants/common";
 import { FONT_SCALE_FACTOR } from "@/constants/ui";
@@ -24,15 +24,12 @@ export const useAppStore = defineStore("app", () => {
 			return;
 		}
 		fontScaleFactor.value = factor;
-	}
-
-	watch(fontScaleFactor, factor => {
 		if (factor === 0) {
 			localStorage.removeItem(FONT_SCALE_FACTOR);
 			return;
 		}
 		localStorage.setItem(FONT_SCALE_FACTOR, factor.toString());
-	});
+	}
 
 	return {
 		lastView,
