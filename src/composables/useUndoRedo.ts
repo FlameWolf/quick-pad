@@ -1,8 +1,8 @@
-import { ref, computed, type Ref, type ComputedRef } from "vue";
+import { ref, computed, readonly, type Ref, type ComputedRef, type DeepReadonly } from "vue";
 import { MAX_HISTORY } from "@/constants/notes";
 
 export interface UndoRedo<T> {
-	current: Ref<T>;
+	current: Readonly<Ref<DeepReadonly<T>>>;
 	push: (value: T) => void;
 	reset: (value: T) => void;
 	undo: () => void;
@@ -52,5 +52,13 @@ export function useUndoRedo<T>(initial: T): UndoRedo<T> {
 		current.value = future.value.pop()!;
 	}
 
-	return { current, push, reset, undo, redo, canUndo, canRedo };
+	return {
+		current: readonly(current),
+		canUndo,
+		canRedo,
+		push,
+		reset,
+		undo,
+		redo
+	};
 }
