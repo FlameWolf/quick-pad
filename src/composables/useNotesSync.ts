@@ -88,7 +88,34 @@ export function useNotesSync() {
 	const { addNotification } = useNotificationsStore();
 	const { listFiles, findFile, readJSONById, writeJSONById, writeJSON, deleteFile } = useGoogleDrive();
 	const { isSignedIn } = useGoogleAuth();
-	const getFileName = (id: UUID) => `${store.fileNamePrefix}${id}.json`;
+	const debouncedFlush = debounce(() => {
+		if (isSignedIn.value && autoSyncEnabled.value) {
+			saveToCloud()
+				.then(() => {
+					addNotification("success", "Synced to cloud");
+				})
+				.catch(() => {
+					addNotification("danger", "Sync failed");
+				});
+		}
+	}, DEBOUNCE_MS);
+	const requestSync = Object.assign(
+		function (purged: ReadonlyArray<UUID> = []) {
+			if (purged.length > 0) {
+				purged.forEach(Set.prototype.add, pendingPurges);
+			}
+			debouncedFlush();
+		},
+		{
+			cancel() {
+				debouncedFlush.cancel();
+			}
+		}
+	);
+
+	function getFileName(id: UUID) {
+		return `${store.fileNamePrefix}${id}.json`;
+	}
 
 	async function readRemoteNotes(force = false, token?: string): Promise<{ token: string | undefined; notes: NoteModel[] }> {
 		const { pageToken, fileList } = await listFiles(store.fileNamePrefix, force ? null : lastSyncedToLocalAt.value, token);
@@ -212,32 +239,6 @@ export function useNotesSync() {
 			isSyncing.value = false;
 		}
 	}
-
-	const debouncedFlush = debounce(() => {
-		if (isSignedIn.value && autoSyncEnabled.value) {
-			saveToCloud()
-				.then(() => {
-					addNotification("success", "Synced to cloud");
-				})
-				.catch(() => {
-					addNotification("danger", "Sync failed");
-				});
-		}
-	}, DEBOUNCE_MS);
-
-	const requestSync = Object.assign(
-		function (purged: ReadonlyArray<UUID> = []) {
-			if (purged.length > 0) {
-				purged.forEach(Set.prototype.add, pendingPurges);
-			}
-			debouncedFlush();
-		},
-		{
-			cancel() {
-				debouncedFlush.cancel();
-			}
-		}
-	);
 
 	async function setAutoSync(enabled: boolean) {
 		autoSyncEnabled.value = enabled;
