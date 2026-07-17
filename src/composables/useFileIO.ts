@@ -1,4 +1,4 @@
-import { useNotesStore } from "@/stores/notes";
+import * as notesStore from "@/stores/notes";
 import { addNotification } from "@/stores/notifications";
 import { NoteModel } from "@/models/NoteModel";
 import { isTextFile } from "@/utils/file-detection";
@@ -10,7 +10,6 @@ interface ImportError {
 }
 
 const JSZip = (await import("jszip")).default;
-const notesStore = useNotesStore();
 
 function formatImportErrors(errors: ImportError[]): string {
 	return [`Import failed for the following file`, errors.length === 1 ? emptyString : "s", ":<hr/>", `<ul>${errors.map(err => `<li>${err.fileName}: ${err.message}</li>`).join(emptyString)}</ul>`].join(emptyString);

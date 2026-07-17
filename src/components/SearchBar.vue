@@ -1,11 +1,10 @@
 <script setup lang="ts">
 	import { computed, useTemplateRef } from "vue";
-	import { useNotesStore } from "@/stores/notes";
+	import * as notesStore from "@/stores/notes";
 	import { listViewRoutes } from "@/router";
 	import { debounce } from "@/utils/timing";
 	import { emptyString } from "@/constants/common";
 
-	const notesStore = useNotesStore();
 	const searchInput = useTemplateRef("search-input");
 	const isSearchMode = computed(() => !!notesStore.searchText.value);
 	const debouncedSearch = debounce(() => {
