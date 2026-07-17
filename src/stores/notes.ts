@@ -1,5 +1,4 @@
 import { ref, computed, readonly, watch } from "vue";
-import { defineStore } from "pinia";
 import { notesRepository } from "@/storage/NotesRepository";
 import { contains } from "@/utils/text-analysis";
 import { emptyString } from "@/constants/common";
@@ -11,6 +10,20 @@ import type { UUID } from "crypto";
 let hydrated = false;
 const isLoading = ref(true);
 const notes = ref<NoteModel[]>([]);
+const searchText = ref<string>(emptyString);
+const isSearching = ref(false);
+const contentMatchedIds = ref<Set<UUID> | null>(null);
+const searchResults = computed(() => {
+	const trimmed = searchText.value.trim();
+	if (!trimmed) {
+		return notes.value;
+	}
+	return notes.value.filter(note => contains(note.title, trimmed) || contentMatchedIds.value?.has(note.id));
+});
+const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt));
+const favedNotes = computed(() => searchResults.value.filter(note => note.favedAt && !note.deletedAt));
+const archivedNotes = computed(() => searchResults.value.filter(note => note.archivedAt && !note.deletedAt));
+const trashedNotes = computed(() => searchResults.value.filter(note => note.deletedAt));
 
 export async function hydrateNotes(): Promise<void> {
 	if (hydrated) {
@@ -25,166 +38,6 @@ export async function hydrateNotes(): Promise<void> {
 	} finally {
 		isLoading.value = false;
 	}
-}
-
-export const useNotesStore = defineStore("notes", () => {
-	const searchText = ref<string>(emptyString);
-	const isSearching = ref(false);
-	const contentMatchedIds = ref<Set<UUID> | null>(null);
-	const searchResults = computed(() => {
-		const trimmed = searchText.value.trim();
-		if (!trimmed) {
-			return notes.value;
-		}
-		return notes.value.filter(note => contains(note.title, trimmed) || contentMatchedIds.value?.has(note.id));
-	});
-	const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt));
-	const favedNotes = computed(() => searchResults.value.filter(note => note.favedAt && !note.deletedAt));
-	const archivedNotes = computed(() => searchResults.value.filter(note => note.archivedAt && !note.deletedAt));
-	const trashedNotes = computed(() => searchResults.value.filter(note => note.deletedAt));
-
-	async function addNote(note: NoteModel) {
-		notes.value.push(note);
-		await notesRepository.saveFull(note);
-	}
-
-	async function updateNote(data: { id: UUID; title: string; content: string }) {
-		const note = notes.value.find(note => note.id === data.id);
-		if (note) {
-			note.update(data.title, data.content);
-			await notesRepository.saveFull(note);
-		}
-	}
-
-	const getNote = (id: UUID): NoteModel | undefined => {
-		return notes.value.find(note => note.id === id);
-	};
-
-	const getNoteContent = (id: UUID): Promise<string | undefined> => {
-		return notesRepository.loadContent(id);
-	};
-
-	async function applyToNote(id: UUID, mutator: (note: NoteModel) => void) {
-		const note = notes.value.find(note => note.id === id);
-		if (note) {
-			mutator(note);
-			await notesRepository.saveMeta(note);
-		}
-	}
-
-	async function applyToMany(ids: ReadonlyArray<UUID>, mutator: (note: NoteModel) => void): Promise<void> {
-		const idSet = new Set(ids);
-		const targetNotes = notes.value.filter(note => idSet.has(note.id));
-		targetNotes.forEach(mutator);
-		await notesRepository.saveManyMeta(targetNotes);
-	}
-
-	async function faveNote(id: UUID) {
-		await applyToNote(id, note => note.fave());
-	}
-
-	async function faveMultiple(ids: ReadonlyArray<UUID>) {
-		await applyToMany(ids, note => note.fave());
-	}
-
-	async function unfaveNote(id: UUID) {
-		await applyToNote(id, note => note.unfave());
-	}
-
-	async function unfaveMultiple(ids: ReadonlyArray<UUID>) {
-		await applyToMany(ids, note => note.unfave());
-	}
-
-	async function pinNote(id: UUID) {
-		await applyToNote(id, note => note.pin());
-	}
-
-	async function unpinNote(id: UUID) {
-		await applyToNote(id, note => note.unpin());
-	}
-
-	async function archiveNote(id: UUID) {
-		await applyToNote(id, note => note.archive());
-	}
-
-	async function archiveMultiple(ids: ReadonlyArray<UUID>) {
-		await applyToMany(ids, note => note.archive());
-	}
-
-	async function unarchiveNote(id: UUID) {
-		await applyToNote(id, note => note.unarchive());
-	}
-
-	async function unarchiveMultiple(ids: ReadonlyArray<UUID>) {
-		await applyToMany(ids, note => note.unarchive());
-	}
-
-	async function trashNote(id: UUID) {
-		await applyToNote(id, note => note.trash());
-	}
-
-	async function trashMultiple(ids: ReadonlyArray<UUID>) {
-		await applyToMany(ids, note => note.trash());
-	}
-
-	async function restoreFromTrash(id: UUID) {
-		await applyToNote(id, note => note.restore());
-	}
-
-	async function restoreFromTrashMultiple(ids: ReadonlyArray<UUID>) {
-		await applyToMany(ids, note => note.restore());
-	}
-
-	async function permanentlyDelete(id: UUID) {
-		const index = notes.value.findIndex(note => note.id === id);
-		if (index !== -1) {
-			notes.value.splice(index, 1);
-			await notesRepository.remove(id);
-		}
-	}
-
-	async function permanentlyDeleteMultiple(ids: ReadonlyArray<UUID>) {
-		const idSet = new Set<UUID>(ids);
-		notes.value = notes.value.filter(note => !idSet.has(note.id));
-		await notesRepository.removeMany(ids as UUID[]);
-	}
-
-	async function purgeExpiredTrash() {
-		const cutoff = Date.now() - TRASH_RETENTION_MS;
-		const expiredIds = notes.value
-			.filter(note => {
-				if (!note.deletedAt) {
-					return false;
-				}
-				const tombstoneTime = note.deletedAt.getTime();
-				return tombstoneTime > 0 && tombstoneTime < cutoff;
-			})
-			.map(expired => expired.id);
-		if (expiredIds.length > 0) {
-			await permanentlyDeleteMultiple(expiredIds);
-		}
-		return expiredIds;
-	}
-
-	function addOrUpdate(updatedNote: NoteModel) {
-		const index = notes.value.findIndex(note => note.id === updatedNote.id);
-		if (index === -1) {
-			notes.value.push(updatedNote);
-		} else {
-			notes.value.splice(index, 1, updatedNote);
-		}
-	}
-
-	async function replaceNote(updatedNote: NoteModel) {
-		addOrUpdate(updatedNote);
-		await notesRepository.saveFull(updatedNote);
-	}
-
-	async function replaceMultiple(updatedNotes: NoteModel[]) {
-		updatedNotes.forEach(addOrUpdate);
-		await notesRepository.saveManyFull(updatedNotes);
-	}
-
 	watch(searchText, async query => {
 		const trimmed = query.trim();
 		contentMatchedIds.value = null;
@@ -199,7 +52,151 @@ export const useNotesStore = defineStore("notes", () => {
 			isSearching.value = false;
 		}
 	});
+}
 
+async function addNote(note: NoteModel) {
+	notes.value.push(note);
+	await notesRepository.saveFull(note);
+}
+
+async function updateNote(data: { id: UUID; title: string; content: string }) {
+	const note = notes.value.find(note => note.id === data.id);
+	if (note) {
+		note.update(data.title, data.content);
+		await notesRepository.saveFull(note);
+	}
+}
+
+const getNote = (id: UUID): NoteModel | undefined => {
+	return notes.value.find(note => note.id === id);
+};
+
+const getNoteContent = (id: UUID): Promise<string | undefined> => {
+	return notesRepository.loadContent(id);
+};
+
+async function applyToNote(id: UUID, mutator: (note: NoteModel) => void) {
+	const note = notes.value.find(note => note.id === id);
+	if (note) {
+		mutator(note);
+		await notesRepository.saveMeta(note);
+	}
+}
+
+async function applyToMany(ids: ReadonlyArray<UUID>, mutator: (note: NoteModel) => void): Promise<void> {
+	const idSet = new Set(ids);
+	const targetNotes = notes.value.filter(note => idSet.has(note.id));
+	targetNotes.forEach(mutator);
+	await notesRepository.saveManyMeta(targetNotes);
+}
+
+async function faveNote(id: UUID) {
+	await applyToNote(id, note => note.fave());
+}
+
+async function faveMultiple(ids: ReadonlyArray<UUID>) {
+	await applyToMany(ids, note => note.fave());
+}
+
+async function unfaveNote(id: UUID) {
+	await applyToNote(id, note => note.unfave());
+}
+
+async function unfaveMultiple(ids: ReadonlyArray<UUID>) {
+	await applyToMany(ids, note => note.unfave());
+}
+
+async function pinNote(id: UUID) {
+	await applyToNote(id, note => note.pin());
+}
+
+async function unpinNote(id: UUID) {
+	await applyToNote(id, note => note.unpin());
+}
+
+async function archiveNote(id: UUID) {
+	await applyToNote(id, note => note.archive());
+}
+
+async function archiveMultiple(ids: ReadonlyArray<UUID>) {
+	await applyToMany(ids, note => note.archive());
+}
+
+async function unarchiveNote(id: UUID) {
+	await applyToNote(id, note => note.unarchive());
+}
+
+async function unarchiveMultiple(ids: ReadonlyArray<UUID>) {
+	await applyToMany(ids, note => note.unarchive());
+}
+
+async function trashNote(id: UUID) {
+	await applyToNote(id, note => note.trash());
+}
+
+async function trashMultiple(ids: ReadonlyArray<UUID>) {
+	await applyToMany(ids, note => note.trash());
+}
+
+async function restoreFromTrash(id: UUID) {
+	await applyToNote(id, note => note.restore());
+}
+
+async function restoreFromTrashMultiple(ids: ReadonlyArray<UUID>) {
+	await applyToMany(ids, note => note.restore());
+}
+
+async function permanentlyDelete(id: UUID) {
+	const index = notes.value.findIndex(note => note.id === id);
+	if (index !== -1) {
+		notes.value.splice(index, 1);
+		await notesRepository.remove(id);
+	}
+}
+
+async function permanentlyDeleteMultiple(ids: ReadonlyArray<UUID>) {
+	const idSet = new Set<UUID>(ids);
+	notes.value = notes.value.filter(note => !idSet.has(note.id));
+	await notesRepository.removeMany(ids as UUID[]);
+}
+
+async function purgeExpiredTrash() {
+	const cutoff = Date.now() - TRASH_RETENTION_MS;
+	const expiredIds = notes.value
+		.filter(note => {
+			if (!note.deletedAt) {
+				return false;
+			}
+			const tombstoneTime = note.deletedAt.getTime();
+			return tombstoneTime > 0 && tombstoneTime < cutoff;
+		})
+		.map(expired => expired.id);
+	if (expiredIds.length > 0) {
+		await permanentlyDeleteMultiple(expiredIds);
+	}
+	return expiredIds;
+}
+
+function addOrUpdate(updatedNote: NoteModel) {
+	const index = notes.value.findIndex(note => note.id === updatedNote.id);
+	if (index === -1) {
+		notes.value.push(updatedNote);
+	} else {
+		notes.value.splice(index, 1, updatedNote);
+	}
+}
+
+async function replaceNote(updatedNote: NoteModel) {
+	addOrUpdate(updatedNote);
+	await notesRepository.saveFull(updatedNote);
+}
+
+async function replaceMultiple(updatedNotes: NoteModel[]) {
+	updatedNotes.forEach(addOrUpdate);
+	await notesRepository.saveManyFull(updatedNotes);
+}
+
+export function useNotesStore() {
 	return {
 		notes: readonly(notes),
 		searchText,
@@ -234,4 +231,4 @@ export const useNotesStore = defineStore("notes", () => {
 		replaceNote,
 		replaceMultiple
 	};
-});
+}
