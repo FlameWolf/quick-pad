@@ -2,7 +2,7 @@
 	import { ref, computed, onBeforeUnmount, onMounted, watch, useTemplateRef } from "vue";
 	import { useRouter, useRoute, onBeforeRouteLeave } from "vue-router";
 	import { listViewRoutes } from "@/router";
-	import { useNotesStore } from "@/stores/notes";
+	import * as notesStore from "@/stores/notes";
 	import * as appStore from "@/stores/app";
 	import { addNotification } from "@/stores/notifications";
 	import { useFileIO } from "@/composables/useFileIO";
@@ -23,7 +23,6 @@
 	}>();
 	const router = useRouter();
 	const route = useRoute();
-	const notesStore = useNotesStore();
 	const { exportNote } = useFileIO();
 	const { confirm } = useConfirmDialogue();
 	const { requestSync } = useNotesSync();

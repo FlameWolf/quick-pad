@@ -1,13 +1,14 @@
 import { ref, readonly, computed, watch } from "vue";
+import { deleteKV, getKV, setKV } from "@/storage/db";
+import * as notesStore from "@/stores/notes";
+import { addNotification } from "@/stores/notifications";
 import { useGoogleDrive } from "@/composables/useGoogleDrive";
 import { useGoogleAuth } from "@/composables/useGoogleAuth";
-import { useNotesStore } from "@/stores/notes";
-import { addNotification } from "@/stores/notifications";
 import { NoteModel } from "@/models/NoteModel";
-import { deleteKV, getKV, setKV } from "@/storage/db";
 import { getTime } from "@/utils/dates";
 import { debounce } from "@/utils/timing";
 import { emptyString } from "@/constants/common";
+import { NOTE_PREFIX } from "@/constants/storage";
 import { AUTO_SYNC_KEY, DEBOUNCE_MS, LAST_SYNCED_TO_CLOUD_KEY, LAST_SYNCED_TO_LOCAL_KEY } from "@/constants/sync";
 import type { NoteJSON } from "@/models/NoteModel";
 import type { UUID } from "crypto";
@@ -23,7 +24,6 @@ const lastSyncedToLocalAt = ref<Date | null>(null);
 const lastSyncedToCloudAt = ref<Date | null>(null);
 const autoSyncEnabled = ref<boolean>(true);
 const syncError = ref<string | null>(null);
-const notesStore = useNotesStore();
 const { listFiles, findFile, readJSONById, writeJSONById, writeJSON, deleteFile } = useGoogleDrive();
 const { isSignedIn } = useGoogleAuth();
 const pendingPurges = new Set<UUID>();
@@ -111,11 +111,11 @@ export function mergeNotesByModifiedAt(local: ReadonlyArray<NoteModel>, remote: 
 }
 
 function getFileName(id: UUID) {
-	return `${notesStore.fileNamePrefix}${id}.json`;
+	return `${NOTE_PREFIX}${id}.json`;
 }
 
 async function readRemoteNotes(force = false, token?: string): Promise<{ token: string | undefined; notes: NoteModel[] }> {
-	const { pageToken, fileList } = await listFiles(notesStore.fileNamePrefix, force ? null : lastSyncedToLocalAt.value, token);
+	const { pageToken, fileList } = await listFiles(NOTE_PREFIX, force ? null : lastSyncedToLocalAt.value, token);
 	const notes: NoteModel[] = [];
 	await Promise.all(
 		fileList.map(async file => {

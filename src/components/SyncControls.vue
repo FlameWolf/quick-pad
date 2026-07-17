@@ -1,6 +1,6 @@
 <script setup lang="ts">
 	import { ref, computed, watch, onMounted, onBeforeUnmount, useTemplateRef } from "vue";
-	import { useNotesStore } from "@/stores/notes";
+	import { isLoading, purgeExpiredTrash } from "@/stores/notes";
 	import { hydrateAuthState, useGoogleAuth } from "@/composables/useGoogleAuth";
 	import { hydrateSyncMetadata, useNotesSync } from "@/composables/useNotesSync";
 	import { useDropdown } from "@/composables/useDropdown";
@@ -9,7 +9,6 @@
 
 	let readyTimeout: ReturnType<typeof setTimeout> | null = null;
 	const syncMenuTrigger = useTemplateRef("sync-menu-trigger");
-	const { isLoading, purgeExpiredTrash } = useNotesStore();
 	const { isSignedIn, isReady, isConfigured, user, tryRestoreSession, signIn, signOut } = useGoogleAuth();
 	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, doPullAndPush, requestSync, setAutoSync } = useNotesSync();
 	const { show: showSyncMenu, toggle: toggleSyncMenu } = useDropdown(syncMenuTrigger);
