@@ -80,7 +80,6 @@ QuickPad keeps your notes in your browser, works without an Internet connection,
 
 - [Vue](https://vuejs.org/) (`<script setup>`, Composition API)
 - [TypeScript](https://www.typescriptlang.org/)
-- [Pinia](https://pinia.vuejs.org/) for state
 - [Vue Router](https://router.vuejs.org/)
 - [Bootstrap](https://getbootstrap.com/) for styling
 - [idb](https://github.com/jakearchibald/idb/) for IndexedDB storage
