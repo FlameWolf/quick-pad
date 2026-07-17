@@ -33,6 +33,7 @@
 	const { sortBy, sortDirection, setSortBy, toggleSortDirection, getSortedNotes } = useNoteSort();
 	const { confirm } = useConfirmDialogue();
 	const { requestSync } = useNotesSync();
+	const isSearchMode = computed(() => !!notesStore.searchText.value);
 	const sourceNotes = computed(() => {
 		switch (view.value) {
 			case "favourited":
@@ -88,7 +89,7 @@
 		}
 	});
 	const emptyMessage = computed(() => {
-		if (notesStore.isSearching.value) {
+		if (isSearchMode.value) {
 			return `No results found for "${notesStore.searchText.value}"`;
 		}
 		switch (view.value) {
@@ -263,7 +264,7 @@
 			<div class="mt-3" role="status">{{ notesStore.isSearching.value ? "Searching..." : "Loading notes..." }}</div>
 		</div>
 	</template>
-	<EmptyState v-else-if="!hasNotes" :message="emptyMessage" :show-actions="view === `active` && !notesStore.isSearching.value" @import="handleImport"/>
+	<EmptyState v-else-if="!hasNotes" :message="emptyMessage" :show-actions="view === `active` && !isSearchMode" @import="handleImport"/>
 	<template v-else>
 		<div class="d-flex gap-2 mb-3 justify-content-end flex-wrap">
 			<template v-if="isSelectionMode">
