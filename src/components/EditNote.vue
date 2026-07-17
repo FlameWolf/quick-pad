@@ -5,7 +5,7 @@
 	import * as notesStore from "@/stores/notes";
 	import * as appStore from "@/stores/app";
 	import { addNotification } from "@/stores/notifications";
-	import { useFileIO } from "@/composables/useFileIO";
+	import { exportNote } from "@/composables/useFileIO";
 	import { confirm } from "@/composables/useConfirmDialogue";
 	import { requestSync } from "@/composables/useNotesSync";
 	import { clearDraft, loadDraft, saveDraft } from "@/composables/useNoteDraft";
@@ -23,7 +23,6 @@
 	}>();
 	const router = useRouter();
 	const route = useRoute();
-	const { exportNote } = useFileIO();
 	const isCreateMode = computed(() => route.path === "/notes/new");
 	const existingNote = computed(() => (props.id && !isCreateMode.value ? notesStore.getNote(props.id) : undefined));
 	const isEditing = ref(isCreateMode.value);

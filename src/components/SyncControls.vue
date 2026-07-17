@@ -90,7 +90,7 @@
 	);
 
 	onMounted(async () => {
-		if (isConfigured.value) {
+		if (isConfigured) {
 			readyTimeout = setTimeout(() => {
 				if (!isReady.value) {
 					authTimedOut.value = true;

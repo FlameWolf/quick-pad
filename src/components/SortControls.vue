@@ -1,11 +1,11 @@
 <script setup lang="ts">
 	import { computed, onMounted } from "vue";
-	import { hydrateSortPrefs, type SortField, type SortDirection } from "@/composables/useNoteSort";
+	import { hydrateSortPrefs, type SortField, type SortOrder } from "@/composables/useNoteSort";
 	import Icon from "@/components/Icon.vue";
 
-	const props = defineProps<{ sortBy: SortField; sortDirection: SortDirection }>();
+	const props = defineProps<{ sortField: SortField; sortOrder: SortOrder }>();
 	const emit = defineEmits<{ changeField: [field: SortField]; toggleDirection: [] }>();
-	const isAscending = computed(() => props.sortDirection === "asc");
+	const isAscending = computed(() => props.sortOrder === "asc");
 
 	function onSortFieldChange(e: Event) {
 		emit("changeField", (e.target as HTMLSelectElement).value as SortField);
@@ -18,7 +18,7 @@
 <template>
 	<div class="d-flex gap-1 align-items-center sort-controls">
 		<label for="sort-by-select" class="form-label text-muted small mb-0 me-1">Sort:</label>
-		<select id="sort-by-select" class="form-select form-select-sm sort-select" :value="props.sortBy" @change="onSortFieldChange" aria-label="Sort notes by">
+		<select id="sort-by-select" class="form-select form-select-sm sort-select" :value="props.sortField" @change="onSortFieldChange" aria-label="Sort notes by">
 			<option value="modifiedAt">Updated</option>
 			<option value="createdAt">Created</option>
 			<option value="title">Title</option>

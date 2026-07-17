@@ -4,11 +4,13 @@ import { SORT_BY_KEY, SORT_DIRECTION_KEY, SORT_DIRECTIONS, SORT_FIELDS } from "@
 import type { NoteModel } from "@/models/NoteModel";
 
 export type SortField = (typeof SORT_FIELDS)[number];
-export type SortDirection = (typeof SORT_DIRECTIONS)[number];
+export type SortOrder = (typeof SORT_DIRECTIONS)[number];
 
 let hydrated = false;
 const sortBy = ref<SortField>("modifiedAt");
-const sortDirection = ref<SortDirection>("desc");
+const sortDir = ref<SortOrder>("desc");
+export const sortField = readonly(sortBy);
+export const sortOrder = readonly(sortDir);
 
 export async function hydrateSortPrefs(): Promise<void> {
 	if (hydrated) {
@@ -20,13 +22,13 @@ export async function hydrateSortPrefs(): Promise<void> {
 		sortBy.value = storedBy as SortField;
 	}
 	const storedDir = await getKV(SORT_DIRECTION_KEY);
-	if (SORT_DIRECTIONS.includes(storedDir as SortDirection)) {
-		sortDirection.value = storedDir as SortDirection;
+	if (SORT_DIRECTIONS.includes(storedDir as SortOrder)) {
+		sortDir.value = storedDir as SortOrder;
 	}
 	watch(sortBy, async field => {
 		await setKV(SORT_BY_KEY, field);
 	});
-	watch(sortDirection, async direction => {
+	watch(sortDir, async direction => {
 		await setKV(SORT_DIRECTION_KEY, direction);
 	});
 }
@@ -51,20 +53,20 @@ function compareNotes(a: NoteModel, b: NoteModel, field: SortField): number {
 	}
 }
 
-function setSortBy(field: SortField) {
+export function setSortBy(field: SortField) {
 	sortBy.value = field;
 }
 
-function setSortDirection(direction: SortDirection) {
-	sortDirection.value = direction;
+export function setSortDirection(direction: SortOrder) {
+	sortDir.value = direction;
 }
 
-function toggleSortDirection() {
-	setSortDirection(sortDirection.value === "asc" ? "desc" : "asc");
+export function toggleSortDirection() {
+	setSortDirection(sortDir.value === "asc" ? "desc" : "asc");
 }
 
-function getSortedNotes(notes: ReadonlyArray<NoteModel>): NoteModel[] {
-	const multiplier = sortDirection.value === "asc" ? 1 : -1;
+export function getSortedNotes(notes: ReadonlyArray<NoteModel>): NoteModel[] {
+	const multiplier = sortDir.value === "asc" ? 1 : -1;
 	return notes.toSorted((a, b) => {
 		if (a.pinnedAt && !b.pinnedAt) {
 			return -1;
@@ -77,15 +79,4 @@ function getSortedNotes(notes: ReadonlyArray<NoteModel>): NoteModel[] {
 		}
 		return compareNotes(a, b, sortBy.value) * multiplier;
 	});
-}
-
-export function useNoteSort() {
-	return {
-		sortBy: readonly(sortBy),
-		sortDirection: readonly(sortDirection),
-		setSortBy,
-		setSortDirection,
-		toggleSortDirection,
-		getSortedNotes
-	};
 }

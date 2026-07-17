@@ -20,13 +20,13 @@ enum NoteUploadResult {
 
 let hydrated = false;
 const syncing = ref(false);
-const autoSync = ref<boolean>(true);
+const allowAutoSync = ref<boolean>(true);
 const errorText = ref<string | null>(null);
 const lastSyncedToLocalAt = ref<Date | null>(null);
 const lastSyncedToCloudAt = ref<Date | null>(null);
 const pendingPurges = new Set<UUID>();
 const debouncedFlush = debounce(() => {
-	if (isSignedIn.value && autoSync.value) {
+	if (isSignedIn.value && allowAutoSync.value) {
 		saveToCloud()
 			.then(() => {
 				addNotification("success", "Synced to cloud");
@@ -37,7 +37,7 @@ const debouncedFlush = debounce(() => {
 	}
 }, DEBOUNCE_MS);
 export const isSyncing = readonly(syncing);
-export const autoSyncEnabled = readonly(autoSync);
+export const autoSyncEnabled = readonly(allowAutoSync);
 export const syncError = readonly(errorText);
 export const lastSyncedAt = computed(() => {
 	const max = Math.max(lastSyncedToLocalAt.value?.getTime() ?? 0, lastSyncedToCloudAt.value?.getTime() ?? 0);
@@ -67,8 +67,8 @@ export async function hydrateSyncMetadata(): Promise<void> {
 	const storedAutoSync = await getKV(AUTO_SYNC_KEY);
 	lastSyncedToLocalAt.value = storedLocal ? new Date(storedLocal) : null;
 	lastSyncedToCloudAt.value = storedCloud ? new Date(storedCloud) : null;
-	autoSync.value = storedAutoSync === undefined ? true : storedAutoSync;
-	watch(autoSync, async flag => {
+	allowAutoSync.value = storedAutoSync === undefined ? true : storedAutoSync;
+	watch(allowAutoSync, async flag => {
 		await setKV(AUTO_SYNC_KEY, flag);
 	});
 	watch(lastSyncedToLocalAt, async date => {
@@ -243,7 +243,7 @@ export async function doPullAndPush({ force = false as boolean, purged = [] as R
 }
 
 export async function setAutoSync(enabled: boolean) {
-	autoSync.value = enabled;
+	allowAutoSync.value = enabled;
 	if (!enabled) {
 		requestSync.cancel();
 	}

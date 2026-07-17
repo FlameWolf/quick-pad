@@ -3,9 +3,9 @@
 	import { onBeforeRouteLeave } from "vue-router";
 	import * as notesStore from "@/stores/notes";
 	import * as appStore from "@/stores/app";
-	import { useFileIO } from "@/composables/useFileIO";
-	import { useNoteSelection } from "@/composables/useNoteSelection";
-	import { useNoteSort } from "@/composables/useNoteSort";
+	import { exportAllNotes, exportNotes, importFiles } from "@/composables/useFileIO";
+	import { clearSelection, enterSelectionMode, exitSelectionMode, isSelected, isSelecting, selectAll, selectedCount, toggleSelection } from "@/composables/useNoteSelection";
+	import { getSortedNotes, setSortBy, sortField, sortOrder, toggleSortDirection } from "@/composables/useNoteSort";
 	import { confirm } from "@/composables/useConfirmDialogue";
 	import { requestSync } from "@/composables/useNotesSync";
 	import { bulkActions } from "@/constants/actions";
@@ -26,9 +26,6 @@
 
 	const props = defineProps<{ view?: View }>();
 	const view = computed<View>(() => props.view ?? "active");
-	const { importFiles, exportNotes, exportAllNotes } = useFileIO();
-	const { isSelectionMode, selectedCount, enterSelectionMode, exitSelectionMode, toggleSelection, isSelected, selectAll, clearSelection } = useNoteSelection();
-	const { sortBy, sortDirection, setSortBy, toggleSortDirection, getSortedNotes } = useNoteSort();
 	const isSearchMode = computed(() => !!notesStore.searchText.value);
 	const sourceNotes = computed(() => {
 		switch (view.value) {
@@ -263,7 +260,7 @@
 	<EmptyState v-else-if="!hasNotes" :message="emptyMessage" :show-actions="view === `active` && !isSearchMode" @import="handleImport"/>
 	<template v-else>
 		<div class="d-flex gap-2 mb-3 justify-content-end flex-wrap">
-			<template v-if="isSelectionMode">
+			<template v-if="isSelecting">
 				<button class="btn btn-outline-secondary btn-sm" @click="toggleSelectAll" :title="selectAllText" :aria-label="selectAllText">
 					<Icon :type="allSelected ? `list` : `listCheck`"/>
 					<span class="d-none d-sm-inline ms-2">{{ selectAllText }}</span>
@@ -274,7 +271,7 @@
 				</button>
 			</template>
 			<template v-else>
-				<SortControls :sort-by="sortBy" :sort-direction="sortDirection" @change-field="setSortBy" @toggle-direction="toggleSortDirection"/>
+				<SortControls :sort-field="sortField" :sort-order="sortOrder" @change-field="setSortBy" @toggle-direction="toggleSortDirection"/>
 				<button class="btn btn-outline-secondary btn-sm" @click="enterSelectionMode" title="Select" aria-label="Select">
 					<Icon type="check2Square"/>
 					<span class="d-none d-sm-inline ms-2">Select</span>
@@ -316,14 +313,14 @@
 				<div class="flex-grow-1 border-bottom"></div>
 			</div>
 			<div class="notes-grid">
-				<RouterLink v-if="section.showNewCard && !isSelectionMode" to="/notes/new" class="card note-card new-note-card text-decoration-none">
+				<RouterLink v-if="section.showNewCard && !isSelecting" to="/notes/new" class="card note-card new-note-card text-decoration-none">
 					<div class="card-body d-flex align-items-center justify-content-center">
 						<span class="fs-1 text-muted">+</span>
 					</div>
 				</RouterLink>
-				<NoteCard v-for="note in section.notes" :key="note.id" :note="note" :selection-mode="isSelectionMode" :selected="isSelected(note.id)" @toggle-select="toggleSelection"/>
+				<NoteCard v-for="note in section.notes" :key="note.id" :note="note" :selection-mode="isSelecting" :selected="isSelected(note.id)" @toggle-select="toggleSelection"/>
 			</div>
 		</template>
-		<SelectionActionBar v-if="isSelectionMode && selectedCount > 0" :selected-count="selectedCount" :actions="selectionActions" @action="handleSelectionAction" @cancel="exitSelectionMode"/>
+		<SelectionActionBar v-if="isSelecting && selectedCount > 0" :selected-count="selectedCount" :actions="selectionActions" @action="handleSelectionAction" @cancel="exitSelectionMode"/>
 	</template>
 </template>
