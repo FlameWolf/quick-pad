@@ -33,17 +33,16 @@
 	const { sortBy, sortDirection, setSortBy, toggleSortDirection, getSortedNotes } = useNoteSort();
 	const { confirm } = useConfirmDialogue();
 	const { requestSync } = useNotesSync();
-	const isSearchMode = computed(() => !!notesStore.searchText);
 	const sourceNotes = computed(() => {
 		switch (view.value) {
 			case "favourited":
-				return notesStore.favedNotes;
+				return notesStore.favedNotes.value;
 			case "archived":
-				return notesStore.archivedNotes;
+				return notesStore.archivedNotes.value;
 			case "trash":
-				return notesStore.trashedNotes;
+				return notesStore.trashedNotes.value;
 			default:
-				return notesStore.activeNotes;
+				return notesStore.activeNotes.value;
 		}
 	});
 	const sortedNotes = computed(() => getSortedNotes(sourceNotes.value));
@@ -89,8 +88,8 @@
 		}
 	});
 	const emptyMessage = computed(() => {
-		if (isSearchMode.value) {
-			return `No results found for "${notesStore.searchText}"`;
+		if (notesStore.isSearching.value) {
+			return `No results found for "${notesStore.searchText.value}"`;
 		}
 		switch (view.value) {
 			case "favourited":
@@ -220,7 +219,7 @@
 	}
 
 	async function handleEmptyTrash() {
-		const count = notesStore.trashedNotes.length;
+		const count = notesStore.trashedNotes.value.length;
 		if (count === 0) {
 			return;
 		}
@@ -234,7 +233,7 @@
 		if (!ok) {
 			return;
 		}
-		const trashedNoteIds = notesStore.trashedNotes.map(n => n.id);
+		const trashedNoteIds = notesStore.trashedNotes.value.map(n => n.id);
 		await notesStore.permanentlyDeleteMultiple(trashedNoteIds);
 		requestSync(trashedNoteIds);
 	}
@@ -258,13 +257,13 @@
 			<span class="ms-2">Back to Notes</span>
 		</RouterLink>
 	</div>
-	<template v-if="notesStore.isLoading || notesStore.isSearching">
+	<template v-if="notesStore.isLoading.value || notesStore.isSearching.value">
 		<div class="d-flex flex-column justify-content-center align-items-center">
 			<div class="spinner-border" aria-hidden="true"></div>
-			<div class="mt-3" role="status">{{ notesStore.isSearching ? "Searching..." : "Loading notes..." }}</div>
+			<div class="mt-3" role="status">{{ notesStore.isSearching.value ? "Searching..." : "Loading notes..." }}</div>
 		</div>
 	</template>
-	<EmptyState v-else-if="!hasNotes" :message="emptyMessage" :show-actions="view === `active` && !isSearchMode" @import="handleImport"/>
+	<EmptyState v-else-if="!hasNotes" :message="emptyMessage" :show-actions="view === `active` && !notesStore.isSearching.value" @import="handleImport"/>
 	<template v-else>
 		<div class="d-flex gap-2 mb-3 justify-content-end flex-wrap">
 			<template v-if="isSelectionMode">
