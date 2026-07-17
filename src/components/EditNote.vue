@@ -3,8 +3,8 @@
 	import { useRouter, useRoute, onBeforeRouteLeave } from "vue-router";
 	import { listViewRoutes } from "@/router";
 	import { useNotesStore } from "@/stores/notes";
-	import { useAppStore } from "@/stores/app";
-	import { useNotificationsStore } from "@/stores/notifications";
+	import * as appStore from "@/stores/app";
+	import { addNotification } from "@/stores/notifications";
 	import { useFileIO } from "@/composables/useFileIO";
 	import { useConfirmDialogue } from "@/composables/useConfirmDialogue";
 	import { useNotesSync } from "@/composables/useNotesSync";
@@ -24,8 +24,6 @@
 	const router = useRouter();
 	const route = useRoute();
 	const notesStore = useNotesStore();
-	const appStore = useAppStore();
-	const { addNotification } = useNotificationsStore();
 	const { exportNote } = useFileIO();
 	const { confirm } = useConfirmDialogue();
 	const { requestSync } = useNotesSync();

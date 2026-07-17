@@ -2,7 +2,7 @@
 	import { computed, onMounted, watch } from "vue";
 	import { onBeforeRouteLeave } from "vue-router";
 	import { useNotesStore } from "@/stores/notes";
-	import { useAppStore } from "@/stores/app";
+	import * as appStore from "@/stores/app";
 	import { useFileIO } from "@/composables/useFileIO";
 	import { useNoteSelection } from "@/composables/useNoteSelection";
 	import { useNoteSort } from "@/composables/useNoteSort";
@@ -27,7 +27,6 @@
 	const props = defineProps<{ view?: View }>();
 	const view = computed<View>(() => props.view ?? "active");
 	const notesStore = useNotesStore();
-	const appStore = useAppStore();
 	const { importFiles, exportNotes, exportAllNotes } = useFileIO();
 	const { isSelectionMode, selectedCount, enterSelectionMode, exitSelectionMode, toggleSelection, isSelected, selectAll, clearSelection } = useNoteSelection();
 	const { sortBy, sortDirection, setSortBy, toggleSortDirection, getSortedNotes } = useNoteSort();

@@ -10,7 +10,8 @@ type Notification = {
 };
 type NotificationList = Array<Notification>;
 
-const notifications = ref<NotificationList>([]);
+const store = ref<NotificationList>([]);
+export const notifications = readonly(store);
 
 function createNotification(type: Notification["type"], message: string) {
 	const notification: Notification = {
@@ -24,19 +25,19 @@ function createNotification(type: Notification["type"], message: string) {
 			deleteNotification(notification);
 		}, 5000);
 	}
-	if (notifications.value.length >= 5) {
-		deleteNotification(notifications.value[0]!);
+	if (store.value.length >= 5) {
+		deleteNotification(store.value[0]!);
 	}
-	notifications.value.push(notification);
+	store.value.push(notification);
 }
 
 function deleteNotification(notification: Notification) {
 	clearTimeout(notification.removeTimer);
-	notifications.value.splice(notifications.value.indexOf(notification), 1);
+	store.value.splice(store.value.indexOf(notification), 1);
 }
 
-function addNotification(type: Notification["type"], message: string) {
-	const existingNotification = notifications.value.find(n => n.message === message && n.type === type);
+export function addNotification(type: Notification["type"], message: string) {
+	const existingNotification = store.value.find(n => n.message === message && n.type === type);
 	if (!existingNotification) {
 		createNotification(type, message);
 		return;
@@ -45,17 +46,9 @@ function addNotification(type: Notification["type"], message: string) {
 	setTimeout(() => createNotification(type, message), 250);
 }
 
-function removeNotification(id: UUID) {
-	const notification = notifications.value.find(n => n.id === id);
+export function removeNotification(id: UUID) {
+	const notification = store.value.find(n => n.id === id);
 	if (notification) {
 		deleteNotification(notification);
 	}
-}
-
-export function useNotificationsStore() {
-	return {
-		notifications: readonly(notifications),
-		addNotification,
-		removeNotification
-	};
 }
