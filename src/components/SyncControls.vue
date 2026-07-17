@@ -1,18 +1,15 @@
 <script setup lang="ts">
 	import { ref, computed, watch, onMounted, onBeforeUnmount, useTemplateRef } from "vue";
 	import { isLoading, purgeExpiredTrash } from "@/stores/notes";
-	import { hydrateAuthState, useGoogleAuth } from "@/composables/useGoogleAuth";
-	import { hydrateSyncMetadata, useNotesSync } from "@/composables/useNotesSync";
+	import { hydrateAuthState, isConfigured, isReady, isSignedIn, signIn, signOut, tryRestoreSession, user } from "@/composables/useGoogleAuth";
+	import { autoSyncEnabled, doPullAndPush, hydrateSyncMetadata, isSyncing, lastSyncedAt, requestSync, setAutoSync, syncError } from "@/composables/useNotesSync";
 	import { useDropdown } from "@/composables/useDropdown";
-	import { useConfirmDialogue } from "@/composables/useConfirmDialogue";
+	import { confirm } from "@/composables/useConfirmDialogue";
 	import Icon from "@/components/Icon.vue";
 
 	let readyTimeout: ReturnType<typeof setTimeout> | null = null;
 	const syncMenuTrigger = useTemplateRef("sync-menu-trigger");
-	const { isSignedIn, isReady, isConfigured, user, tryRestoreSession, signIn, signOut } = useGoogleAuth();
-	const { isSyncing, lastSyncedAt, syncError, autoSyncEnabled, doPullAndPush, requestSync, setAutoSync } = useNotesSync();
 	const { show: showSyncMenu, toggle: toggleSyncMenu } = useDropdown(syncMenuTrigger);
-	const { confirm } = useConfirmDialogue();
 	const authTimedOut = ref(false);
 
 	async function handleSync(force = false) {

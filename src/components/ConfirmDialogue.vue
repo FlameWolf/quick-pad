@@ -1,8 +1,7 @@
 <script setup lang="ts">
-	import { useConfirmDialogue } from "@/composables/useConfirmDialogue";
+	import { state, onConfirm, onCancel } from "@/composables/useConfirmDialogue";
 	import { onBeforeUnmount, onMounted } from "vue";
 
-	const { state, onConfirm, onCancel } = useConfirmDialogue();
 	const handlers: Record<string, (() => void) | undefined> = {
 		Escape: onCancel,
 		Enter: onConfirm

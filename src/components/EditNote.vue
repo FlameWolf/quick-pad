@@ -6,9 +6,9 @@
 	import * as appStore from "@/stores/app";
 	import { addNotification } from "@/stores/notifications";
 	import { useFileIO } from "@/composables/useFileIO";
-	import { useConfirmDialogue } from "@/composables/useConfirmDialogue";
-	import { useNotesSync } from "@/composables/useNotesSync";
-	import { useNoteDraft } from "@/composables/useNoteDraft";
+	import { confirm } from "@/composables/useConfirmDialogue";
+	import { requestSync } from "@/composables/useNotesSync";
+	import { clearDraft, loadDraft, saveDraft } from "@/composables/useNoteDraft";
 	import { useUndoRedo } from "@/composables/useUndoRedo";
 	import { NoteModel } from "@/models/NoteModel";
 	import { emptyString } from "@/constants/common";
@@ -24,9 +24,6 @@
 	const router = useRouter();
 	const route = useRoute();
 	const { exportNote } = useFileIO();
-	const { confirm } = useConfirmDialogue();
-	const { requestSync } = useNotesSync();
-	const { saveDraft, loadDraft, clearDraft } = useNoteDraft();
 	const isCreateMode = computed(() => route.path === "/notes/new");
 	const existingNote = computed(() => (props.id && !isCreateMode.value ? notesStore.getNote(props.id) : undefined));
 	const isEditing = ref(isCreateMode.value);
