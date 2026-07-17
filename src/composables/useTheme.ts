@@ -5,7 +5,7 @@ export enum Theme {
 	Light = "light"
 }
 
-const activeTheme = ref(
+const theme = ref(
 	toValue(() => {
 		const savedTheme = localStorage.getItem("theme");
 		if (savedTheme === Theme.Dark || savedTheme === Theme.Light) {
@@ -14,22 +14,14 @@ const activeTheme = ref(
 		return window.matchMedia("(prefers-color-scheme: dark)").matches ? Theme.Dark : Theme.Light;
 	})
 );
+export const activeTheme = readonly(theme);
 
-function applyTheme(newTheme: Theme) {
-	activeTheme.value = newTheme;
+export function applyTheme(newTheme: Theme) {
+	theme.value = newTheme;
 	document.documentElement.setAttribute("data-bs-theme", newTheme);
 	localStorage.setItem("theme", newTheme);
 }
 
-function toggleTheme() {
-	applyTheme(activeTheme.value === Theme.Dark ? Theme.Light : Theme.Dark);
-}
-
-applyTheme(activeTheme.value);
-
-export function useTheme() {
-	return {
-		activeTheme: readonly(activeTheme),
-		toggleTheme
-	};
+export function toggleTheme() {
+	applyTheme(theme.value === Theme.Dark ? Theme.Light : Theme.Dark);
 }

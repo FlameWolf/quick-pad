@@ -1,9 +1,9 @@
 <script setup lang="ts">
 	import { computed, onMounted } from "vue";
-	import { hydrateSortPrefs, type SortField, type SortDirection } from "@/composables/useNoteSort";
+	import { hydrateSortPrefs, type SortField, type SortOrder } from "@/composables/useNoteSort";
 	import Icon from "@/components/Icon.vue";
 
-	const props = defineProps<{ sortBy: SortField; sortDirection: SortDirection }>();
+	const props = defineProps<{ sortBy: SortField; sortDirection: SortOrder }>();
 	const emit = defineEmits<{ changeField: [field: SortField]; toggleDirection: [] }>();
 	const isAscending = computed(() => props.sortDirection === "asc");
 

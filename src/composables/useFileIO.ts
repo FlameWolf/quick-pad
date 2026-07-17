@@ -32,7 +32,7 @@ function sanitizeFilename(name: string): string {
 	return name.replace(/[<>:"/\\|?*]+/g, "_").trim() || "Untitled";
 }
 
-function importFiles(): Promise<number> {
+export function importFiles(): Promise<number> {
 	return new Promise(resolve => {
 		const errors: ImportError[] = [];
 		const input = document.createElement("input");
@@ -75,13 +75,13 @@ function importFiles(): Promise<number> {
 	});
 }
 
-async function exportNote(note: NoteModel) {
+export async function exportNote(note: NoteModel) {
 	const content = (await notesStore.getNoteContent(note.id)) ?? emptyString;
 	const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
 	triggerDownload(blob, `${sanitizeFilename(note.title)}.txt`);
 }
 
-async function exportNotes(notes: NoteModel[]) {
+export async function exportNotes(notes: NoteModel[]) {
 	if (notes.length === 0) {
 		return;
 	}
@@ -102,15 +102,6 @@ async function exportNotes(notes: NoteModel[]) {
 	triggerDownload(blob, "quick-pad-notes.zip");
 }
 
-async function exportAllNotes() {
+export async function exportAllNotes() {
 	await exportNotes(notesStore.activeNotes.value);
-}
-
-export function useFileIO() {
-	return {
-		importFiles,
-		exportNote,
-		exportNotes,
-		exportAllNotes
-	};
 }

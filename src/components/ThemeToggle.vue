@@ -1,10 +1,13 @@
 <script setup lang="ts">
-	import { computed } from "vue";
-	import { Theme, useTheme } from "@/composables/useTheme";
+	import { computed, onMounted } from "vue";
+	import { activeTheme, applyTheme, Theme, toggleTheme } from "@/composables/useTheme";
 	import Icon from "@/components/Icon.vue";
 
-	const { activeTheme, toggleTheme } = useTheme();
 	const isDark = computed(() => activeTheme.value === Theme.Dark);
+
+	onMounted(() => {
+		applyTheme(activeTheme.value);
+	});
 </script>
 <template>
 	<button class="btn btn-secondary btn-sm" @click="toggleTheme" :aria-label="`Switch to ${isDark ? Theme.Light : Theme.Dark} theme`">
