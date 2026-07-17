@@ -4,7 +4,7 @@
 
 	const notificationsStore = useNotificationsStore();
 	const sortedNotifications = computed(() => {
-		return notificationsStore.notifications.toSorted((a, b) => b.timeStamp - a.timeStamp);
+		return notificationsStore.notifications.value.toSorted((a, b) => b.timeStamp - a.timeStamp);
 	});
 </script>
 <template>
