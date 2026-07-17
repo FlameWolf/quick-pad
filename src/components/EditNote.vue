@@ -92,7 +92,7 @@
 
 	function setFontScaling(operator: "+" | "-") {
 		const multiplier = operator === "+" ? 1 : -1;
-		appStore.setFontScaleFactor(appStore.fontScaleFactor + 1 * multiplier);
+		appStore.setFontScaleFactor(appStore.fontScaleFactor.value + 1 * multiplier);
 	}
 
 	function onContentInput(e: Event) {
@@ -231,7 +231,7 @@
 		}
 		await notesStore.archiveNote(existingNote.value.id);
 		requestSync();
-		if (appStore.lastView !== "favourited") {
+		if (appStore.lastView.value !== "favourited") {
 			router.push(backRoute.value);
 		}
 	}
@@ -242,7 +242,7 @@
 		}
 		await notesStore.unarchiveNote(existingNote.value.id);
 		requestSync();
-		if (appStore.lastView !== "favourited") {
+		if (appStore.lastView.value !== "favourited") {
 			router.push(backRoute.value);
 		}
 	}
@@ -319,7 +319,7 @@
 
 	onMounted(() => {
 		if (!listViewRoutes.includes(backRoute.value)) {
-			appStore.setLastView(null);
+			appStore.lastView.value = null;
 		}
 		window.addEventListener("beforeunload", onBeforeUnload);
 		window.addEventListener("resize", adjustTextAreaHeight);
@@ -370,7 +370,7 @@
 	});
 
 	watch(
-		() => appStore.fontScaleFactor,
+		appStore.fontScaleFactor,
 		factor => {
 			const rootElement = document.documentElement;
 			if (factor === 0) {
