@@ -243,7 +243,7 @@
 	});
 
 	onBeforeRouteLeave(() => {
-		appStore.setLastView(view.value);
+		appStore.lastView.value = view.value;
 	});
 
 	watch(view, exitSelectionMode);
