@@ -80,7 +80,7 @@ export default defineConfig(({ command }) => ({
 		rollupOptions: {
 			output: {
 				manualChunks(id) {
-					const vendorModules = ["node_modules/@vue/", "node_modules/vue/", "node_modules/vue-router/", "node_modules/pinia/"];
+					const vendorModules = ["node_modules/@vue/", "node_modules/vue/", "node_modules/vue-router/"];
 					if (vendorModules.some(module => id.includes(module))) {
 						return "vendor-vue";
 					}
