@@ -13,12 +13,16 @@ let cachedToken: string | null = null;
 let cachedExpiry: number = 0;
 let cachedUser: UserInfo | null = null;
 let refreshInFlight: Promise<string> | null = null;
-const isConfigured = ref(CLIENT_ID);
-const isReady = ref(false);
-const isSignedIn = ref(false);
+const configured = ref(CLIENT_ID);
+const ready = ref(false);
+const signedIn = ref(false);
+const userInfo = ref<UserInfo | null>(null);
 const accessToken = ref<string | null>(null);
 const tokenExpiresAt = ref(0);
-const user = ref<UserInfo | null>(null);
+export const isConfigured = readonly(configured);
+export const isReady = readonly(ready);
+export const isSignedIn = readonly(signedIn);
+export const user = readonly(userInfo);
 
 export async function hydrateAuthState(): Promise<void> {
 	if (hydrated) {
@@ -64,8 +68,8 @@ async function clearSession(keepUser = false) {
 	cachedToken = null;
 	cachedExpiry = 0;
 	if (!keepUser) {
-		user.value = null;
-		isSignedIn.value = false;
+		userInfo.value = null;
+		signedIn.value = false;
 		cachedUser = null;
 		await deleteKV(SESSION_KEY);
 		await deleteKV(LAST_SYNCED_TO_CLOUD_KEY);
@@ -73,24 +77,24 @@ async function clearSession(keepUser = false) {
 	}
 }
 
-function tryRestoreSession() {
+export function tryRestoreSession() {
 	if (isReady.value) {
 		return;
 	}
 	if (!CLIENT_ID) {
-		isReady.value = true;
+		ready.value = true;
 		return;
 	}
 	if (cachedToken && cachedExpiry && Date.now() < cachedExpiry - TOKEN_REFRESH_BUFFER_MS) {
 		accessToken.value = cachedToken;
 		tokenExpiresAt.value = cachedExpiry;
-		user.value = cachedUser;
-		isSignedIn.value = true;
+		userInfo.value = cachedUser;
+		signedIn.value = true;
 	} else if (cachedUser) {
-		user.value = cachedUser;
-		isSignedIn.value = true;
+		userInfo.value = cachedUser;
+		signedIn.value = true;
 	}
-	isReady.value = true;
+	ready.value = true;
 }
 
 async function refreshFromServer(): Promise<string> {
@@ -115,10 +119,10 @@ async function refreshFromServer(): Promise<string> {
 			accessToken.value = data.access_token;
 			tokenExpiresAt.value = Date.now() + (data.expires_in || 3600) * 1000;
 			if (data.user) {
-				user.value = data.user;
+				userInfo.value = data.user;
 			}
 			await setKV(SESSION_KEY, true);
-			isSignedIn.value = true;
+			signedIn.value = true;
 			return data.access_token;
 		} finally {
 			refreshInFlight = null;
@@ -127,7 +131,7 @@ async function refreshFromServer(): Promise<string> {
 	return refreshInFlight;
 }
 
-async function getAccessToken(): Promise<string> {
+export async function getAccessToken(): Promise<string> {
 	const token = accessToken.value;
 	if (token && Date.now() < tokenExpiresAt.value - TOKEN_REFRESH_BUFFER_MS) {
 		return token;
@@ -135,7 +139,7 @@ async function getAccessToken(): Promise<string> {
 	return refreshFromServer();
 }
 
-function signIn(): Promise<void> {
+export function signIn(): Promise<void> {
 	if (!CLIENT_ID) {
 		return Promise.resolve();
 	}
@@ -168,10 +172,10 @@ function signIn(): Promise<void> {
 			}
 			if (event.data.ok) {
 				if (event.data.user) {
-					user.value = event.data.user;
+					userInfo.value = event.data.user;
 				}
 				await setKV(SESSION_KEY, true);
-				isSignedIn.value = true;
+				signedIn.value = true;
 				try {
 					await refreshFromServer();
 				} catch (err) {
@@ -194,24 +198,11 @@ function signIn(): Promise<void> {
 	});
 }
 
-async function signOut() {
+export async function signOut() {
 	try {
 		await fetch(AUTH_SIGNOUT_URL, { method: "POST", credentials: "include" });
 	} catch (err) {
 		console.warn("Failed to notify the server of sign-out", err);
 	}
 	await clearSession();
-}
-
-export function useGoogleAuth() {
-	return {
-		isConfigured: readonly(isConfigured),
-		isReady: readonly(isReady),
-		isSignedIn: readonly(isSignedIn),
-		user: readonly(user),
-		tryRestoreSession,
-		signIn,
-		signOut,
-		getAccessToken
-	};
 }

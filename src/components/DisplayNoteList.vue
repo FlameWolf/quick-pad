@@ -6,8 +6,8 @@
 	import { useFileIO } from "@/composables/useFileIO";
 	import { useNoteSelection } from "@/composables/useNoteSelection";
 	import { useNoteSort } from "@/composables/useNoteSort";
-	import { useConfirmDialogue } from "@/composables/useConfirmDialogue";
-	import { useNotesSync } from "@/composables/useNotesSync";
+	import { confirm } from "@/composables/useConfirmDialogue";
+	import { requestSync } from "@/composables/useNotesSync";
 	import { bulkActions } from "@/constants/actions";
 	import Icon from "@/components/Icon.vue";
 	import EmptyState from "@/components/EmptyState.vue";
@@ -29,8 +29,6 @@
 	const { importFiles, exportNotes, exportAllNotes } = useFileIO();
 	const { isSelectionMode, selectedCount, enterSelectionMode, exitSelectionMode, toggleSelection, isSelected, selectAll, clearSelection } = useNoteSelection();
 	const { sortBy, sortDirection, setSortBy, toggleSortDirection, getSortedNotes } = useNoteSort();
-	const { confirm } = useConfirmDialogue();
-	const { requestSync } = useNotesSync();
 	const isSearchMode = computed(() => !!notesStore.searchText.value);
 	const sourceNotes = computed(() => {
 		switch (view.value) {

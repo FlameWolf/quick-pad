@@ -19,7 +19,7 @@ interface ConfirmState {
 }
 
 let resolver: ((value: boolean) => void) | null = null;
-const state = ref<ConfirmState>({
+const params = ref<ConfirmState>({
 	visible: false,
 	title: emptyString,
 	message: emptyString,
@@ -27,13 +27,14 @@ const state = ref<ConfirmState>({
 	cancelText: "Cancel",
 	variant: "primary"
 });
+export const state = readonly(params);
 
-function confirm(options: ConfirmOptions): Promise<boolean> {
+export function confirm(options: ConfirmOptions): Promise<boolean> {
 	return new Promise(resolve => {
 		if (resolver) {
 			resolver(false);
 		}
-		state.value = {
+		params.value = {
 			visible: true,
 			title: options.title,
 			message: options.message,
@@ -45,29 +46,20 @@ function confirm(options: ConfirmOptions): Promise<boolean> {
 	});
 }
 
-function onConfirm() {
+export function onConfirm() {
 	const r = resolver;
 	resolver = null;
-	state.value.visible = false;
+	params.value.visible = false;
 	if (r) {
 		r(true);
 	}
 }
 
-function onCancel() {
+export function onCancel() {
 	const r = resolver;
 	resolver = null;
-	state.value.visible = false;
+	params.value.visible = false;
 	if (r) {
 		r(false);
 	}
-}
-
-export function useConfirmDialogue() {
-	return {
-		state: readonly(state),
-		confirm,
-		onConfirm,
-		onCancel
-	};
 }

@@ -4,7 +4,7 @@
 	import { RouterView } from "vue-router";
 	import { isNavigating } from "@/router";
 	import { hydrateNotes } from "@/stores/notes";
-	import { useNoteDraft } from "@/composables/useNoteDraft";
+	import { purgeStaleDrafts } from "@/composables/useNoteDraft";
 	import Icon from "@/components/Icon.vue";
 	import SearchBar from "@/components/SearchBar.vue";
 	import SyncControls from "@/components/SyncControls.vue";
@@ -12,8 +12,6 @@
 	import ScrollButtons from "@/components/ScrollButtons.vue";
 	import NotificationList from "@/components/NotificationList.vue";
 	import ConfirmDialogue from "@/components/ConfirmDialogue.vue";
-
-	const { purgeStaleDrafts } = useNoteDraft();
 
 	onMounted(async () => {
 		await hydrateNotes();
