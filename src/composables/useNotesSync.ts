@@ -23,7 +23,35 @@ const lastSyncedToLocalAt = ref<Date | null>(null);
 const lastSyncedToCloudAt = ref<Date | null>(null);
 const autoSyncEnabled = ref<boolean>(true);
 const syncError = ref<string | null>(null);
+const notesStore = useNotesStore();
+const { addNotification } = useNotificationsStore();
+const { listFiles, findFile, readJSONById, writeJSONById, writeJSON, deleteFile } = useGoogleDrive();
+const { isSignedIn } = useGoogleAuth();
 const pendingPurges = new Set<UUID>();
+const debouncedFlush = debounce(() => {
+	if (isSignedIn.value && autoSyncEnabled.value) {
+		saveToCloud()
+			.then(() => {
+				addNotification("success", "Synced to cloud");
+			})
+			.catch(() => {
+				addNotification("danger", "Sync failed");
+			});
+	}
+}, DEBOUNCE_MS);
+const requestSync = Object.assign(
+	function (purged: ReadonlyArray<UUID> = []) {
+		if (purged.length > 0) {
+			purged.forEach(Set.prototype.add, pendingPurges);
+		}
+		debouncedFlush();
+	},
+	{
+		cancel() {
+			debouncedFlush.cancel();
+		}
+	}
+);
 
 export async function hydrateSyncMetadata(): Promise<void> {
 	if (hydrated) {
@@ -83,170 +111,141 @@ export function mergeNotesByModifiedAt(local: ReadonlyArray<NoteModel>, remote: 
 	return changes;
 }
 
-export function useNotesSync() {
-	const store = useNotesStore();
-	const { addNotification } = useNotificationsStore();
-	const { listFiles, findFile, readJSONById, writeJSONById, writeJSON, deleteFile } = useGoogleDrive();
-	const { isSignedIn } = useGoogleAuth();
-	const debouncedFlush = debounce(() => {
-		if (isSignedIn.value && autoSyncEnabled.value) {
-			saveToCloud()
-				.then(() => {
-					addNotification("success", "Synced to cloud");
-				})
-				.catch(() => {
-					addNotification("danger", "Sync failed");
-				});
-		}
-	}, DEBOUNCE_MS);
-	const requestSync = Object.assign(
-		function (purged: ReadonlyArray<UUID> = []) {
-			if (purged.length > 0) {
-				purged.forEach(Set.prototype.add, pendingPurges);
+function getFileName(id: UUID) {
+	return `${notesStore.fileNamePrefix}${id}.json`;
+}
+
+async function readRemoteNotes(force = false, token?: string): Promise<{ token: string | undefined; notes: NoteModel[] }> {
+	const { pageToken, fileList } = await listFiles(notesStore.fileNamePrefix, force ? null : lastSyncedToLocalAt.value, token);
+	const notes: NoteModel[] = [];
+	await Promise.all(
+		fileList.map(async file => {
+			try {
+				const data = await readJSONById<NoteJSON>(file.id);
+				if (data) {
+					notes.push(NoteModel.fromJSON(data));
+				}
+			} catch (err) {
+				console.warn(`Failed to read note file ${file.name}`, err);
 			}
-			debouncedFlush();
-		},
-		{
-			cancel() {
-				debouncedFlush.cancel();
-			}
-		}
+		})
 	);
+	return { token: pageToken, notes };
+}
 
-	function getFileName(id: UUID) {
-		return `${store.fileNamePrefix}${id}.json`;
+async function purgeRemoteFiles(fileIdsToPurge: ReadonlyArray<UUID>) {
+	fileIdsToPurge.forEach(Set.prototype.add, pendingPurges);
+	if (pendingPurges.size > 0) {
+		const purgeSnapshot = Array.from(pendingPurges);
+		await Promise.all(purgeSnapshot.map(getFileName).map(deleteFile));
+		purgeSnapshot.forEach(Set.prototype.delete, pendingPurges);
 	}
+}
 
-	async function readRemoteNotes(force = false, token?: string): Promise<{ token: string | undefined; notes: NoteModel[] }> {
-		const { pageToken, fileList } = await listFiles(store.fileNamePrefix, force ? null : lastSyncedToLocalAt.value, token);
-		const notes: NoteModel[] = [];
-		await Promise.all(
-			fileList.map(async file => {
-				try {
-					const data = await readJSONById<NoteJSON>(file.id);
-					if (data) {
-						notes.push(NoteModel.fromJSON(data));
-					}
-				} catch (err) {
-					console.warn(`Failed to read note file ${file.name}`, err);
-				}
-			})
-		);
-		return { token: pageToken, notes };
-	}
+async function buildUploadPayload(note: NoteModel): Promise<NoteJSON> {
+	const content = await notesStore.getNoteContent(note.id);
+	return Object.assign(note.toJSON(), {
+		content: content ?? emptyString
+	});
+}
 
-	async function purgeRemoteFiles(fileIdsToPurge: ReadonlyArray<UUID>) {
-		fileIdsToPurge.forEach(Set.prototype.add, pendingPurges);
-		if (pendingPurges.size > 0) {
-			const purgeSnapshot = Array.from(pendingPurges);
-			await Promise.all(purgeSnapshot.map(getFileName).map(deleteFile));
-			purgeSnapshot.forEach(Set.prototype.delete, pendingPurges);
-		}
-	}
-
-	async function buildUploadPayload(note: NoteModel): Promise<NoteJSON> {
-		const content = await store.getNoteContent(note.id);
-		return Object.assign(note.toJSON(), {
-			content: content ?? emptyString
-		});
-	}
-
-	async function uploadNote(note: NoteModel): Promise<NoteUploadResult> {
-		const fileName = getFileName(note.id);
-		const remoteFile = await findFile(fileName);
-		if (remoteFile) {
-			const remoteJSON = await readJSONById<NoteJSON>(remoteFile.id);
-			if (remoteJSON) {
-				const remoteNote = NoteModel.fromJSON(remoteJSON);
-				if (modifiedAtRemote(remoteNote, note)) {
-					await store.replaceNote(remoteNote);
-					return NoteUploadResult.Conflict;
-				}
-				await writeJSONById(remoteFile.id, await buildUploadPayload(note));
-				return NoteUploadResult.Uploaded;
+async function uploadNote(note: NoteModel): Promise<NoteUploadResult> {
+	const fileName = getFileName(note.id);
+	const remoteFile = await findFile(fileName);
+	if (remoteFile) {
+		const remoteJSON = await readJSONById<NoteJSON>(remoteFile.id);
+		if (remoteJSON) {
+			const remoteNote = NoteModel.fromJSON(remoteJSON);
+			if (modifiedAtRemote(remoteNote, note)) {
+				await notesStore.replaceNote(remoteNote);
+				return NoteUploadResult.Conflict;
 			}
-		} else {
-			await writeJSON(fileName, await buildUploadPayload(note));
+			await writeJSONById(remoteFile.id, await buildUploadPayload(note));
+			return NoteUploadResult.Uploaded;
 		}
-		return NoteUploadResult.Uploaded;
+	} else {
+		await writeJSON(fileName, await buildUploadPayload(note));
 	}
+	return NoteUploadResult.Uploaded;
+}
 
-	async function runPull(force = false) {
-		let pageToken: string | undefined;
-		let remoteNotes: NoteModel[];
-		let remoteCount: number = 0;
-		let downloaded: number = 0;
-		const syncStartedAt = new Date();
-		do {
-			({ token: pageToken, notes: remoteNotes } = await readRemoteNotes(force, pageToken));
-			const readCount = remoteNotes.length;
-			if (readCount === 0) {
-				continue;
-			}
-			remoteCount += readCount;
-			const changes = mergeNotesByModifiedAt(store.notes.value, remoteNotes);
-			const changeCount = changes.length;
-			if (changeCount > 0) {
-				await store.replaceMultiple(changes);
-				downloaded += changeCount;
-			}
-			addNotification("success", `Fetching remote notes (${remoteCount} loaded)`);
-		} while (pageToken);
-		await purgeRemoteFiles(await store.purgeExpiredTrash());
-		lastSyncedToLocalAt.value = syncStartedAt;
-		return { remoteCount, downloaded };
-	}
-
-	async function runPush(purged: ReadonlyArray<UUID> = [], force = false) {
-		const syncStartedAt = new Date();
-		await purgeRemoteFiles(purged);
-		const candidates = force ? store.notes.value : store.notes.value.filter(n => noteEffectiveTime(n) > (lastSyncedToCloudAt.value?.getTime() ?? 0));
-		const results = await Promise.all(candidates.map(uploadNote));
-		lastSyncedToCloudAt.value = syncStartedAt;
-		return {
-			conflicts: results.filter(r => r === "conflict").length
-		};
-	}
-
-	async function doPullAndPush({ force = false as boolean, purged = [] as ReadonlyArray<UUID> } = {}) {
-		if (isSyncing.value) {
-			return;
+async function runPull(force = false) {
+	let pageToken: string | undefined;
+	let remoteNotes: NoteModel[];
+	let remoteCount: number = 0;
+	let downloaded: number = 0;
+	const syncStartedAt = new Date();
+	do {
+		({ token: pageToken, notes: remoteNotes } = await readRemoteNotes(force, pageToken));
+		const readCount = remoteNotes.length;
+		if (readCount === 0) {
+			continue;
 		}
+		remoteCount += readCount;
+		const changes = mergeNotesByModifiedAt(notesStore.notes.value, remoteNotes);
+		const changeCount = changes.length;
+		if (changeCount > 0) {
+			await notesStore.replaceMultiple(changes);
+			downloaded += changeCount;
+		}
+		addNotification("success", `Fetching remote notes (${remoteCount} loaded)`);
+	} while (pageToken);
+	await purgeRemoteFiles(await notesStore.purgeExpiredTrash());
+	lastSyncedToLocalAt.value = syncStartedAt;
+	return { remoteCount, downloaded };
+}
+
+async function runPush(purged: ReadonlyArray<UUID> = [], force = false) {
+	const syncStartedAt = new Date();
+	await purgeRemoteFiles(purged);
+	const candidates = force ? notesStore.notes.value : notesStore.notes.value.filter(n => noteEffectiveTime(n) > (lastSyncedToCloudAt.value?.getTime() ?? 0));
+	const results = await Promise.all(candidates.map(uploadNote));
+	lastSyncedToCloudAt.value = syncStartedAt;
+	return {
+		conflicts: results.filter(r => r === "conflict").length
+	};
+}
+
+async function doPullAndPush({ force = false as boolean, purged = [] as ReadonlyArray<UUID> } = {}) {
+	if (isSyncing.value) {
+		return;
+	}
+	isSyncing.value = true;
+	syncError.value = null;
+	try {
+		const pullResult = await runPull(force);
+		const pushResult = await runPush(purged, force);
+		const empty = pullResult.remoteCount === 0 && notesStore.notes.value.length === 0;
+		const changes = pushResult.conflicts + pullResult.downloaded;
+		addNotification("success", empty ? "Nothing to sync" : `Synced${changes > 0 ? ` (pulled ${changes} change${changes > 1 ? "s" : emptyString} from cloud)` : emptyString}`);
+	} catch (err: any) {
+		syncError.value = err?.message ?? "Sync failed";
+		addNotification("danger", `Sync failed: ${syncError.value}`);
+	} finally {
+		isSyncing.value = false;
+	}
+}
+
+async function saveToCloud(purged: ReadonlyArray<UUID> = []) {
+	if (isSyncing.value) {
+		return;
+	}
+	try {
 		isSyncing.value = true;
-		syncError.value = null;
-		try {
-			const pullResult = await runPull(force);
-			const pushResult = await runPush(purged, force);
-			const empty = pullResult.remoteCount === 0 && store.notes.value.length === 0;
-			const changes = pushResult.conflicts + pullResult.downloaded;
-			addNotification("success", empty ? "Nothing to sync" : `Synced${changes > 0 ? ` (pulled ${changes} change${changes > 1 ? "s" : emptyString} from cloud)` : emptyString}`);
-		} catch (err: any) {
-			syncError.value = err?.message ?? "Sync failed";
-			addNotification("danger", `Sync failed: ${syncError.value}`);
-		} finally {
-			isSyncing.value = false;
-		}
+		await runPush(purged, false);
+	} finally {
+		isSyncing.value = false;
 	}
+}
 
-	async function saveToCloud(purged: ReadonlyArray<UUID> = []) {
-		if (isSyncing.value) {
-			return;
-		}
-		try {
-			isSyncing.value = true;
-			await runPush(purged, false);
-		} finally {
-			isSyncing.value = false;
-		}
+async function setAutoSync(enabled: boolean) {
+	autoSyncEnabled.value = enabled;
+	if (!enabled) {
+		requestSync.cancel();
 	}
+}
 
-	async function setAutoSync(enabled: boolean) {
-		autoSyncEnabled.value = enabled;
-		if (!enabled) {
-			requestSync.cancel();
-		}
-	}
-
+export function useNotesSync() {
 	return {
 		isSyncing: readonly(isSyncing),
 		lastSyncedAt: computed(() => {
