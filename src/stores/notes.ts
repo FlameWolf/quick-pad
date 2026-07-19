@@ -1,4 +1,4 @@
-import { ref, computed, readonly, toRef } from "vue";
+import { computed, reactive, ref, toRef } from "vue";
 import { notesRepository } from "@/storage/NotesRepository";
 import { contains } from "@/utils/text-analysis";
 import { emptyString } from "@/constants/common";
@@ -9,26 +9,28 @@ import type { UUID } from "crypto";
 interface NotesState {
 	notes: NoteModel[];
 	searchText: string;
+	isLoading: boolean;
+	isSearching: boolean;
 }
 
 let hydrated = false;
-const store = ref<NotesState>({
+const store = reactive<NotesState>({
 	notes: [],
-	searchText: emptyString
+	searchText: emptyString,
+	isLoading: true,
+	isSearching: false
 });
-const loading = ref(true);
-const searching = ref(false);
-export const notes = readonly(toRef(store.value, "notes"));
-export const searchText = readonly(toRef(store.value, "searchText"));
-export const isLoading = readonly(loading);
-export const isSearching = readonly(searching);
+export const notes = toRef(() => store.notes);
+export const searchText = computed(() => store.searchText);
+export const isLoading = computed(() => store.isLoading);
+export const isSearching = computed(() => store.isSearching);
 export const contentMatchedIds = ref<Set<UUID> | null>(null);
 export const searchResults = computed(() => {
 	const trimmed = searchText.value.trim();
 	if (!trimmed) {
-		return store.value.notes;
+		return store.notes;
 	}
-	return store.value.notes.filter(note => contains(note.title, trimmed) || contentMatchedIds.value?.has(note.id));
+	return store.notes.filter(note => contains(note.title, trimmed) || contentMatchedIds.value?.has(note.id));
 });
 export const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt));
 export const favedNotes = computed(() => searchResults.value.filter(note => note.favedAt && !note.deletedAt));
@@ -41,41 +43,41 @@ export async function hydrateNotes(): Promise<void> {
 	}
 	hydrated = true;
 	try {
-		store.value.notes = await notesRepository.loadAll();
+		store.notes = await notesRepository.loadAll();
 	} catch (err) {
-		store.value.notes = [];
+		store.notes = [];
 		console.error("Failed to load notes from storage", err);
 	} finally {
-		loading.value = false;
+		store.isLoading = false;
 	}
 }
 
 export function setSearchText(query: string) {
 	const trimmed = query.trim();
-	store.value.searchText = trimmed;
+	store.searchText = trimmed;
 	if (!trimmed) {
-		searching.value = false;
+		store.isSearching = false;
 		contentMatchedIds.value = null;
 		return;
 	}
-	searching.value = true;
+	store.isSearching = true;
 	notesRepository
 		.search(content => contains(content, trimmed))
 		.then(matches => {
 			contentMatchedIds.value = matches as Set<UUID>;
 		})
 		.finally(() => {
-			searching.value = false;
+			store.isSearching = false;
 		});
 }
 
 export async function addNote(note: NoteModel) {
-	store.value.notes.push(note);
+	store.notes.push(note);
 	await notesRepository.saveFull(note);
 }
 
 export async function updateNote(data: { id: UUID; title: string; content: string }) {
-	const note = store.value.notes.find(note => note.id === data.id);
+	const note = store.notes.find(note => note.id === data.id);
 	if (note) {
 		note.update(data.title, data.content);
 		await notesRepository.saveFull(note);
@@ -83,7 +85,7 @@ export async function updateNote(data: { id: UUID; title: string; content: strin
 }
 
 export const getNote = (id: UUID): NoteModel | undefined => {
-	return store.value.notes.find(note => note.id === id);
+	return store.notes.find(note => note.id === id);
 };
 
 export const getNoteContent = (id: UUID): Promise<string | undefined> => {
@@ -91,7 +93,7 @@ export const getNoteContent = (id: UUID): Promise<string | undefined> => {
 };
 
 async function applyToNote(id: UUID, mutator: (note: NoteModel) => void) {
-	const note = store.value.notes.find(note => note.id === id);
+	const note = store.notes.find(note => note.id === id);
 	if (note) {
 		mutator(note);
 		await notesRepository.saveMeta(note);
@@ -100,7 +102,7 @@ async function applyToNote(id: UUID, mutator: (note: NoteModel) => void) {
 
 async function applyToMany(ids: ReadonlyArray<UUID>, mutator: (note: NoteModel) => void): Promise<void> {
 	const idSet = new Set(ids);
-	const targetNotes = store.value.notes.filter(note => idSet.has(note.id));
+	const targetNotes = store.notes.filter(note => idSet.has(note.id));
 	targetNotes.forEach(mutator);
 	await notesRepository.saveManyMeta(targetNotes);
 }
@@ -162,22 +164,22 @@ export async function restoreFromTrashMultiple(ids: ReadonlyArray<UUID>) {
 }
 
 export async function permanentlyDelete(id: UUID) {
-	const index = store.value.notes.findIndex(note => note.id === id);
+	const index = store.notes.findIndex(note => note.id === id);
 	if (index !== -1) {
-		store.value.notes.splice(index, 1);
+		store.notes.splice(index, 1);
 		await notesRepository.remove(id);
 	}
 }
 
 export async function permanentlyDeleteMultiple(ids: ReadonlyArray<UUID>) {
 	const idSet = new Set<UUID>(ids);
-	store.value.notes = store.value.notes.filter(note => !idSet.has(note.id));
+	store.notes = store.notes.filter(note => !idSet.has(note.id));
 	await notesRepository.removeMany(ids as UUID[]);
 }
 
 export async function purgeExpiredTrash() {
 	const cutoff = Date.now() - TRASH_RETENTION_MS;
-	const expiredIds = store.value.notes
+	const expiredIds = store.notes
 		.filter(note => {
 			if (!note.deletedAt) {
 				return false;
@@ -193,11 +195,11 @@ export async function purgeExpiredTrash() {
 }
 
 function addOrUpdate(updatedNote: NoteModel) {
-	const index = store.value.notes.findIndex(note => note.id === updatedNote.id);
+	const index = store.notes.findIndex(note => note.id === updatedNote.id);
 	if (index === -1) {
-		store.value.notes.push(updatedNote);
+		store.notes.push(updatedNote);
 	} else {
-		store.value.notes.splice(index, 1, updatedNote);
+		store.notes.splice(index, 1, updatedNote);
 	}
 }
 
