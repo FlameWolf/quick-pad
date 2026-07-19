@@ -1,4 +1,4 @@
-import { ref, readonly, computed, watch } from "vue";
+import { ref, computed, watch, reactive } from "vue";
 import { deleteKV, getKV, setKV } from "@/storage/db";
 import * as notesStore from "@/stores/notes";
 import { addNotification } from "@/stores/notifications";
@@ -13,20 +13,27 @@ import { AUTO_SYNC_KEY, DEBOUNCE_MS, LAST_SYNCED_TO_CLOUD_KEY, LAST_SYNCED_TO_LO
 import type { NoteJSON } from "@/models/NoteModel";
 import type { UUID } from "crypto";
 
+interface SyncState {
+	isSyncing: boolean;
+	autoSyncEnabled: boolean;
+	syncError: string | null;
+}
 enum NoteUploadResult {
 	Uploaded = "uploaded",
 	Conflict = "conflict"
 }
 
 let hydrated = false;
-const syncing = ref(false);
-const allowAutoSync = ref<boolean>(true);
-const errorText = ref<string | null>(null);
+const state = reactive<SyncState>({
+	isSyncing: false,
+	autoSyncEnabled: true,
+	syncError: null
+});
 const lastSyncedToLocalAt = ref<Date | null>(null);
 const lastSyncedToCloudAt = ref<Date | null>(null);
 const pendingPurges = new Set<UUID>();
 const debouncedFlush = debounce(() => {
-	if (isSignedIn.value && allowAutoSync.value) {
+	if (isSignedIn.value && state.autoSyncEnabled) {
 		saveToCloud()
 			.then(() => {
 				addNotification("success", "Synced to cloud");
@@ -36,9 +43,9 @@ const debouncedFlush = debounce(() => {
 			});
 	}
 }, DEBOUNCE_MS);
-export const isSyncing = readonly(syncing);
-export const autoSyncEnabled = readonly(allowAutoSync);
-export const syncError = readonly(errorText);
+export const isSyncing = computed(() => state.isSyncing);
+export const autoSyncEnabled = computed(() => state.autoSyncEnabled);
+export const syncError = computed(() => state.syncError);
 export const lastSyncedAt = computed(() => {
 	const max = Math.max(lastSyncedToLocalAt.value?.getTime() ?? 0, lastSyncedToCloudAt.value?.getTime() ?? 0);
 	return max > 0 ? new Date(max) : null;
@@ -67,10 +74,13 @@ export async function hydrateSyncMetadata(): Promise<void> {
 	const storedAutoSync = await getKV(AUTO_SYNC_KEY);
 	lastSyncedToLocalAt.value = storedLocal ? new Date(storedLocal) : null;
 	lastSyncedToCloudAt.value = storedCloud ? new Date(storedCloud) : null;
-	allowAutoSync.value = storedAutoSync === undefined ? true : storedAutoSync;
-	watch(allowAutoSync, async flag => {
-		await setKV(AUTO_SYNC_KEY, flag);
-	});
+	state.autoSyncEnabled = storedAutoSync === undefined ? true : storedAutoSync;
+	watch(
+		() => state.autoSyncEnabled,
+		async flag => {
+			await setKV(AUTO_SYNC_KEY, flag);
+		}
+	);
 	watch(lastSyncedToLocalAt, async date => {
 		if (date) {
 			await setKV(LAST_SYNCED_TO_LOCAL_KEY, date.toISOString());
@@ -211,23 +221,23 @@ async function runPush(purged: ReadonlyArray<UUID> = [], force = false) {
 }
 
 async function saveToCloud(purged: ReadonlyArray<UUID> = []) {
-	if (syncing.value) {
+	if (state.isSyncing) {
 		return;
 	}
 	try {
-		syncing.value = true;
+		state.isSyncing = true;
 		await runPush(purged, false);
 	} finally {
-		syncing.value = false;
+		state.isSyncing = false;
 	}
 }
 
 export async function doPullAndPush({ force = false as boolean, purged = [] as ReadonlyArray<UUID> } = {}) {
-	if (syncing.value) {
+	if (state.isSyncing) {
 		return;
 	}
-	syncing.value = true;
-	errorText.value = null;
+	state.isSyncing = true;
+	state.syncError = null;
 	try {
 		const pullResult = await runPull(force);
 		const pushResult = await runPush(purged, force);
@@ -235,15 +245,15 @@ export async function doPullAndPush({ force = false as boolean, purged = [] as R
 		const changes = pushResult.conflicts + pullResult.downloaded;
 		addNotification("success", empty ? "Nothing to sync" : `Synced${changes > 0 ? ` (pulled ${changes} change${changes > 1 ? "s" : emptyString} from cloud)` : emptyString}`);
 	} catch (err: any) {
-		errorText.value = err?.message ?? "Sync failed";
-		addNotification("danger", `Sync failed: ${errorText.value}`);
+		state.syncError = err?.message ?? "Sync failed";
+		addNotification("danger", `Sync failed: ${state.syncError}`);
 	} finally {
-		syncing.value = false;
+		state.isSyncing = false;
 	}
 }
 
 export async function setAutoSync(enabled: boolean) {
-	allowAutoSync.value = enabled;
+	state.autoSyncEnabled = enabled;
 	if (!enabled) {
 		requestSync.cancel();
 	}

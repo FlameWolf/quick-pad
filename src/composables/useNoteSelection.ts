@@ -1,40 +1,46 @@
-import { ref, computed, readonly } from "vue";
+import { computed, reactive } from "vue";
 import type { UUID } from "crypto";
 
-const selecting = ref(false);
-const selectedNoteIds = ref(new Set<UUID>());
-const selectedNoteCount = computed(() => selectedNoteIds.value.size);
-export const isSelecting = readonly(selecting);
-export const selectedIds = readonly(selectedNoteIds);
-export const selectedCount = readonly(selectedNoteCount);
+interface SelectionState {
+	isSelecting: boolean;
+	selectedIds: Set<UUID>;
+}
+
+const state = reactive<SelectionState>({
+	isSelecting: false,
+	selectedIds: new Set<UUID>()
+});
+export const isSelecting = computed(() => state.isSelecting);
+export const selectedIds = computed(() => state.selectedIds);
+export const selectedCount = computed(() => state.selectedIds.size);
 
 export function enterSelectionMode() {
-	selecting.value = true;
+	state.isSelecting = true;
 }
 
 export function exitSelectionMode() {
-	selectedNoteIds.value = new Set();
-	selecting.value = false;
+	state.selectedIds = new Set();
+	state.isSelecting = false;
 }
 
 export function toggleSelection(id: UUID) {
-	const next = new Set(selectedNoteIds.value);
+	const next = new Set(state.selectedIds);
 	if (next.has(id)) {
 		next.delete(id);
 	} else {
 		next.add(id);
 	}
-	selectedNoteIds.value = next;
+	state.selectedIds = next;
 }
 
 export function isSelected(id: UUID): boolean {
-	return selectedNoteIds.value.has(id);
+	return state.selectedIds.has(id);
 }
 
 export function selectAll(ids: UUID[]) {
-	selectedNoteIds.value = new Set(ids);
+	state.selectedIds = new Set(ids);
 }
 
 export function clearSelection() {
-	selectedNoteIds.value = new Set();
+	state.selectedIds = new Set();
 }
