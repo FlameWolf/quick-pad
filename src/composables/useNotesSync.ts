@@ -186,7 +186,7 @@ async function runPull(force = false) {
 			continue;
 		}
 		remoteCount += readCount;
-		const changes = mergeNotesByModifiedAt(notesStore.notes.value, remoteNotes);
+		const changes = mergeNotesByModifiedAt(notesStore.notes, remoteNotes);
 		const changeCount = changes.length;
 		if (changeCount > 0) {
 			await notesStore.replaceMultiple(changes);
@@ -202,7 +202,7 @@ async function runPull(force = false) {
 async function runPush(purged: ReadonlyArray<UUID> = [], force = false) {
 	const syncStartedAt = new Date();
 	await purgeRemoteFiles(purged);
-	const candidates = force ? notesStore.notes.value : notesStore.notes.value.filter(n => noteEffectiveTime(n) > (lastSyncedToCloudAt.value?.getTime() ?? 0));
+	const candidates = force ? notesStore.notes : notesStore.notes.filter(n => noteEffectiveTime(n) > (lastSyncedToCloudAt.value?.getTime() ?? 0));
 	const results = await Promise.all(candidates.map(uploadNote));
 	lastSyncedToCloudAt.value = syncStartedAt;
 	return {
@@ -231,7 +231,7 @@ export async function doPullAndPush({ force = false as boolean, purged = [] as R
 	try {
 		const pullResult = await runPull(force);
 		const pushResult = await runPush(purged, force);
-		const empty = pullResult.remoteCount === 0 && notesStore.notes.value.length === 0;
+		const empty = pullResult.remoteCount === 0 && notesStore.notes.length === 0;
 		const changes = pushResult.conflicts + pullResult.downloaded;
 		addNotification("success", empty ? "Nothing to sync" : `Synced${changes > 0 ? ` (pulled ${changes} change${changes > 1 ? "s" : emptyString} from cloud)` : emptyString}`);
 	} catch (err: any) {
