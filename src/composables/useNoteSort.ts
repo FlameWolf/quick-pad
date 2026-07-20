@@ -66,16 +66,16 @@ function compareNotes(a: NoteModel, b: NoteModel, field: SortField): number {
 	}
 }
 
-export function setSortBy(field: SortField) {
+export function setSortField(field: SortField) {
 	state.sortField = field;
 }
 
-export function setSortDirection(direction: SortOrder) {
+export function setSortOrer(direction: SortOrder) {
 	state.sortOrder = direction;
 }
 
 export function toggleSortDirection() {
-	setSortDirection(state.sortOrder === "asc" ? "desc" : "asc");
+	setSortOrer(state.sortOrder === "asc" ? "desc" : "asc");
 }
 
 export function getSortedNotes(notes: ReadonlyArray<NoteModel>): NoteModel[] {
