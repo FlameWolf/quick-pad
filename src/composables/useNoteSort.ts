@@ -1,4 +1,4 @@
-import { ref, readonly, watch } from "vue";
+import { computed, reactive, watch } from "vue";
 import { getKV, setKV } from "@/storage/db";
 import { SORT_BY_KEY, SORT_DIRECTION_KEY, SORT_DIRECTIONS, SORT_FIELDS } from "@/constants/sort";
 import type { NoteModel } from "@/models/NoteModel";
@@ -6,11 +6,18 @@ import type { NoteModel } from "@/models/NoteModel";
 export type SortField = (typeof SORT_FIELDS)[number];
 export type SortOrder = (typeof SORT_DIRECTIONS)[number];
 
+interface SortState {
+	sortField: SortField;
+	sortOrder: SortOrder;
+}
+
 let hydrated = false;
-const sortBy = ref<SortField>("modifiedAt");
-const sortDir = ref<SortOrder>("desc");
-export const sortField = readonly(sortBy);
-export const sortOrder = readonly(sortDir);
+const state = reactive<SortState>({
+	sortField: "modifiedAt",
+	sortOrder: "desc"
+});
+export const sortField = computed(() => state.sortField);
+export const sortOrder = computed(() => state.sortOrder);
 
 export async function hydrateSortPrefs(): Promise<void> {
 	if (hydrated) {
@@ -19,18 +26,24 @@ export async function hydrateSortPrefs(): Promise<void> {
 	hydrated = true;
 	const storedBy = await getKV(SORT_BY_KEY);
 	if (SORT_FIELDS.includes(storedBy as SortField)) {
-		sortBy.value = storedBy as SortField;
+		state.sortField = storedBy as SortField;
 	}
 	const storedDir = await getKV(SORT_DIRECTION_KEY);
 	if (SORT_DIRECTIONS.includes(storedDir as SortOrder)) {
-		sortDir.value = storedDir as SortOrder;
+		state.sortOrder = storedDir as SortOrder;
 	}
-	watch(sortBy, async field => {
-		await setKV(SORT_BY_KEY, field);
-	});
-	watch(sortDir, async direction => {
-		await setKV(SORT_DIRECTION_KEY, direction);
-	});
+	watch(
+		() => state.sortField,
+		async field => {
+			await setKV(SORT_BY_KEY, field);
+		}
+	);
+	watch(
+		() => state.sortOrder,
+		async order => {
+			await setKV(SORT_DIRECTION_KEY, order);
+		}
+	);
 }
 
 function compareNotes(a: NoteModel, b: NoteModel, field: SortField): number {
@@ -54,19 +67,19 @@ function compareNotes(a: NoteModel, b: NoteModel, field: SortField): number {
 }
 
 export function setSortBy(field: SortField) {
-	sortBy.value = field;
+	state.sortField = field;
 }
 
 export function setSortDirection(direction: SortOrder) {
-	sortDir.value = direction;
+	state.sortOrder = direction;
 }
 
 export function toggleSortDirection() {
-	setSortDirection(sortDir.value === "asc" ? "desc" : "asc");
+	setSortDirection(state.sortOrder === "asc" ? "desc" : "asc");
 }
 
 export function getSortedNotes(notes: ReadonlyArray<NoteModel>): NoteModel[] {
-	const multiplier = sortDir.value === "asc" ? 1 : -1;
+	const multiplier = state.sortOrder === "asc" ? 1 : -1;
 	return notes.toSorted((a, b) => {
 		if (a.pinnedAt && !b.pinnedAt) {
 			return -1;
@@ -77,6 +90,6 @@ export function getSortedNotes(notes: ReadonlyArray<NoteModel>): NoteModel[] {
 		if (a.pinnedAt && b.pinnedAt) {
 			return b.pinnedAt.getTime() - a.pinnedAt.getTime();
 		}
-		return compareNotes(a, b, sortBy.value) * multiplier;
+		return compareNotes(a, b, state.sortField) * multiplier;
 	});
 }

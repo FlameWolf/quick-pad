@@ -1,4 +1,4 @@
-import { ref, readonly, toRaw, watch } from "vue";
+import { computed, reactive, ref, toRaw, watch } from "vue";
 import { deleteKV, getKV, setKV } from "@/storage/db";
 import { AUTH_SIGNOUT_URL, AUTH_START_URL, AUTH_TOKEN_URL, CLIENT_ID, EXPIRY_KEY, SESSION_KEY, TOKEN_KEY, TOKEN_REFRESH_BUFFER_MS, USER_KEY } from "@/constants/auth";
 import { LAST_SYNCED_TO_CLOUD_KEY, LAST_SYNCED_TO_LOCAL_KEY } from "@/constants/sync";
@@ -7,21 +7,28 @@ type UserInfo = {
 	email: string;
 	name: string;
 };
+interface AuthState {
+	isReady: boolean;
+	isSignedIn: boolean;
+	user: UserInfo | null;
+}
 
 let hydrated = false;
 let cachedToken: string | null = null;
 let cachedExpiry: number = 0;
 let cachedUser: UserInfo | null = null;
 let refreshInFlight: Promise<string> | null = null;
-const ready = ref(false);
-const signedIn = ref(false);
-const userInfo = ref<UserInfo | null>(null);
+const state = reactive<AuthState>({
+	isReady: false,
+	isSignedIn: false,
+	user: null
+});
 const accessToken = ref<string | null>(null);
 const tokenExpiresAt = ref(0);
 export const isConfigured = !!CLIENT_ID;
-export const isReady = readonly(ready);
-export const isSignedIn = readonly(signedIn);
-export const user = readonly(userInfo);
+export const isReady = computed(() => state.isReady);
+export const isSignedIn = computed(() => state.isSignedIn);
+export const user = computed(() => state.user);
 
 export async function hydrateAuthState(): Promise<void> {
 	if (hydrated) {
@@ -67,8 +74,8 @@ async function clearSession(keepUser = false) {
 	cachedToken = null;
 	cachedExpiry = 0;
 	if (!keepUser) {
-		userInfo.value = null;
-		signedIn.value = false;
+		state.user = null;
+		state.isSignedIn = false;
 		cachedUser = null;
 		await deleteKV(SESSION_KEY);
 		await deleteKV(LAST_SYNCED_TO_CLOUD_KEY);
@@ -98,10 +105,10 @@ async function refreshFromServer(): Promise<string> {
 			accessToken.value = data.access_token;
 			tokenExpiresAt.value = Date.now() + (data.expires_in || 3600) * 1000;
 			if (data.user) {
-				userInfo.value = data.user;
+				state.user = data.user;
 			}
 			await setKV(SESSION_KEY, true);
-			signedIn.value = true;
+			state.isSignedIn = true;
 			return data.access_token;
 		} finally {
 			refreshInFlight = null;
@@ -123,19 +130,19 @@ export function tryRestoreSession() {
 		return;
 	}
 	if (!CLIENT_ID) {
-		ready.value = true;
+		state.isReady = true;
 		return;
 	}
 	if (cachedToken && cachedExpiry && Date.now() < cachedExpiry - TOKEN_REFRESH_BUFFER_MS) {
 		accessToken.value = cachedToken;
 		tokenExpiresAt.value = cachedExpiry;
-		userInfo.value = cachedUser;
-		signedIn.value = true;
+		state.user = cachedUser;
+		state.isSignedIn = true;
 	} else if (cachedUser) {
-		userInfo.value = cachedUser;
-		signedIn.value = true;
+		state.user = cachedUser;
+		state.isSignedIn = true;
 	}
-	ready.value = true;
+	state.isReady = true;
 }
 
 export function signIn(): Promise<void> {
@@ -171,10 +178,10 @@ export function signIn(): Promise<void> {
 			}
 			if (event.data.ok) {
 				if (event.data.user) {
-					userInfo.value = event.data.user;
+					state.user = event.data.user;
 				}
 				await setKV(SESSION_KEY, true);
-				signedIn.value = true;
+				state.isSignedIn = true;
 				try {
 					await refreshFromServer();
 				} catch (err) {
