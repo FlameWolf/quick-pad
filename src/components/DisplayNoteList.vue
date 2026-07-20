@@ -5,7 +5,7 @@
 	import * as appStore from "@/stores/app";
 	import { exportAllNotes, exportNotes, importFiles } from "@/composables/useFileIO";
 	import { clearSelection, enterSelectionMode, exitSelectionMode, isSelected, isSelecting, selectAll, selectedCount, toggleSelection } from "@/composables/useNoteSelection";
-	import { getSortedNotes, setSortBy, sortField, sortOrder, toggleSortDirection } from "@/composables/useNoteSort";
+	import { getSortedNotes, setSortField, sortField, sortOrder, toggleSortDirection } from "@/composables/useNoteSort";
 	import { confirm } from "@/composables/useConfirmDialogue";
 	import { requestSync } from "@/composables/useNotesSync";
 	import { bulkActions } from "@/constants/actions";
@@ -271,7 +271,7 @@
 				</button>
 			</template>
 			<template v-else>
-				<SortControls :sort-field="sortField" :sort-order="sortOrder" @change-field="setSortBy" @toggle-direction="toggleSortDirection"/>
+				<SortControls :sort-field="sortField" :sort-order="sortOrder" @change-field="setSortField" @toggle-direction="toggleSortDirection"/>
 				<button class="btn btn-outline-secondary btn-sm" @click="enterSelectionMode" title="Select" aria-label="Select">
 					<Icon type="check2Square"/>
 					<span class="d-none d-sm-inline ms-2">Select</span>
