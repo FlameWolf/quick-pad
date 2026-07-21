@@ -2,8 +2,8 @@
 	import "@/styles.css";
 	import { onMounted } from "vue";
 	import { RouterView } from "vue-router";
-	import { isNavigating } from "@/router";
 	import { hydrateNotes } from "@/stores/notes";
+	import { isNavigating } from "@/router";
 	import { purgeStaleDrafts } from "@/composables/useNoteDraft";
 	import Icon from "@/components/Icon.vue";
 	import SearchBar from "@/components/SearchBar.vue";

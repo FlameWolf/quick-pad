@@ -1,7 +1,7 @@
-import { getCharacterCount, getSentenceCount, getSummary, getWordCount } from "@/utils/text-analysis";
 import { emptyString } from "@/constants/common";
 import { parseValidDate } from "@/utils/dates";
 import { isValidCount } from "@/utils/numbers";
+import { getCharacterCount, getSentenceCount, getSummary, getWordCount } from "@/utils/text-analysis";
 import type { UUID } from "crypto";
 
 export interface NoteMetaJSON {

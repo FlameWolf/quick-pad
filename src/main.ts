@@ -1,6 +1,6 @@
 import { ensurePersistentStorage } from "@/storage/persistence.ts";
-import { registerServiceWorker } from "@/registerServiceWorker";
 import { runMigration } from "@/storage/migrate";
+import { registerServiceWorker } from "@/registerServiceWorker";
 import { createApp } from "vue";
 import router from "@/router";
 import App from "@/App.vue";

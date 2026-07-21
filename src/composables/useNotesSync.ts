@@ -1,15 +1,15 @@
 import { computed, reactive, ref, watch } from "vue";
-import { deleteKV, getKV, setKV } from "@/storage/db";
-import * as notesStore from "@/stores/notes";
-import { addNotification } from "@/stores/notifications";
-import { deleteFile, findFile, listFiles, readJSONById, writeJSON, writeJSONById } from "@/composables/useGoogleDrive";
-import { isSignedIn } from "@/composables/useGoogleAuth";
-import { NoteModel } from "@/models/NoteModel";
-import { getTime } from "@/utils/dates";
-import { debounce } from "@/utils/timing";
 import { emptyString } from "@/constants/common";
 import { NOTE_PREFIX } from "@/constants/storage";
 import { AUTO_SYNC_KEY, DEBOUNCE_MS, LAST_SYNCED_TO_CLOUD_KEY, LAST_SYNCED_TO_LOCAL_KEY } from "@/constants/sync";
+import { getTime } from "@/utils/dates";
+import { debounce } from "@/utils/timing";
+import { NoteModel } from "@/models/NoteModel";
+import { deleteKV, getKV, setKV } from "@/storage/db";
+import * as notesStore from "@/stores/notes";
+import { addNotification } from "@/stores/notifications";
+import { isSignedIn } from "@/composables/useGoogleAuth";
+import { deleteFile, findFile, listFiles, readJSONById, writeJSON, writeJSONById } from "@/composables/useGoogleDrive";
 import type { NoteJSON } from "@/models/NoteModel";
 import type { UUID } from "crypto";
 

@@ -1,8 +1,8 @@
+import { emptyString } from "@/constants/common";
+import { isTextFile } from "@/utils/file-detection";
+import { NoteModel } from "@/models/NoteModel";
 import * as notesStore from "@/stores/notes";
 import { addNotification } from "@/stores/notifications";
-import { NoteModel } from "@/models/NoteModel";
-import { isTextFile } from "@/utils/file-detection";
-import { emptyString } from "@/constants/common";
 
 interface ImportError {
 	fileName: string;

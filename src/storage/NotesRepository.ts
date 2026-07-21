@@ -1,5 +1,5 @@
-import * as db from "@/storage/db";
 import { NoteModel } from "@/models/NoteModel";
+import * as db from "@/storage/db";
 import type { UUID } from "crypto";
 
 class NotesRepository {

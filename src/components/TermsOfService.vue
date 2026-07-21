@@ -1,6 +1,6 @@
 <script setup lang="ts">
-	import LegalPage from "@/components/LegalPage.vue";
 	import { termsEffectiveDate, termsIntro, termsSections } from "@/content/terms";
+	import LegalPage from "@/components/LegalPage.vue";
 </script>
 
 <template>
