@@ -1,5 +1,5 @@
-import { getKV, putNote, setKV, setKVRaw } from "@/storage/db";
 import { KV_MAPPINGS, LEGACY_NOTES_KEY, MIGRATION_FLAG, NOTE_PREFIX } from "@/constants/storage";
+import { getKV, putNote, setKV, setKVRaw } from "@/storage/db";
 import type { NoteJSON } from "@/models/NoteModel";
 
 type Coercion = (typeof KV_MAPPINGS)[number][2];

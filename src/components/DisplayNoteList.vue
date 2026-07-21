@@ -1,14 +1,14 @@
 <script setup lang="ts">
 	import { computed, onMounted, watch } from "vue";
 	import { onBeforeRouteLeave } from "vue-router";
-	import * as notesStore from "@/stores/notes";
+	import { bulkActions } from "@/constants/actions";
 	import * as appStore from "@/stores/app";
+	import * as notesStore from "@/stores/notes";
+	import { confirm } from "@/composables/useConfirmDialogue";
 	import { exportAllNotes, exportNotes, importFiles } from "@/composables/useFileIO";
 	import { clearSelection, enterSelectionMode, exitSelectionMode, isSelected, isSelecting, selectAll, selectedCount, toggleSelection } from "@/composables/useNoteSelection";
 	import { getSortedNotes, setSortField, sortField, sortOrder, toggleSortDirection } from "@/composables/useNoteSort";
-	import { confirm } from "@/composables/useConfirmDialogue";
 	import { requestSync } from "@/composables/useNotesSync";
-	import { bulkActions } from "@/constants/actions";
 	import Icon from "@/components/Icon.vue";
 	import EmptyState from "@/components/EmptyState.vue";
 	import SortControls from "@/components/SortControls.vue";

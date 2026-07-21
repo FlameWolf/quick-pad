@@ -1,8 +1,8 @@
 import { computed, reactive, ref, toRef } from "vue";
-import { notesRepository } from "@/storage/NotesRepository";
-import { contains } from "@/utils/text-analysis";
 import { emptyString } from "@/constants/common";
 import { TRASH_RETENTION_MS } from "@/constants/notes";
+import { contains } from "@/utils/text-analysis";
+import { notesRepository } from "@/storage/NotesRepository";
 import type { NoteModel } from "@/models/NoteModel";
 import type { UUID } from "crypto";
 

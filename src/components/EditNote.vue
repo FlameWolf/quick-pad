@@ -1,19 +1,19 @@
 <script setup lang="ts">
 	import { ref, computed, onBeforeUnmount, onMounted, watch, useTemplateRef } from "vue";
 	import { useRouter, useRoute, onBeforeRouteLeave } from "vue-router";
-	import { listViewRoutes } from "@/router";
-	import * as notesStore from "@/stores/notes";
-	import * as appStore from "@/stores/app";
-	import { addNotification } from "@/stores/notifications";
-	import { exportNote } from "@/composables/useFileIO";
-	import { confirm } from "@/composables/useConfirmDialogue";
-	import { requestSync } from "@/composables/useNotesSync";
-	import { clearDraft, loadDraft, saveDraft } from "@/composables/useNoteDraft";
-	import { useUndoRedo } from "@/composables/useUndoRedo";
-	import { NoteModel } from "@/models/NoteModel";
 	import { emptyString } from "@/constants/common";
 	import { getSentenceCount, getWordCount, getCharacterCount } from "@/utils/text-analysis";
 	import { debounce } from "@/utils/timing";
+	import { NoteModel } from "@/models/NoteModel";
+	import * as appStore from "@/stores/app";
+	import * as notesStore from "@/stores/notes";
+	import { addNotification } from "@/stores/notifications";
+	import { listViewRoutes } from "@/router";
+	import { confirm } from "@/composables/useConfirmDialogue";
+	import { exportNote } from "@/composables/useFileIO";
+	import { clearDraft, loadDraft, saveDraft } from "@/composables/useNoteDraft";
+	import { requestSync } from "@/composables/useNotesSync";
+	import { useUndoRedo } from "@/composables/useUndoRedo";
 	import Icon from "@/components/Icon.vue";
 	import type { UUID } from "crypto";
 

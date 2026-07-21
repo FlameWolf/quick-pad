@@ -1,6 +1,6 @@
 import { computed, reactive, watch } from "vue";
-import { getKV, setKV } from "@/storage/db";
 import { SORT_BY_KEY, SORT_DIRECTION_KEY, SORT_DIRECTIONS, SORT_FIELDS } from "@/constants/sort";
+import { getKV, setKV } from "@/storage/db";
 import type { NoteModel } from "@/models/NoteModel";
 
 export type SortField = (typeof SORT_FIELDS)[number];

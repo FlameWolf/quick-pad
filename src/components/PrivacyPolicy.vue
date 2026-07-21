@@ -1,6 +1,6 @@
 <script setup lang="ts">
-	import LegalPage from "@/components/LegalPage.vue";
 	import { privacyEffectiveDate, privacyIntro, privacySections } from "@/content/privacy";
+	import LegalPage from "@/components/LegalPage.vue";
 </script>
 
 <template>

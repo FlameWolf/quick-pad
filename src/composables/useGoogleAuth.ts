@@ -1,7 +1,7 @@
 import { computed, reactive, ref, toRaw, watch } from "vue";
-import { deleteKV, getKV, setKV } from "@/storage/db";
 import { AUTH_SIGNOUT_URL, AUTH_START_URL, AUTH_TOKEN_URL, CLIENT_ID, EXPIRY_KEY, SESSION_KEY, TOKEN_KEY, TOKEN_REFRESH_BUFFER_MS, USER_KEY } from "@/constants/auth";
 import { LAST_SYNCED_TO_CLOUD_KEY, LAST_SYNCED_TO_LOCAL_KEY } from "@/constants/sync";
+import { deleteKV, getKV, setKV } from "@/storage/db";
 
 type UserInfo = {
 	email: string;

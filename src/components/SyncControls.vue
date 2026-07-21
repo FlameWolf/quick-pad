@@ -1,10 +1,10 @@
 <script setup lang="ts">
 	import { ref, computed, watch, onMounted, onBeforeUnmount, useTemplateRef } from "vue";
 	import { isLoading, purgeExpiredTrash } from "@/stores/notes";
+	import { confirm } from "@/composables/useConfirmDialogue";
+	import { useDropdown } from "@/composables/useDropdown";
 	import { hydrateAuthState, isConfigured, isReady, isSignedIn, signIn, signOut, tryRestoreSession, user } from "@/composables/useGoogleAuth";
 	import { autoSyncEnabled, doPullAndPush, hydrateSyncMetadata, isSyncing, lastSyncedAt, requestSync, setAutoSync, syncError } from "@/composables/useNotesSync";
-	import { useDropdown } from "@/composables/useDropdown";
-	import { confirm } from "@/composables/useConfirmDialogue";
 	import Icon from "@/components/Icon.vue";
 
 	let readyTimeout: ReturnType<typeof setTimeout> | null = null;
