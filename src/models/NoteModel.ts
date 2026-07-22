@@ -1,7 +1,8 @@
 import { emptyString } from "@/constants/common";
+import { normaliseTag } from "@/utils/common";
 import { parseValidDate } from "@/utils/dates";
 import { isValidCount } from "@/utils/numbers";
-import { getCharacterCount, getSentenceCount, getSummary, getWordCount } from "@/utils/text-analysis";
+import { equals, getCharacterCount, getSentenceCount, getSummary, getWordCount } from "@/utils/text-analysis";
 import type { UUID } from "crypto";
 
 export interface NoteMetaJSON {
@@ -14,6 +15,7 @@ export interface NoteMetaJSON {
 	archivedAt?: string;
 	deletedAt?: string;
 	stateChangedAt?: string;
+	tags?: string[];
 	summary: string;
 	sentenceCount: number;
 	wordCount: number;
@@ -35,6 +37,7 @@ export class NoteModel {
 	archivedAt?: Date;
 	deletedAt?: Date;
 	stateChangedAt?: Date;
+	tags?: string[];
 	summary!: string;
 	sentenceCount!: number;
 	wordCount!: number;
@@ -117,6 +120,27 @@ export class NoteModel {
 		this.stateChangedAt = new Date();
 	}
 
+	addTag(tag: string) {
+		const normalisedTag = normaliseTag(tag);
+		if (!normalisedTag || this.tags?.some(x => equals(x, normalisedTag))) {
+			return;
+		}
+		if (!this.tags) {
+			this.tags = [];
+		}
+		this.tags.push(normalisedTag);
+		this.stateChangedAt = new Date();
+	}
+
+	removeTag(tag: string) {
+		const normalisedTag = normaliseTag(tag);
+		const index = this.tags?.findIndex(x => equals(x, normalisedTag));
+		if (index !== undefined && index > -1) {
+			this.tags!.splice(index, 1);
+		}
+		this.stateChangedAt = new Date();
+	}
+
 	toMetaJSON(): NoteMetaJSON {
 		return {
 			id: this.id,
@@ -128,6 +152,7 @@ export class NoteModel {
 			archivedAt: this.archivedAt?.toISOString(),
 			deletedAt: this.deletedAt?.toISOString(),
 			stateChangedAt: this.stateChangedAt?.toISOString(),
+			tags: this.tags,
 			summary: this.summary,
 			sentenceCount: this.sentenceCount,
 			wordCount: this.wordCount,
@@ -150,6 +175,7 @@ export class NoteModel {
 		note.archivedAt = parseValidDate(data.archivedAt);
 		note.deletedAt = parseValidDate(data.deletedAt);
 		note.stateChangedAt = parseValidDate(data.stateChangedAt);
+		note.tags = data.tags;
 		if (typeof data.summary === "string" && isValidCount(data.sentenceCount) && isValidCount(data.wordCount) && isValidCount(data.characterCount)) {
 			note.summary = data.summary;
 			note.sentenceCount = data.sentenceCount;
