@@ -4,3 +4,7 @@ export function camelToKebab(input: string) {
 		.replace(/([A-Z])([A-Z][a-z])/g, "$1-$2")
 		.toLowerCase();
 }
+
+export function normaliseTag(raw: string): string {
+	return raw.trim().replace(/\s+/g, " ").normalize("NFC");
+}
