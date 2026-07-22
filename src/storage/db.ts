@@ -1,5 +1,5 @@
 import { openDB, type IDBPDatabase } from "idb";
-import { DB_NAME, DB_VERSION, NOTES_STORE, CONTENTS_STORE, KV_STORE } from "@/constants/storage";
+import { DB_NAME, DB_VERSION, NOTES_STORE, CONTENTS_STORE, KV_STORE, TAGS_STORE } from "@/constants/storage";
 import type { NoteJSON, NoteMetaJSON } from "@/models/NoteModel";
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
@@ -16,6 +16,9 @@ function getDB(): Promise<IDBPDatabase> {
 				}
 				if (!db.objectStoreNames.contains(KV_STORE)) {
 					db.createObjectStore(KV_STORE);
+				}
+				if (!db.objectStoreNames.contains(TAGS_STORE)) {
+					db.createObjectStore(TAGS_STORE);
 				}
 				if (oldVersion === 1) {
 					const notesStore = tx.objectStore(NOTES_STORE);
@@ -130,11 +133,6 @@ export async function deleteNotes(ids: string[]): Promise<void> {
 	await Promise.all(ops);
 }
 
-export async function getAllKV(): Promise<string[]> {
-	const db = await getDB();
-	return await db.getAll(KV_STORE);
-}
-
 export async function getKV<K extends KVKey>(key: K): Promise<KVSchema[K] | undefined> {
 	const db = await getDB();
 	return (await db.get(KV_STORE, key)) as KVSchema[K] | undefined;
@@ -153,4 +151,24 @@ export async function deleteKV(key: KVKey): Promise<void> {
 export async function setKVRaw(key: string, value: unknown): Promise<void> {
 	const db = await getDB();
 	await db.put(KV_STORE, value, key);
+}
+
+export async function getAllTags(): Promise<string[]> {
+	const db = await getDB();
+	return await db.getAll(TAGS_STORE);
+}
+
+export async function getTag(key: string): Promise<string | undefined> {
+	const db = await getDB();
+	return await db.get(TAGS_STORE, key);
+}
+
+export async function setTag(key: string, value: string): Promise<void> {
+	const db = await getDB();
+	await db.put(TAGS_STORE, value, key);
+}
+
+export async function deleteTag(key: string): Promise<void> {
+	const db = await getDB();
+	await db.delete(TAGS_STORE, key);
 }

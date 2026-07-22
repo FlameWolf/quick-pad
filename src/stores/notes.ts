@@ -163,6 +163,22 @@ export async function restoreFromTrashMultiple(ids: ReadonlyArray<UUID>) {
 	await applyToMany(ids, note => note.restore());
 }
 
+export async function addTag(id: UUID, tag: string) {
+	await applyToNote(id, note => note.addTag(tag));
+}
+
+export async function addTagMultiple(ids: ReadonlyArray<UUID>, tag: string) {
+	await applyToMany(ids, note => note.addTag(tag));
+}
+
+export async function removeTag(id: UUID, tag: string) {
+	await applyToNote(id, note => note.removeTag(tag));
+}
+
+export async function removeTagMultiple(ids: ReadonlyArray<UUID>, tag: string) {
+	await applyToMany(ids, note => note.removeTag(tag));
+}
+
 export async function permanentlyDelete(id: UUID) {
 	const index = store.notes.findIndex(note => note.id === id);
 	if (index !== -1) {

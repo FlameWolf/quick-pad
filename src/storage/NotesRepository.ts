@@ -1,5 +1,7 @@
-import { NoteModel } from "@/models/NoteModel";
+import { normaliseTag } from "@/utils/common";
+import { NoteModel, type NoteMetaJSON } from "@/models/NoteModel";
 import * as db from "@/storage/db";
+import { tagsRepository } from "@/storage/TagsRepository";
 import type { UUID } from "crypto";
 
 class NotesRepository {
@@ -25,20 +27,56 @@ class NotesRepository {
 		notes.forEach(note => (note.content = undefined));
 	}
 
+	async saveTags(meta: NoteMetaJSON) {
+		if (meta.tags) {
+			const tagsToSave: string[] = [];
+			for (const tag of meta.tags) {
+				const normalisedTag = normaliseTag(tag);
+				if (!tagsRepository.load(normalisedTag.toLowerCase())) {
+					tagsToSave.push(normalisedTag);
+				}
+			}
+			if (tagsToSave.length) {
+				tagsRepository.saveMany(tagsToSave);
+			}
+		}
+	}
+
+	async saveManyTags(metas: NoteMetaJSON[]) {
+		const tagsToSave: string[] = [];
+		for (const meta of metas) {
+			if (meta.tags) {
+				for (const tag of meta.tags) {
+					const normalisedTag = normaliseTag(tag);
+					if (!tagsRepository.load(normalisedTag.toLowerCase())) {
+						tagsToSave.push(normalisedTag);
+					}
+				}
+			}
+		}
+		if (tagsToSave.length) {
+			tagsRepository.saveMany(tagsToSave);
+		}
+	}
+
 	async saveMeta(note: NoteModel): Promise<void> {
-		return await db.putNoteMeta(note.toMetaJSON());
+		const meta = note.toMetaJSON();
+		await this.saveTags(meta);
+		await db.putNoteMeta(meta);
 	}
 
 	async saveManyMeta(notes: NoteModel[]): Promise<void> {
-		return await db.putNotesMeta(notes.map(note => note.toMetaJSON()));
+		const metas = notes.map(note => note.toMetaJSON());
+		await this.saveManyTags(metas);
+		await db.putNotesMeta(metas);
 	}
 
 	async remove(id: UUID): Promise<void> {
-		return await db.deleteNote(id);
+		await db.deleteNote(id);
 	}
 
 	async removeMany(ids: UUID[]): Promise<void> {
-		return await db.deleteNotes(ids);
+		await db.deleteNotes(ids);
 	}
 }
 
