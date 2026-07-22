@@ -9,6 +9,7 @@ interface KVSchema {
 	"last-synced-to-local": string;
 	"last-synced-to-cloud": string;
 	"__migrated-to-idb": boolean;
+	[key: `tag:${string}`]: string;
 }
 
 type KVKey = keyof KVSchema;
@@ -35,7 +36,7 @@ type View = "active" | "favourited" | "archived" | "trash";
 interface SelectionAction {
 	key: "export" | "fave" | "unfave" | "archive" | "unarchive" | "trash" | "restore" | "permanent";
 	label: string;
-	variant: "primary" | "danger" | "outline-primary" | "outline-secondary" | "outline-danger";
+	variant: "primary" | "secondary" | "danger" | "outline-primary" | "outline-secondary" | "outline-danger";
 }
 
 type LegalBlock = { type: "paragraph"; text: string } | { type: "list"; items: string[] };

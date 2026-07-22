@@ -130,6 +130,11 @@ export async function deleteNotes(ids: string[]): Promise<void> {
 	await Promise.all(ops);
 }
 
+export async function getAllKV(): Promise<string[]> {
+	const db = await getDB();
+	return await db.getAll(KV_STORE);
+}
+
 export async function getKV<K extends KVKey>(key: K): Promise<KVSchema[K] | undefined> {
 	const db = await getDB();
 	return (await db.get(KV_STORE, key)) as KVSchema[K] | undefined;
