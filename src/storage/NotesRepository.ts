@@ -27,15 +27,22 @@ class NotesRepository {
 		notes.forEach(note => (note.content = undefined));
 	}
 
-	async saveTags(meta: NoteMetaJSON) {
+	async getTagsToSave(meta: NoteMetaJSON): Promise<string[]> {
+		const tagsToSave: string[] = [];
 		if (meta.tags) {
-			const tagsToSave: string[] = [];
 			for (const tag of meta.tags) {
 				const normalisedTag = normaliseTag(tag);
-				if (!tagsRepository.load(normalisedTag.toLowerCase())) {
+				if (!(await tagsRepository.load(normalisedTag))) {
 					tagsToSave.push(normalisedTag);
 				}
 			}
+		}
+		return tagsToSave;
+	}
+
+	async saveTags(meta: NoteMetaJSON) {
+		if (meta.tags) {
+			const tagsToSave = await this.getTagsToSave(meta);
 			if (tagsToSave.length) {
 				tagsRepository.saveMany(tagsToSave);
 			}
@@ -43,17 +50,7 @@ class NotesRepository {
 	}
 
 	async saveManyTags(metas: NoteMetaJSON[]) {
-		const tagsToSave: string[] = [];
-		for (const meta of metas) {
-			if (meta.tags) {
-				for (const tag of meta.tags) {
-					const normalisedTag = normaliseTag(tag);
-					if (!tagsRepository.load(normalisedTag.toLowerCase())) {
-						tagsToSave.push(normalisedTag);
-					}
-				}
-			}
-		}
+		const tagsToSave = (await Promise.all(metas.map(this.getTagsToSave))).flat();
 		if (tagsToSave.length) {
 			tagsRepository.saveMany(tagsToSave);
 		}
