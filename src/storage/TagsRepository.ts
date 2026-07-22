@@ -13,6 +13,10 @@ class TagsRepository {
 		return (await this.loadAll()).filter(tag => contains(tag, text));
 	}
 
+	async load(tag: string): Promise<string | undefined> {
+		return await db.getKV(`${TAG_PREFIX}${tag}`);
+	}
+
 	async save(tag: string): Promise<void> {
 		db.setKV(`${TAG_PREFIX}${tag}`, tag);
 	}
