@@ -4,11 +4,13 @@ import { TRASH_RETENTION_MS } from "@/constants/notes";
 import { normaliseTag } from "@/utils/common";
 import { contains } from "@/utils/text-analysis";
 import { notesRepository } from "@/storage/NotesRepository";
+import { tagsRepository } from "@/storage/TagsRepository";
 import type { NoteModel } from "@/models/NoteModel";
 import type { UUID } from "crypto";
 
 interface NotesState {
 	notes: NoteModel[];
+	tags: string[];
 	searchText: string;
 	searchTags: Set<string>;
 	isLoading: boolean;
@@ -18,6 +20,7 @@ interface NotesState {
 let hydrated = false;
 const store = reactive<NotesState>({
 	notes: [],
+	tags: [],
 	searchText: emptyString,
 	searchTags: new Set<string>(),
 	isLoading: true,
@@ -25,6 +28,7 @@ const store = reactive<NotesState>({
 });
 const contentMatchedIds = ref(new Set<UUID>());
 export const notes = toRef(() => store.notes);
+export const tags = toRef(() => store.tags);
 export const searchText = computed(() => store.searchText);
 export const searchTags = computed(() => store.searchTags);
 export const isLoading = computed(() => store.isLoading);
@@ -49,6 +53,7 @@ export async function hydrateNotes(): Promise<void> {
 	hydrated = true;
 	try {
 		store.notes = await notesRepository.loadAll();
+		store.tags = await tagsRepository.loadAll();
 	} catch (err) {
 		store.notes = [];
 		console.error("Failed to load notes from storage", err);
