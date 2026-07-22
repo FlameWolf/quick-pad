@@ -1,6 +1,12 @@
 import { onBeforeUnmount, onMounted, readonly, ref, type TemplateRef } from "vue";
 
-export function useDropdown(trigger: TemplateRef<HTMLElement>, initialState: boolean = false) {
+type DropdownOptions = {
+	initialState?: boolean;
+	autoClose?: boolean;
+	dropdown?: TemplateRef<HTMLElement>;
+};
+
+export function useDropdown(trigger: TemplateRef<HTMLElement>, { initialState = false, autoClose = true, dropdown }: DropdownOptions = {}) {
 	const show = ref(initialState);
 
 	function toggle() {
@@ -13,10 +19,16 @@ export function useDropdown(trigger: TemplateRef<HTMLElement>, initialState: boo
 			return;
 		}
 		const target = event.target as Node;
-		if (triggerElement === target || triggerElement.contains(target)) {
+		if (triggerElement.contains(target)) {
 			return;
 		}
-		show.value = false;
+		if (autoClose) {
+			const protectedElement = dropdown?.value;
+			if (!protectedElement || protectedElement.contains(target)) {
+				return;
+			}
+			show.value = false;
+		}
 	}
 
 	onMounted(() => {
