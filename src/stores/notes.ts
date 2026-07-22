@@ -1,6 +1,7 @@
 import { computed, reactive, ref, toRef } from "vue";
 import { emptyString } from "@/constants/common";
 import { TRASH_RETENTION_MS } from "@/constants/notes";
+import { normaliseTag } from "@/utils/common";
 import { contains } from "@/utils/text-analysis";
 import { notesRepository } from "@/storage/NotesRepository";
 import type { NoteModel } from "@/models/NoteModel";
@@ -9,6 +10,7 @@ import type { UUID } from "crypto";
 interface NotesState {
 	notes: NoteModel[];
 	searchText: string;
+	searchTags: Set<string>;
 	isLoading: boolean;
 	isSearching: boolean;
 }
@@ -17,20 +19,23 @@ let hydrated = false;
 const store = reactive<NotesState>({
 	notes: [],
 	searchText: emptyString,
+	searchTags: new Set<string>(),
 	isLoading: true,
 	isSearching: false
 });
+const contentMatchedIds = ref(new Set<UUID>());
 export const notes = toRef(() => store.notes);
 export const searchText = computed(() => store.searchText);
+export const searchTags = computed(() => store.searchTags);
 export const isLoading = computed(() => store.isLoading);
 export const isSearching = computed(() => store.isSearching);
-export const contentMatchedIds = ref<Set<UUID> | null>(null);
 export const searchResults = computed(() => {
-	const trimmed = searchText.value.trim();
-	if (!trimmed) {
-		return store.notes;
+	const trimmed = store.searchText.trim();
+	const initial = trimmed ? store.notes.filter(note => contains(note.title, trimmed) || contentMatchedIds.value.has(note.id)) : store.notes;
+	if (store.searchTags.size === 0) {
+		return initial;
 	}
-	return store.notes.filter(note => contains(note.title, trimmed) || contentMatchedIds.value?.has(note.id));
+	return initial.filter(note => note.tags?.some(tag => store.searchTags.has(tag)));
 });
 export const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt));
 export const favedNotes = computed(() => searchResults.value.filter(note => note.favedAt && !note.deletedAt));
@@ -57,7 +62,7 @@ export function setSearchText(query: string) {
 	store.searchText = trimmed;
 	if (!trimmed) {
 		store.isSearching = false;
-		contentMatchedIds.value = null;
+		contentMatchedIds.value.clear();
 		return;
 	}
 	store.isSearching = true;
@@ -69,6 +74,14 @@ export function setSearchText(query: string) {
 		.finally(() => {
 			store.isSearching = false;
 		});
+}
+
+export function addSearchTag(tag: string) {
+	store.searchTags.add(normaliseTag(tag));
+}
+
+export function removeSearchTag(tag: string) {
+	store.searchTags.delete(normaliseTag(tag));
 }
 
 export async function addNote(note: NoteModel) {
