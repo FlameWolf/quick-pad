@@ -19,6 +19,7 @@ function getDB(): Promise<IDBPDatabase> {
 				}
 				if (!db.objectStoreNames.contains(TAGS_STORE)) {
 					db.createObjectStore(TAGS_STORE);
+					await Promise.all([setTag("Ideas"), setTag("Personal"), setTag("Work")]);
 				}
 				if (oldVersion === 1) {
 					const notesStore = tx.objectStore(NOTES_STORE);
@@ -160,15 +161,15 @@ export async function getAllTags(): Promise<string[]> {
 
 export async function getTag(key: string): Promise<string | undefined> {
 	const db = await getDB();
-	return await db.get(TAGS_STORE, key);
+	return await db.get(TAGS_STORE, key.toLowerCase());
 }
 
-export async function setTag(key: string, value: string): Promise<void> {
+export async function setTag(value: string): Promise<void> {
 	const db = await getDB();
-	await db.put(TAGS_STORE, value, key);
+	await db.put(TAGS_STORE, value, value.toLowerCase());
 }
 
 export async function deleteTag(key: string): Promise<void> {
 	const db = await getDB();
-	await db.delete(TAGS_STORE, key);
+	await db.delete(TAGS_STORE, key.toLowerCase());
 }

@@ -15,7 +15,7 @@ class TagsRepository {
 	}
 
 	async save(tag: string): Promise<void> {
-		await db.setTag(tag.toLowerCase(), tag);
+		await db.setTag(tag);
 	}
 
 	async saveMany(tags: string[]): Promise<void> {
