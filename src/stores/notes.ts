@@ -247,12 +247,14 @@ export async function replaceMultiple(updatedNotes: NoteModel[]) {
 }
 
 export async function saveTag(tag: string) {
-	store.tags.push(tag);
+	if (!store.tags.includes(tag)) {
+		store.tags.push(tag);
+	}
 	await tagsRepository.save(tag);
 }
 
 export async function saveTags(tags: string[]) {
-	tags.forEach(Array.prototype.push, store.tags);
+	tags.filter(tag => !store.tags.includes(tag)).forEach(tag => store.tags.push(tag));
 	await tagsRepository.saveMany(tags);
 }
 
