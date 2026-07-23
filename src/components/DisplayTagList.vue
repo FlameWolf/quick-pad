@@ -10,26 +10,17 @@
 	}>();
 	const dropdownToggle = useTemplateRef("dropdown-toggle");
 	const dropdownMenu = useTemplateRef("dropdown-menu");
-	const selectedTags = ref<Set<string>>(new Set<string>());
+	const selectedTags = ref<string[]>([]);
 	const { show, toggle } = useDropdown(dropdownToggle, {
 		autoClose: false,
 		dropdown: dropdownMenu
 	});
 
-	function addTag(tag: string) {
-		selectedTags.value.add(tag);
-	}
-
 	function removeTag(tag: string) {
-		selectedTags.value.delete(tag);
-	}
-
-	function toggleSelection(tag: string) {
-		if (selectedTags.value.has(tag)) {
-			removeTag(tag);
-			return;
+		const index = selectedTags.value.indexOf(tag);
+		if(index > -1) {
+			selectedTags.value.splice(index, 1);
 		}
-		addTag(tag);
 	}
 </script>
 <template>
@@ -49,11 +40,16 @@
 			<li><hr class="dropdown-divider"/></li>
 			<li v-for="tag in notesStore.tags.value">
 				<label>
-					<input type="checkbox" @click="toggleSelection(tag)"/>
+					<input type="checkbox" :value="tag" v-model="selectedTags"/>
 					<span class="ms-2">{{ tag }}</span>
 				</label>
 			</li>
-			<li><a class="dropdown-item">Something else here</a></li>
 		</ul>
+		<div v-if="selectedTags.length" class="d-inline-flex flex-wrap gap-2 align-middle ms-3">
+			<div v-for="tag in selectedTags" class="badge text-bg-secondary">
+				<span>{{ tag }}</span>
+				<button class="small btn-close ms-2" @click="removeTag(tag)"></button>
+			</div>
+		</div>
 	</div>
 </template>
