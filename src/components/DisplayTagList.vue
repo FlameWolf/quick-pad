@@ -1,25 +1,43 @@
 <script setup lang="ts">
-	import { ref, useTemplateRef } from "vue";
+	import { computed, ref, useTemplateRef } from "vue";
+	import { emptyString } from "@/constants/common";
 	import * as notesStore from "@/stores/notes";
 	import { useDropdown } from "@/composables/useDropdown";
+	import { contains } from "@/utils/text-analysis";
+	import Icon from "@/components/Icon.vue";
 
 	const props = defineProps<{ allowCreate: boolean }>();
 	const emit = defineEmits<{
-		tagAdded: [tag: string];
-		tagRemoved: [tag: string];
+		tagCreated: [tag: string];
 	}>();
 	const dropdownToggle = useTemplateRef("dropdown-toggle");
 	const dropdownMenu = useTemplateRef("dropdown-menu");
+	const searchText = ref(emptyString);
 	const selectedTags = ref<string[]>([]);
 	const { show, toggle } = useDropdown(dropdownToggle, {
 		autoClose: false,
 		dropdown: dropdownMenu
 	});
+	const filteredTags = computed(() => {
+		if (!searchText.value) {
+			return notesStore.tags.value;
+		}
+		return notesStore.tags.value.filter(tag => contains(tag, searchText.value));
+	});
+	const allSelected = computed(() => filteredTags.value.every(tag => selectedTags.value.includes(tag)));
+
+	function toggleSelectAll() {
+		if (!allSelected.value) {
+			selectedTags.value = filteredTags.value;
+			return;
+		}
+		selectedTags.value = [];
+	}
 
 	function removeTag(tag: string) {
 		const index = selectedTags.value.indexOf(tag);
-		if(index > -1) {
-			selectedTags.value.splice(index, 1);
+		if (index > -1) {
+			selectedTags.value = selectedTags.value.toSpliced(index, 1);
 		}
 	}
 </script>
@@ -29,16 +47,21 @@
 		<ul v-if="show" ref="dropdown-menu" class="dropdown-menu show p-2">
 			<li>
 				<label>
-					<input type="checkbox"/>
-					<span class="ms-2">Select All</span>
+					<input type="checkbox" :checked="allSelected" :disabled="!filteredTags.length" @change="toggleSelectAll"/>
+					<span class="ms-2">{{ allSelected ? "Deselect All" : "Select All" }}</span>
 				</label>
 			</li>
 			<li><hr class="dropdown-divider"/></li>
 			<li>
-				<input type="text" placeholder="Search"/>
+				<div class="input-group">
+					<input v-model.trim="searchText" type="text" class="form-control" placeholder="Search"/>
+					<button class="btn btn-outline-primary">
+						<Icon type="plusLg"/>
+					</button>
+				</div>
 			</li>
 			<li><hr class="dropdown-divider"/></li>
-			<li v-for="tag in notesStore.tags.value">
+			<li v-for="tag in filteredTags">
 				<label>
 					<input type="checkbox" :value="tag" v-model="selectedTags"/>
 					<span class="ms-2">{{ tag }}</span>
