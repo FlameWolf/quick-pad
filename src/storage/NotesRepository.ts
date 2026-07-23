@@ -18,13 +18,19 @@ class NotesRepository {
 	}
 
 	async saveFull(note: NoteModel): Promise<void> {
-		await db.putNote(note.toJSON());
+		const noteJson = note.toJSON();
+		await db.putNote(noteJson);
 		note.content = undefined;
+		delete noteJson.content;
+		await this.saveTags(noteJson);
 	}
 
 	async saveManyFull(notes: NoteModel[]): Promise<void> {
-		await db.putNotes(notes.map(note => note.toJSON()));
+		const noteJsons = notes.map(note => note.toJSON());
+		await db.putNotes(noteJsons);
 		notes.forEach(note => (note.content = undefined));
+		noteJsons.forEach(json => delete json.content);
+		await this.saveManyTags(noteJsons);
 	}
 
 	async getTagsToSave(meta: NoteMetaJSON): Promise<string[]> {
@@ -58,14 +64,14 @@ class NotesRepository {
 
 	async saveMeta(note: NoteModel): Promise<void> {
 		const meta = note.toMetaJSON();
-		await this.saveTags(meta);
 		await db.putNoteMeta(meta);
+		await this.saveTags(meta);
 	}
 
 	async saveManyMeta(notes: NoteModel[]): Promise<void> {
 		const metas = notes.map(note => note.toMetaJSON());
-		await this.saveManyTags(metas);
 		await db.putNotesMeta(metas);
+		await this.saveManyTags(metas);
 	}
 
 	async remove(id: UUID): Promise<void> {
