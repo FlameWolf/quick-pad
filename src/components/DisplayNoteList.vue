@@ -307,7 +307,7 @@
 				</template>
 			</template>
 		</div>
-		<DisplayTagList :allow-create="true"/>
+		<DisplayTagList :allow-create="true" :allow-delete="true"/>
 		<template v-for="section in noteSections" :key="section.key">
 			<div v-if="section.divider" class="d-flex align-items-center my-4">
 				<div class="flex-grow-1 border-bottom"></div>

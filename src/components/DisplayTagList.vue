@@ -7,10 +7,11 @@
 	import { useDropdown } from "@/composables/useDropdown";
 	import Icon from "@/components/Icon.vue";
 
-	const props = defineProps<{ allowCreate: boolean }>();
-	const emit = defineEmits<{
-		tagCreated: [tag: string];
+	const props = defineProps<{
+		allowCreate: boolean;
+		allowDelete: boolean;
 	}>();
+	const emit = defineEmits<{ tagCreated: [tag: string]; }>();
 	const dropdownToggle = useTemplateRef("dropdown-toggle");
 	const dropdownMenu = useTemplateRef("dropdown-menu");
 	const searchText = ref(emptyString);
@@ -61,19 +62,18 @@
 		<button ref="dropdown-toggle" class="btn btn-sm btn-outline-primary dropdown-toggle" @click="toggle">Tags</button>
 		<ul v-if="show" ref="dropdown-menu" class="dropdown-menu show p-2">
 			<li>
-				<label>
+				<label class="btn btn-sm btn-outline-primary">
 					<input type="checkbox" :checked="allSelected" :disabled="!filteredTags.length" @change="toggleSelectAll"/>
 					<span class="ms-2">{{ allSelected ? "Deselect All" : "Select All" }}</span>
 				</label>
+				<button class="btn btn-sm btn-outline-danger ms-2" :disabled="!selectedTags.length">Delete Selected</button>
 			</li>
 			<li><hr class="dropdown-divider"/></li>
-			<li>
-				<div :class="{ [`input-group`]: allowCreate }">
-					<input v-model.trim="searchText" type="text" class="form-control" placeholder="Search"/>
-					<button v-if="allowCreate" class="btn btn-outline-primary" :disabled="hasExactMatch">
-						<Icon type="plusLg"/>
-					</button>
-				</div>
+			<li :class="{ [`input-group`]: allowCreate }">
+				<input v-model.trim="searchText" type="text" class="form-control form-control-sm" placeholder="Search"/>
+				<button v-if="allowCreate" class="btn btn-sm btn-outline-primary" :disabled="hasExactMatch">
+					<Icon type="plusLg"/>
+				</button>
 			</li>
 			<li><hr class="dropdown-divider"/></li>
 			<li v-for="tag in filteredTags">
