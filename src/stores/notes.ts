@@ -1,7 +1,6 @@
 import { computed, reactive, ref, toRef } from "vue";
 import { emptyString } from "@/constants/common";
 import { TRASH_RETENTION_MS } from "@/constants/notes";
-import { normaliseTag } from "@/utils/common";
 import { contains } from "@/utils/text-analysis";
 import { notesRepository } from "@/storage/NotesRepository";
 import { tagsRepository } from "@/storage/TagsRepository";
@@ -82,11 +81,11 @@ export function setSearchText(query: string) {
 }
 
 export function addSearchTag(tag: string) {
-	store.searchTags.add(normaliseTag(tag));
+	store.searchTags.add(tag);
 }
 
 export function removeSearchTag(tag: string) {
-	store.searchTags.delete(normaliseTag(tag));
+	store.searchTags.delete(tag);
 }
 
 export async function addNote(note: NoteModel) {
@@ -245,4 +244,35 @@ export async function replaceNote(updatedNote: NoteModel) {
 export async function replaceMultiple(updatedNotes: NoteModel[]) {
 	updatedNotes.forEach(addOrUpdate);
 	await notesRepository.saveManyFull(updatedNotes);
+}
+
+export async function saveTag(tag: string) {
+	store.tags.push(tag);
+	await tagsRepository.save(tag);
+}
+
+export async function saveTags(tags: string[]) {
+	tags.forEach(Array.prototype.push, store.tags);
+	await tagsRepository.saveMany(tags);
+}
+
+export async function deleteTag(tag: string) {
+	await applyToMany(
+		store.notes.reduce((ids, note) => {
+			if (note.tags?.includes(tag)) {
+				ids.push(note.id);
+			}
+			return ids;
+		}, [] as UUID[]),
+		note => note.removeTag(tag)
+	);
+	const index = store.tags.indexOf(tag);
+	if (index !== -1) {
+		store.tags.splice(index, 1);
+	}
+	await tagsRepository.remove(tag);
+}
+
+export async function deleteTags(tags: string[]) {
+	await Promise.all(tags.map(deleteTag));
 }

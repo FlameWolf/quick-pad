@@ -1,5 +1,4 @@
 import { emptyString } from "@/constants/common";
-import { normaliseTag } from "@/utils/common";
 import { parseValidDate } from "@/utils/dates";
 import { isValidCount } from "@/utils/numbers";
 import { equals, getCharacterCount, getSentenceCount, getSummary, getWordCount } from "@/utils/text-analysis";
@@ -121,21 +120,19 @@ export class NoteModel {
 	}
 
 	addTag(tag: string) {
-		const normalisedTag = normaliseTag(tag);
-		if (!normalisedTag || this.tags?.some(x => equals(x, normalisedTag))) {
+		if (!tag || this.tags?.some(x => equals(x, tag))) {
 			return;
 		}
 		if (!this.tags) {
 			this.tags = [];
 		}
-		this.tags.push(normalisedTag);
+		this.tags.push(tag);
 		this.stateChangedAt = new Date();
 	}
 
 	removeTag(tag: string) {
-		const normalisedTag = normaliseTag(tag);
-		const index = this.tags?.findIndex(x => equals(x, normalisedTag));
-		if (index !== undefined && index > -1) {
+		const index = this.tags?.findIndex(x => equals(x, tag));
+		if (index !== undefined && index !== -1) {
 			this.tags!.splice(index, 1);
 		}
 		this.stateChangedAt = new Date();

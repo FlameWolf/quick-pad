@@ -12,6 +12,7 @@
 	import Icon from "@/components/Icon.vue";
 	import EmptyState from "@/components/EmptyState.vue";
 	import SortControls from "@/components/SortControls.vue";
+	import DisplayTagList from "@/components/DisplayTagList.vue";
 	import NoteCard from "@/components/NoteCard.vue";
 	import SelectionActionBar from "@/components/SelectionActionBar.vue";
 	import type { NoteModel } from "@/models/NoteModel";
@@ -306,6 +307,7 @@
 				</template>
 			</template>
 		</div>
+		<DisplayTagList :allow-create="true"/>
 		<template v-for="section in noteSections" :key="section.key">
 			<div v-if="section.divider" class="d-flex align-items-center my-4">
 				<div class="flex-grow-1 border-bottom"></div>

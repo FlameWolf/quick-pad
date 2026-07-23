@@ -41,11 +41,19 @@
 		selectedTags.value = [];
 	}
 
-	function removeTag(tag: string) {
+	function removeTagFromFilter(tag: string) {
 		const index = selectedTags.value.indexOf(tag);
-		if (index > -1) {
+		if (index !== -1) {
 			selectedTags.value = selectedTags.value.toSpliced(index, 1);
 		}
+	}
+
+	async function saveTag(tag: string) {
+		await notesStore.saveTag(normaliseTag(tag));
+	}
+
+	async function deleteTag(tag: string) {
+		await notesStore.deleteTag(normaliseTag(tag));
 	}
 </script>
 <template>
@@ -78,7 +86,7 @@
 		<div v-if="selectedTags.length" class="d-inline-flex flex-wrap gap-2 align-middle ms-3">
 			<div v-for="tag in selectedTags" class="badge text-bg-secondary">
 				<span>{{ tag }}</span>
-				<button class="small btn-close ms-2" @click="removeTag(tag)"></button>
+				<button class="small btn-close ms-2" @click="removeTagFromFilter(tag)"></button>
 			</div>
 		</div>
 	</div>

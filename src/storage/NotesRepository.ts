@@ -1,4 +1,3 @@
-import { normaliseTag } from "@/utils/common";
 import { NoteModel, type NoteMetaJSON } from "@/models/NoteModel";
 import * as db from "@/storage/db";
 import { tagsRepository } from "@/storage/TagsRepository";
@@ -37,9 +36,8 @@ class NotesRepository {
 		const tagsToSave: string[] = [];
 		if (meta.tags) {
 			for (const tag of meta.tags) {
-				const normalisedTag = normaliseTag(tag);
-				if (!(await tagsRepository.load(normalisedTag))) {
-					tagsToSave.push(normalisedTag);
+				if (!(await tagsRepository.load(tag))) {
+					tagsToSave.push(tag);
 				}
 			}
 		}

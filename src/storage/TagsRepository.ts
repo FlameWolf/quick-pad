@@ -11,7 +11,7 @@ class TagsRepository {
 	}
 
 	async load(tag: string): Promise<string | undefined> {
-		return await db.getTag(tag.toLowerCase());
+		return await db.getTag(tag);
 	}
 
 	async save(tag: string): Promise<void> {
@@ -23,7 +23,7 @@ class TagsRepository {
 	}
 
 	async remove(tag: string): Promise<void> {
-		await db.deleteTag(tag.toLowerCase());
+		await db.deleteTag(tag);
 	}
 
 	async removeMany(tags: string[]): Promise<void> {
