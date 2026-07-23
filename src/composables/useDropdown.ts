@@ -22,13 +22,13 @@ export function useDropdown(trigger: TemplateRef<HTMLElement>, { initialState = 
 		if (triggerElement.contains(target)) {
 			return;
 		}
-		if (autoClose) {
+		if (!autoClose) {
 			const protectedElement = dropdown?.value;
-			if (!protectedElement || protectedElement.contains(target)) {
+			if (protectedElement?.contains(target)) {
 				return;
 			}
-			show.value = false;
 		}
+		show.value = false;
 	}
 
 	onMounted(() => {
