@@ -52,7 +52,15 @@ export async function hydrateNotes(): Promise<void> {
 	hydrated = true;
 	try {
 		store.notes = await notesRepository.loadAll();
-		store.tags = await tagsRepository.loadAll();
+		store.tags = Array.from(
+			new Set(
+				store.notes
+					.map(note => note.tags)
+					.filter(Boolean)
+					.flat()
+					.concat(await tagsRepository.loadAll()) as string[]
+			)
+		);
 	} catch (err) {
 		store.notes = [];
 		console.error("Failed to load notes from storage", err);
