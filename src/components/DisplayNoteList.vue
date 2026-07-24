@@ -145,12 +145,13 @@
 
 	async function handleSelectionAction(key: SelectionAction["key"]) {
 		const ids = getSelectedIds();
-		if (ids.length === 0) {
+		const idCount = ids.length;
+		if (idCount === 0) {
 			return;
 		}
 		let syncNotes = true;
 		let purgeNotes = false;
-		const noun = ids.length === 1 ? "note" : "notes";
+		const noun = idCount === 1 ? "note" : "notes";
 		switch (key) {
 			case "export": {
 				await exportNotes(getSelectedNotes());
@@ -175,8 +176,8 @@
 			}
 			case "trash": {
 				const ok = await confirm({
-					title: `Move ${ids.length} ${noun} to Trash?`,
-					message: `${ids.length === 1 ? "This note" : "These notes"} can be restored from Trash within 30 days.`,
+					title: `Move ${idCount} ${noun} to Trash?`,
+					message: `${idCount === 1 ? "This note" : "These notes"} can be restored from Trash within 30 days.`,
 					confirmText: "Move to Trash",
 					cancelText: "Cancel",
 					variant: "danger"
@@ -193,7 +194,7 @@
 			}
 			case "permanent": {
 				const ok = await confirm({
-					title: `Permanently delete ${ids.length} ${noun}?`,
+					title: `Permanently delete ${idCount} ${noun}?`,
 					message: "This action cannot be undone.",
 					confirmText: "Delete Permanently",
 					cancelText: "Cancel",

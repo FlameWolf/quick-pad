@@ -4,6 +4,7 @@
 	import { normaliseTag } from "@/utils/common";
 	import { contains, equals } from "@/utils/text-analysis";
 	import * as notesStore from "@/stores/notes";
+	import { confirm } from "@/composables/useConfirmDialogue";
 	import { useDropdown } from "@/composables/useDropdown";
 	import Icon from "@/components/Icon.vue";
 
@@ -58,7 +59,19 @@
 	}
 
 	async function deleteTags(tags: string[]) {
-		await notesStore.deleteTags(tags.map(normaliseTag));
+		const hasMany = tags.length > 1;
+		const suffix = hasMany ? "s" : emptyString;
+		const ok = await confirm({
+			title: `Delete selected tag${suffix} permanently?`,
+			message: `The selected tag${suffix} will be deleted permanently. ${hasMany ? "They" : "It"} will also be removed from any notes that use ${hasMany ? "them" : "it"}.`,
+			confirmText: "Delete Tags",
+			cancelText: "",
+			variant: "danger"
+		});
+		if (ok) {
+			tags.forEach(removeTagFromFilter);
+			await notesStore.deleteTags(tags.map(normaliseTag));
+		}
 	}
 </script>
 <template>
