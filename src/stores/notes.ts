@@ -80,12 +80,8 @@ export function setSearchText(query: string) {
 		});
 }
 
-export function addSearchTag(tag: string) {
-	store.searchTags.add(tag);
-}
-
-export function removeSearchTag(tag: string) {
-	store.searchTags.delete(tag);
+export function setSearchTags(tags: string[]) {
+	store.searchTags = new Set(tags);
 }
 
 export async function addNote(note: NoteModel) {

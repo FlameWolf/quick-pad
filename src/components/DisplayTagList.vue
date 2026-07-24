@@ -15,7 +15,6 @@
 		allowDelete: boolean;
 	}>();
 	const emit = defineEmits<{
-		tagCreated: [tag: string];
 		selectionChanged: [tags: string[]];
 	}>();
 	const dropdownToggle = useTemplateRef("dropdown-toggle");
@@ -34,30 +33,43 @@
 	});
 	const allSelected = computed(() => filteredTags.value.every(tag => selectedTags.value.includes(tag)));
 	const hasExactMatch = computed(() => {
-		if (!searchText) {
+		if (!searchText.value) {
 			return true;
 		}
 		return notesStore.tags.value.some(tag => equals(tag, normaliseTag(searchText.value)));
 	});
 
+	function isTagSelected(tag: string) {
+		return selectedTags.value.includes(tag);
+	}
+
+	function toggleTagSelection(tag: string) {
+		if (isTagSelected(tag)) {
+			selectedTags.value.splice(selectedTags.value.indexOf(tag), 1);
+			return;
+		}
+		selectedTags.value.push(tag);
+	}
+
 	function toggleSelectAll() {
 		if (!allSelected.value) {
-			selectedTags.value = filteredTags.value;
+			selectedTags.value = Array.from(filteredTags.value);
 			return;
 		}
 		selectedTags.value = [];
 	}
 
-	function removeTagFromFilter(tag: string) {
+	function unselectTag(tag: string) {
 		const index = selectedTags.value.indexOf(tag);
 		if (index !== -1) {
-			selectedTags.value = selectedTags.value.toSpliced(index, 1);
+			selectedTags.value.splice(index, 1);
 		}
 	}
 
 	async function createTag(tag: string) {
-		await notesStore.createTag(normaliseTag(tag));
-		emit("tagCreated", tag);
+		const normalised = normaliseTag(tag);
+		await notesStore.createTag(normalised);
+		selectedTags.value.push(normalised);
 	}
 
 	async function deleteTags(tags: string[]) {
@@ -72,7 +84,7 @@
 		});
 		if (ok) {
 			requestSync.cancel();
-			tags.forEach(removeTagFromFilter);
+			tags.forEach(unselectTag);
 			await notesStore.deleteTags(tags.map(normaliseTag));
 			requestSync();
 		}
@@ -85,7 +97,7 @@
 <template>
 	<div class="p-1 border rounded mb-3">
 		<button ref="dropdown-toggle" class="btn btn-sm btn-outline-primary dropdown-toggle" @click="toggle">Tags</button>
-		<ul v-if="show" ref="dropdown-menu" class="dropdown-menu show p-2">
+		<ul v-if="show" ref="dropdown-menu" class="dropdown-menu show p-2 mt-1">
 			<template v-if="props.allowManage">
 				<li>
 					<label class="btn btn-sm btn-outline-primary">
@@ -105,7 +117,7 @@
 			<li><hr class="dropdown-divider"/></li>
 			<li v-for="tag in filteredTags">
 				<label>
-					<input type="checkbox" :value="tag" v-model="selectedTags"/>
+					<input type="checkbox" :checked="isTagSelected(tag)" @change="toggleTagSelection(tag)"/>
 					<span class="ms-2">{{ tag }}</span>
 				</label>
 			</li>
@@ -113,7 +125,7 @@
 		<div v-if="selectedTags.length" class="d-inline-flex flex-wrap gap-2 align-middle ms-3">
 			<div v-for="tag in selectedTags" class="badge text-bg-secondary">
 				<span>{{ tag }}</span>
-				<button class="small btn-close ms-2" @click="removeTagFromFilter(tag)"></button>
+				<button class="small btn-close ms-2" @click="unselectTag(tag)"></button>
 			</div>
 		</div>
 	</div>
