@@ -1,11 +1,12 @@
 <script setup lang="ts">
-	import { computed, ref, useTemplateRef } from "vue";
+	import { computed, ref, useTemplateRef, watch } from "vue";
 	import { emptyString } from "@/constants/common";
 	import { normaliseTag } from "@/utils/common";
 	import { contains, equals } from "@/utils/text-analysis";
 	import * as notesStore from "@/stores/notes";
 	import { confirm } from "@/composables/useConfirmDialogue";
 	import { useDropdown } from "@/composables/useDropdown";
+	import { requestSync } from "@/composables/useNotesSync";
 	import Icon from "@/components/Icon.vue";
 
 	const props = defineProps<{
@@ -56,6 +57,7 @@
 
 	async function createTag(tag: string) {
 		await notesStore.createTag(normaliseTag(tag));
+		emit("tagCreated", tag);
 	}
 
 	async function deleteTags(tags: string[]) {
@@ -65,14 +67,20 @@
 			title: `Delete selected tag${suffix} permanently?`,
 			message: `The selected tag${suffix} will be deleted permanently. ${hasMany ? "They" : "It"} will also be removed from any notes that use ${hasMany ? "them" : "it"}.`,
 			confirmText: "Delete Tags",
-			cancelText: "",
+			cancelText: "Cancel",
 			variant: "danger"
 		});
 		if (ok) {
+			requestSync.cancel();
 			tags.forEach(removeTagFromFilter);
 			await notesStore.deleteTags(tags.map(normaliseTag));
+			requestSync();
 		}
 	}
+
+	watch(selectedTags, tags => {
+		emit("selectionChanged", tags);
+	});
 </script>
 <template>
 	<div class="p-1 border rounded mb-3">
