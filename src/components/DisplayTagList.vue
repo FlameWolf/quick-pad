@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { computed, ref, useTemplateRef, watch } from "vue";
+	import { computed, ref, toValue, useTemplateRef, watch } from "vue";
 	import { emptyString } from "@/constants/common";
 	import { normaliseTag } from "@/utils/common";
 	import { contains, equals } from "@/utils/text-analysis";
@@ -11,9 +11,10 @@
 
 	const props = defineProps<{
 		activeTags?: string[];
-		allowManage: boolean;
-		allowCreate: boolean;
-		allowDelete: boolean;
+		allowManage?: boolean;
+		allowCreate?: boolean;
+		allowDelete?: boolean;
+		allowEdit?: boolean;
 	}>();
 	const emit = defineEmits<{
 		selectionChanged: [tags: string[]];
@@ -21,7 +22,7 @@
 	const dropdownToggle = useTemplateRef("dropdown-toggle");
 	const dropdownMenu = useTemplateRef("dropdown-menu");
 	const searchText = ref(emptyString);
-	const selectedTags = ref<string[]>(props.activeTags ?? []);
+	const selectedTags = ref<string[]>(toValue(props.activeTags) ?? []);
 	const { show, toggle } = useDropdown(dropdownToggle, {
 		autoClose: false,
 		dropdown: dropdownMenu
@@ -92,14 +93,21 @@
 		}
 	}
 
-	watch(selectedTags, tags => {
-		emit("selectionChanged", tags);
-	});
+	watch(
+		selectedTags,
+		tags => {
+			emit("selectionChanged", tags);
+		},
+		{
+			deep: true
+		}
+	);
 </script>
 <template>
 	<div class="p-1 border rounded mb-3">
-		<button ref="dropdown-toggle" class="btn btn-sm btn-outline-primary dropdown-toggle" @click="toggle">Tags</button>
-		<ul v-if="show" ref="dropdown-menu" class="dropdown-menu show p-2 mt-1">
+		<button v-if="props.allowEdit" ref="dropdown-toggle" class="btn btn-sm btn-outline-primary dropdown-toggle" @click="toggle">Tags</button>
+		<label v-else>Tags:</label>
+		<ul v-if="props.allowEdit && show" ref="dropdown-menu" class="dropdown-menu show p-2 mt-1">
 			<template v-if="props.allowManage">
 				<li>
 					<label class="btn btn-sm btn-outline-primary">

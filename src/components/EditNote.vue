@@ -1,6 +1,6 @@
 <script setup lang="ts">
-	import { ref, computed, onBeforeUnmount, onMounted, watch, useTemplateRef } from "vue";
-	import { useRouter, useRoute, onBeforeRouteLeave } from "vue-router";
+	import { computed, onBeforeUnmount, onMounted, ref, toValue, useTemplateRef, watch } from "vue";
+	import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 	import { emptyString } from "@/constants/common";
 	import { getSentenceCount, getWordCount, getCharacterCount } from "@/utils/text-analysis";
 	import { haveSameItems } from "@/utils/common";
@@ -121,7 +121,7 @@
 	function startEditing() {
 		editTitle.value = existingNote.value?.title ?? emptyString;
 		editContent.value = loadedContent.value;
-		editTags.value = existingNote.value?.tags;
+		editTags.value = toValue(existingNote.value?.tags);
 		undoRedo.push(editContent.value);
 		isEditing.value = true;
 		setTimeout(adjustTextAreaHeight);
@@ -152,14 +152,18 @@
 			isEditing.value = false;
 			editTitle.value = existingNote.value?.title ?? emptyString;
 			editContent.value = loadedContent.value;
-			editTags.value = existingNote.value?.tags;
+			editTags.value = toValue(existingNote.value?.tags);
 		}
+	}
+
+	async function updateTags(tags: string[]) {
+		editTags.value = tags;
 	}
 
 	async function saveNote() {
 		const title = editTitle.value.trim() || "Untitled";
 		const content = editContent.value;
-		const tags = editTags.value;
+		const tags = toValue(editTags.value);
 		isEditing.value = false;
 		if (isCreateMode.value) {
 			const note = new NoteModel(title, content);
@@ -169,6 +173,9 @@
 			await notesStore.addNote(note);
 			router.push(`/notes/${note.id}`);
 		} else if (existingNote.value) {
+			if (tags) {
+				existingNote.value.addTags(tags);
+			}
 			await notesStore.updateNote({ id: existingNote.value.id, title, content });
 			loadedContent.value = content;
 		}
@@ -367,10 +374,16 @@
 		{ immediate: true }
 	);
 
-	watch([editTitle, editContent, editTags], () => {
-		adjustTextAreaHeight();
-		persistDraft();
-	});
+	watch(
+		[editTitle, editContent, editTags],
+		() => {
+			adjustTextAreaHeight();
+			persistDraft();
+		},
+		{
+			deep: true
+		}
+	);
 
 	watch(
 		appStore.fontScaleFactor,
@@ -494,10 +507,10 @@
 			<input v-model="editTitle" type="text" class="form-control form-control-lg" placeholder="Title"/>
 			<hr class="my-1"/>
 			<textarea ref="edit-text-area" :value="editContent" @input="onContentInput" class="form-control note-textarea" placeholder="Start writing..." rows="12"></textarea>
-			<hr class="my-1"/>
-			<DisplayTagList :active-tags="editTags" :allow-manage="false" :allow-create="true" :allow-delete="false"/>
 		</template>
 	</div>
+	<hr class="my-1"/>
+	<DisplayTagList :active-tags="editTags" :allow-edit="isEditing" :allow-create="true" @selection-changed="updateTags"/>
 	<hr :class="{ [`mt-1`]: isEditing }"/>
 	<div class="d-flex flex-wrap gap-2 mt-3" v-if="hasContent">
 		<span class="badge text-bg-secondary" v-if="sentenceCount">{{ sentenceCount }} sentences</span>

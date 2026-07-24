@@ -1,4 +1,4 @@
-import { computed, reactive, ref, toRef } from "vue";
+import { computed, reactive, ref, toRaw, toRef } from "vue";
 import { emptyString } from "@/constants/common";
 import { TRASH_RETENTION_MS } from "@/constants/notes";
 import { contains } from "@/utils/text-analysis";
@@ -94,14 +94,14 @@ export function setSearchTags(tags: string[]) {
 
 export async function addNote(note: NoteModel) {
 	store.notes.push(note);
-	await notesRepository.saveFull(note);
+	await notesRepository.saveFull(toRaw(note));
 }
 
 export async function updateNote(data: { id: UUID; title: string; content: string }) {
 	const note = store.notes.find(note => note.id === data.id);
 	if (note) {
 		note.update(data.title, data.content);
-		await notesRepository.saveFull(note);
+		await notesRepository.saveFull(toRaw(note));
 	}
 }
 
@@ -117,7 +117,7 @@ async function applyToNote(id: UUID, mutator: (note: NoteModel) => void) {
 	const note = store.notes.find(note => note.id === id);
 	if (note) {
 		mutator(note);
-		await notesRepository.saveMeta(note);
+		await notesRepository.saveMeta(toRaw(note));
 	}
 }
 
@@ -125,7 +125,7 @@ async function applyToMany(ids: ReadonlyArray<UUID>, mutator: (note: NoteModel) 
 	const idSet = new Set(ids);
 	const targetNotes = store.notes.filter(note => idSet.has(note.id));
 	targetNotes.forEach(mutator);
-	await notesRepository.saveManyMeta(targetNotes);
+	await notesRepository.saveManyMeta(toRaw(targetNotes));
 }
 
 export async function faveNote(id: UUID) {
@@ -242,12 +242,12 @@ function addOrUpdate(updatedNote: NoteModel) {
 
 export async function replaceNote(updatedNote: NoteModel) {
 	addOrUpdate(updatedNote);
-	await notesRepository.saveFull(updatedNote);
+	await notesRepository.saveFull(toRaw(updatedNote));
 }
 
 export async function replaceMultiple(updatedNotes: NoteModel[]) {
 	updatedNotes.forEach(addOrUpdate);
-	await notesRepository.saveManyFull(updatedNotes);
+	await notesRepository.saveManyFull(toRaw(updatedNotes));
 }
 
 export async function createTag(tag: string) {
