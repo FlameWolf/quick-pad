@@ -255,22 +255,35 @@ export async function createTags(tags: string[]) {
 }
 
 export async function deleteTag(tag: string) {
-	await applyToMany(
-		store.notes.reduce((ids, note) => {
-			if (note.tags?.includes(tag)) {
-				ids.push(note.id);
-			}
-			return ids;
-		}, [] as UUID[]),
-		note => note.removeTag(tag)
-	);
+	const affectedIds = store.notes.reduce((ids, note) => {
+		if (note.tags?.includes(tag)) {
+			ids.push(note.id);
+		}
+		return ids;
+	}, [] as UUID[]);
+	await applyToMany(affectedIds, note => note.removeTag(tag));
 	const index = store.tags.indexOf(tag);
 	if (index !== -1) {
 		store.tags.splice(index, 1);
 	}
 	await tagsRepository.remove(tag);
+	return affectedIds.length;
 }
 
 export async function deleteTags(tags: string[]) {
-	await Promise.all(tags.map(deleteTag));
+	const tagSet = new Set(tags);
+	const affectedIds = store.notes.reduce((ids, note) => {
+		if (note.tags?.some(tag => tagSet.has(tag))) {
+			ids.push(note.id);
+		}
+		return ids;
+	}, [] as UUID[]);
+	await applyToMany(affectedIds, note => {
+		for (const tag of tags) {
+			note.removeTag(tag);
+		}
+	});
+	store.tags = store.tags.filter(tag => !tagSet.has(tag));
+	await Promise.all(tags.map(tag => tagsRepository.remove(tag)));
+	return affectedIds.length;
 }

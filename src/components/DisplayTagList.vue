@@ -83,10 +83,11 @@
 			variant: "danger"
 		});
 		if (ok) {
-			requestSync.cancel();
 			tags.forEach(unselectTag);
-			await notesStore.deleteTags(tags.map(normaliseTag));
-			requestSync();
+			const affectedCount = await notesStore.deleteTags(tags.map(normaliseTag));
+			if (affectedCount) {
+				requestSync();
+			}
 		}
 	}
 

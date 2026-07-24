@@ -120,20 +120,24 @@ export class NoteModel {
 	}
 
 	addTag(tag: string) {
-		if (!tag || this.tags?.some(x => equals(x, tag))) {
+		if (!tag) {
 			return;
 		}
-		if (!this.tags) {
-			this.tags = [];
+		this.tags ??= [];
+		if (this.tags.some(x => equals(x, tag))) {
+			return;
 		}
 		this.tags.push(tag);
 		this.stateChangedAt = new Date();
 	}
 
 	removeTag(tag: string) {
-		const index = this.tags?.findIndex(x => equals(x, tag));
-		if (index !== undefined && index !== -1) {
-			this.tags!.splice(index, 1);
+		if (!this.tags) {
+			return;
+		}
+		const index = this.tags.findIndex(x => equals(x, tag));
+		if (index !== -1) {
+			this.tags.splice(index, 1);
 		}
 		this.stateChangedAt = new Date();
 	}
