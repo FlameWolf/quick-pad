@@ -3,6 +3,7 @@
 	import { useRouter, useRoute, onBeforeRouteLeave } from "vue-router";
 	import { emptyString } from "@/constants/common";
 	import { getSentenceCount, getWordCount, getCharacterCount } from "@/utils/text-analysis";
+	import { haveSameItems } from "@/utils/common";
 	import { debounce } from "@/utils/timing";
 	import { NoteModel } from "@/models/NoteModel";
 	import * as appStore from "@/stores/app";
@@ -15,6 +16,7 @@
 	import { requestSync } from "@/composables/useNotesSync";
 	import { useUndoRedo } from "@/composables/useUndoRedo";
 	import Icon from "@/components/Icon.vue";
+	import DisplayTagList from "@/components/DisplayTagList.vue";
 	import type { UUID } from "crypto";
 
 	const props = defineProps<{
@@ -28,6 +30,7 @@
 	const isEditing = ref(isCreateMode.value);
 	const editTitle = ref(existingNote.value?.title ?? emptyString);
 	const editContent = ref(emptyString);
+	const editTags = ref<string[] | undefined>();
 	const loadedContent = ref(emptyString);
 	const isContentLoaded = ref(isCreateMode.value);
 	const editTextArea = useTemplateRef("edit-text-area");
@@ -46,18 +49,18 @@
 			return false;
 		}
 		if (isCreateMode.value) {
-			return editTitle.value.trim().length > 0 || editContent.value.length > 0;
+			return editTitle.value.trim().length > 0 || editContent.value.length > 0 || !!editTags.value?.length;
 		}
 		if (!existingNote.value) {
 			return false;
 		}
-		return editTitle.value !== existingNote.value.title || editContent.value !== loadedContent.value;
+		return editTitle.value !== existingNote.value.title || editContent.value !== loadedContent.value || !haveSameItems(editTags.value, existingNote.value.tags);
 	});
 	const draftId = computed(() => (isCreateMode.value ? "new" : props.id!));
 	const debouncedPushUndo = debounce((value: string) => undoRedo.push(value), 300);
 	const persistDraft = debounce(() => {
 		if (hasUnsavedChanges.value) {
-			saveDraft(draftId.value, editTitle.value, editContent.value);
+			saveDraft(draftId.value, editTitle.value, editContent.value, editTags.value);
 		} else {
 			clearDraft(draftId.value);
 		}
@@ -118,6 +121,7 @@
 	function startEditing() {
 		editTitle.value = existingNote.value?.title ?? emptyString;
 		editContent.value = loadedContent.value;
+		editTags.value = existingNote.value?.tags;
 		undoRedo.push(editContent.value);
 		isEditing.value = true;
 		setTimeout(adjustTextAreaHeight);
@@ -148,15 +152,20 @@
 			isEditing.value = false;
 			editTitle.value = existingNote.value?.title ?? emptyString;
 			editContent.value = loadedContent.value;
+			editTags.value = existingNote.value?.tags;
 		}
 	}
 
 	async function saveNote() {
 		const title = editTitle.value.trim() || "Untitled";
 		const content = editContent.value;
+		const tags = editTags.value;
 		isEditing.value = false;
 		if (isCreateMode.value) {
 			const note = new NoteModel(title, content);
+			if (tags) {
+				note.addTags(tags);
+			}
 			await notesStore.addNote(note);
 			router.push(`/notes/${note.id}`);
 		} else if (existingNote.value) {
@@ -283,6 +292,7 @@
 				isEditing.value = true;
 				editTitle.value = draft.title;
 				editContent.value = draft.content;
+				editTags.value = draft.tags;
 				undoRedo.push(editContent.value);
 			} else {
 				clearDraft(draftId.value);
@@ -293,7 +303,7 @@
 	function flushDraft() {
 		persistDraft.cancel();
 		if (hasUnsavedChanges.value) {
-			saveDraft(draftId.value, editTitle.value, editContent.value);
+			saveDraft(draftId.value, editTitle.value, editContent.value, editTags.value);
 		}
 	}
 
@@ -357,7 +367,7 @@
 		{ immediate: true }
 	);
 
-	watch([editTitle, editContent], () => {
+	watch([editTitle, editContent, editTags], () => {
 		adjustTextAreaHeight();
 		persistDraft();
 	});
@@ -484,6 +494,8 @@
 			<input v-model="editTitle" type="text" class="form-control form-control-lg" placeholder="Title"/>
 			<hr class="my-1"/>
 			<textarea ref="edit-text-area" :value="editContent" @input="onContentInput" class="form-control note-textarea" placeholder="Start writing..." rows="12"></textarea>
+			<hr class="my-1"/>
+			<DisplayTagList :active-tags="editTags" :allow-manage="false" :allow-create="true" :allow-delete="false"/>
 		</template>
 	</div>
 	<hr :class="{ [`mt-1`]: isEditing }"/>

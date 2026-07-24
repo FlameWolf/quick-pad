@@ -119,26 +119,30 @@ export class NoteModel {
 		this.stateChangedAt = new Date();
 	}
 
-	addTag(tag: string) {
-		if (!tag) {
-			return;
-		}
-		this.tags ??= [];
-		if (this.tags.some(x => equals(x, tag))) {
-			return;
-		}
-		this.tags.push(tag);
+	addTags(tags: string[]) {
+		tags.forEach(tag => {
+			if (!tag) {
+				return;
+			}
+			this.tags ??= [];
+			if (this.tags.some(x => equals(x, tag))) {
+				return;
+			}
+			this.tags.push(tag);
+		});
 		this.stateChangedAt = new Date();
 	}
 
-	removeTag(tag: string) {
-		if (!this.tags) {
-			return;
-		}
-		const index = this.tags.findIndex(x => equals(x, tag));
-		if (index !== -1) {
-			this.tags.splice(index, 1);
-		}
+	removeTags(tags: string[]) {
+		tags.forEach(tag => {
+			if (!this.tags) {
+				return;
+			}
+			const index = this.tags.findIndex(x => equals(x, tag));
+			if (index !== -1) {
+				this.tags.splice(index, 1);
+			}
+		});
 		this.stateChangedAt = new Date();
 	}
 

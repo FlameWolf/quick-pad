@@ -10,6 +10,7 @@
 	import Icon from "@/components/Icon.vue";
 
 	const props = defineProps<{
+		activeTags?: string[];
 		allowManage: boolean;
 		allowCreate: boolean;
 		allowDelete: boolean;
@@ -20,7 +21,7 @@
 	const dropdownToggle = useTemplateRef("dropdown-toggle");
 	const dropdownMenu = useTemplateRef("dropdown-menu");
 	const searchText = ref(emptyString);
-	const selectedTags = ref<string[]>([]);
+	const selectedTags = ref<string[]>(props.activeTags ?? []);
 	const { show, toggle } = useDropdown(dropdownToggle, {
 		autoClose: false,
 		dropdown: dropdownMenu

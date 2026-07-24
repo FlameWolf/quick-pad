@@ -184,20 +184,20 @@ export async function restoreFromTrashMultiple(ids: ReadonlyArray<UUID>) {
 	await applyToMany(ids, note => note.restore());
 }
 
-export async function addTag(id: UUID, tag: string) {
-	await applyToNote(id, note => note.addTag(tag));
+export async function addTags(id: UUID, tags: string[]) {
+	await applyToNote(id, note => note.addTags(tags));
 }
 
-export async function addTagMultiple(ids: ReadonlyArray<UUID>, tag: string) {
-	await applyToMany(ids, note => note.addTag(tag));
+export async function addTagsMultiple(ids: ReadonlyArray<UUID>, tags: string[]) {
+	await applyToMany(ids, note => note.addTags(tags));
 }
 
-export async function removeTag(id: UUID, tag: string) {
-	await applyToNote(id, note => note.removeTag(tag));
+export async function removeTags(id: UUID, tags: string[]) {
+	await applyToNote(id, note => note.removeTags(tags));
 }
 
-export async function removeTagMultiple(ids: ReadonlyArray<UUID>, tag: string) {
-	await applyToMany(ids, note => note.removeTag(tag));
+export async function removeTagMultiple(ids: ReadonlyArray<UUID>, tags: string[]) {
+	await applyToMany(ids, note => note.removeTags(tags));
 }
 
 export async function permanentlyDelete(id: UUID) {
@@ -262,22 +262,6 @@ export async function createTags(tags: string[]) {
 	await tagsRepository.saveMany(tags);
 }
 
-export async function deleteTag(tag: string) {
-	const affectedIds = store.notes.reduce((ids, note) => {
-		if (note.tags?.includes(tag)) {
-			ids.push(note.id);
-		}
-		return ids;
-	}, [] as UUID[]);
-	await applyToMany(affectedIds, note => note.removeTag(tag));
-	const index = store.tags.indexOf(tag);
-	if (index !== -1) {
-		store.tags.splice(index, 1);
-	}
-	await tagsRepository.remove(tag);
-	return affectedIds.length;
-}
-
 export async function deleteTags(tags: string[]) {
 	const tagSet = new Set(tags);
 	const affectedIds = store.notes.reduce((ids, note) => {
@@ -286,11 +270,7 @@ export async function deleteTags(tags: string[]) {
 		}
 		return ids;
 	}, [] as UUID[]);
-	await applyToMany(affectedIds, note => {
-		for (const tag of tags) {
-			note.removeTag(tag);
-		}
-	});
+	await applyToMany(affectedIds, note => note.removeTags(tags));
 	store.tags = store.tags.filter(tag => !tagSet.has(tag));
 	await Promise.all(tags.map(tag => tagsRepository.remove(tag)));
 	return affectedIds.length;
