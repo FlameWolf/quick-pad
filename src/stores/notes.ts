@@ -246,14 +246,14 @@ export async function replaceMultiple(updatedNotes: NoteModel[]) {
 	await notesRepository.saveManyFull(updatedNotes);
 }
 
-export async function saveTag(tag: string) {
+export async function createTag(tag: string) {
 	if (!store.tags.includes(tag)) {
 		store.tags.push(tag);
 	}
 	await tagsRepository.save(tag);
 }
 
-export async function saveTags(tags: string[]) {
+export async function createTags(tags: string[]) {
 	tags.filter(tag => !store.tags.includes(tag)).forEach(tag => store.tags.push(tag));
 	await tagsRepository.saveMany(tags);
 }
