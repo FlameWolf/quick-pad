@@ -8,10 +8,14 @@
 	import Icon from "@/components/Icon.vue";
 
 	const props = defineProps<{
+		allowManage: boolean;
 		allowCreate: boolean;
 		allowDelete: boolean;
 	}>();
-	const emit = defineEmits<{ tagCreated: [tag: string]; }>();
+	const emit = defineEmits<{
+		tagCreated: [tag: string];
+		selectionChanged: [tags: string[]];
+	}>();
 	const dropdownToggle = useTemplateRef("dropdown-toggle");
 	const dropdownMenu = useTemplateRef("dropdown-menu");
 	const searchText = ref(emptyString);
@@ -49,29 +53,31 @@
 		}
 	}
 
-	async function saveTag(tag: string) {
-		await notesStore.saveTag(normaliseTag(tag));
+	async function createTag(tag: string) {
+		await notesStore.createTag(normaliseTag(tag));
 	}
 
-	async function deleteTag(tag: string) {
-		await notesStore.deleteTag(normaliseTag(tag));
+	async function deleteTags(tags: string[]) {
+		await notesStore.deleteTags(tags.map(normaliseTag));
 	}
 </script>
 <template>
 	<div class="p-1 border rounded mb-3">
 		<button ref="dropdown-toggle" class="btn btn-sm btn-outline-primary dropdown-toggle" @click="toggle">Tags</button>
 		<ul v-if="show" ref="dropdown-menu" class="dropdown-menu show p-2">
-			<li>
-				<label class="btn btn-sm btn-outline-primary">
-					<input type="checkbox" :checked="allSelected" :disabled="!filteredTags.length" @change="toggleSelectAll"/>
-					<span class="ms-2">{{ allSelected ? "Deselect All" : "Select All" }}</span>
-				</label>
-				<button class="btn btn-sm btn-outline-danger ms-2" :disabled="!selectedTags.length">Delete Selected</button>
-			</li>
-			<li><hr class="dropdown-divider"/></li>
-			<li :class="{ [`input-group`]: allowCreate }">
+			<template v-if="props.allowManage">
+				<li>
+					<label class="btn btn-sm btn-outline-primary">
+						<input type="checkbox" :checked="allSelected" :disabled="!filteredTags.length" @change="toggleSelectAll"/>
+						<span class="ms-2">{{ allSelected ? "Deselect All" : "Select All" }}</span>
+					</label>
+					<button v-if="props.allowDelete" class="btn btn-sm btn-outline-danger ms-2" :disabled="!selectedTags.length" @click="deleteTags(selectedTags)">Delete Selected</button>
+				</li>
+				<li><hr class="dropdown-divider"/></li>
+			</template>
+			<li :class="{ [`input-group`]: props.allowCreate }">
 				<input v-model.trim="searchText" type="text" class="form-control form-control-sm" placeholder="Search"/>
-				<button v-if="allowCreate" class="btn btn-sm btn-outline-primary" :disabled="hasExactMatch">
+				<button v-if="props.allowCreate" class="btn btn-sm btn-outline-primary" :disabled="hasExactMatch" @click="createTag(searchText)">
 					<Icon type="plusLg"/>
 				</button>
 			</li>
