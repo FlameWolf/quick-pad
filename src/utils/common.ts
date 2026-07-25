@@ -16,3 +16,10 @@ export function haveSameItems<T>(a: readonly T[] = [], b: readonly T[] | undefin
 	const set = new Set(a);
 	return b.every(x => set.has(x));
 }
+
+export function copyNullableArray<T>(arr: T[] | undefined): T[] | undefined {
+	if(arr) {
+		return Array.from(arr);
+	}
+	return undefined;
+}

@@ -125,7 +125,7 @@ async function applyToMany(ids: ReadonlyArray<UUID>, mutator: (note: NoteModel) 
 	const idSet = new Set(ids);
 	const targetNotes = store.notes.filter(note => idSet.has(note.id));
 	targetNotes.forEach(mutator);
-	await notesRepository.saveManyMeta(toRaw(targetNotes));
+	await notesRepository.saveManyMeta(targetNotes.map(toRaw));
 }
 
 export async function faveNote(id: UUID) {
@@ -247,7 +247,7 @@ export async function replaceNote(updatedNote: NoteModel) {
 
 export async function replaceMultiple(updatedNotes: NoteModel[]) {
 	updatedNotes.forEach(addOrUpdate);
-	await notesRepository.saveManyFull(toRaw(updatedNotes));
+	await notesRepository.saveManyFull(updatedNotes.map(toRaw));
 }
 
 export async function createTag(tag: string) {

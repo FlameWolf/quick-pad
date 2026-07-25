@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { computed, ref, toValue, useTemplateRef, watch } from "vue";
+	import { computed, ref, toRef, useTemplateRef, watch } from "vue";
 	import { emptyString } from "@/constants/common";
 	import { normaliseTag } from "@/utils/common";
 	import { contains, equals } from "@/utils/text-analysis";
@@ -22,7 +22,8 @@
 	const dropdownToggle = useTemplateRef("dropdown-toggle");
 	const dropdownMenu = useTemplateRef("dropdown-menu");
 	const searchText = ref(emptyString);
-	const selectedTags = ref<string[]>(toValue(props.activeTags) ?? []);
+	const selectedTags = ref(props.activeTags ?? []);
+	const shouldEmit = ref(true);
 	const { show, toggle } = useDropdown(dropdownToggle, {
 		autoClose: false,
 		dropdown: dropdownMenu
@@ -96,17 +97,26 @@
 	watch(
 		selectedTags,
 		tags => {
-			emit("selectionChanged", tags);
+			if(shouldEmit.value) {
+				emit("selectionChanged", tags);
+			}
+			shouldEmit.value = true;
 		},
-		{
-			deep: true
-		}
+		{ deep: true }
 	);
+
+	watch(() => props.activeTags, tags => {
+		shouldEmit.value = false;
+		selectedTags.value = tags ?? [];
+	},
+	{
+		deep: true
+	});
 </script>
 <template>
 	<div class="p-1 border rounded mb-3">
 		<button v-if="props.allowEdit" ref="dropdown-toggle" class="btn btn-sm btn-outline-primary dropdown-toggle" @click="toggle">Tags</button>
-		<label v-else>Tags:</label>
+		<label v-else class="small border border-primary rounded px-2 py-1">Tags:</label>
 		<ul v-if="props.allowEdit && show" ref="dropdown-menu" class="dropdown-menu show p-2 mt-1">
 			<template v-if="props.allowManage">
 				<li>
@@ -133,9 +143,9 @@
 			</li>
 		</ul>
 		<div v-if="selectedTags.length" class="d-inline-flex flex-wrap gap-2 align-middle ms-3">
-			<div v-for="tag in selectedTags" class="badge text-bg-secondary">
+			<div v-for="tag in selectedTags" class="badge text-bg-secondary" :class="{ [`py-2`]: !props.allowEdit }">
 				<span>{{ tag }}</span>
-				<button class="small btn-close ms-2" @click="unselectTag(tag)"></button>
+				<button v-if="props.allowEdit" class="small btn-close ms-2" @click="unselectTag(tag)"></button>
 			</div>
 		</div>
 	</div>
