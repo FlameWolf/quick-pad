@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { computed, onBeforeUnmount, onMounted, ref, toValue, useTemplateRef, watch } from "vue";
+	import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from "vue";
 	import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 	import { emptyString } from "@/constants/common";
 	import { getSentenceCount, getWordCount, getCharacterCount } from "@/utils/text-analysis";
@@ -155,7 +155,7 @@
 		}
 	}
 
-	async function updateTags(tags: string[]) {
+	async function setEditTags(tags: string[]) {
 		editTags.value = tags;
 	}
 
@@ -163,20 +163,16 @@
 		const title = editTitle.value.trim() || "Untitled";
 		const content = editContent.value;
 		const tags = editTags.value;
-		console.log("saving notes", tags);
+		const note = isCreateMode.value ? new NoteModel(title, content) : existingNote.value!;
 		isEditing.value = false;
+		if (tags?.length) {
+			note.tags = tags;
+		}
 		if (isCreateMode.value) {
-			const note = new NoteModel(title, content);
-			if (tags?.length) {
-				note.tags = tags;
-			}
 			await notesStore.addNote(note);
 			router.push(`/notes/${note.id}`);
 		} else if (existingNote.value) {
-			if (tags?.length) {
-				existingNote.value.tags = tags;
-			}
-			await notesStore.updateNote({ id: existingNote.value.id, title, content });
+			await notesStore.updateNote({ id: note.id, title, content });
 			loadedContent.value = content;
 		}
 		clearDraft(draftId.value);
@@ -413,90 +409,90 @@
 <template>
 	<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
 		<RouterLink :to="backRoute" class="btn btn-secondary btn-sm" aria-label="Back to notes">
-			<Icon type="chevronLeft" />
+			<Icon type="chevronLeft"/>
 			<span class="ms-2">Back</span>
 		</RouterLink>
 		<div class="d-flex flex-wrap gap-2 ms-auto">
 			<button class="btn btn-outline-secondary btn-sm" @click="setFontScaling(`+`)" title="Increase font size" aria-label="Increase font size">
-				<Icon type="aPlus" />
+				<Icon type="aPlus"/>
 			</button>
 			<button class="btn btn-outline-secondary btn-sm" @click="setFontScaling(`-`)" title="Decrease font size" aria-label="Decrease font size">
-				<Icon type="aMinus" />
+				<Icon type="aMinus"/>
 			</button>
 		</div>
 		<div class="d-flex flex-wrap gap-2" v-if="!isCreateMode && !isEditing && isTrashed">
 			<button class="btn btn-outline-primary btn-sm" @click="restoreNote" title="Restore" aria-label="Restore">
-				<Icon type="reply" />
+				<Icon type="reply"/>
 				<span class="d-none d-sm-inline ms-2">Restore</span>
 			</button>
 			<button class="btn btn-outline-secondary btn-sm" v-if="existingNote" @click="exportNote(existingNote)" title="Export" aria-label="Export">
-				<Icon type="download" />
+				<Icon type="download"/>
 				<span class="d-none d-sm-inline ms-2">Export</span>
 			</button>
 			<button class="btn btn-outline-danger btn-sm" @click="permanentlyDeleteNote" title="Delete Permanently" aria-label="Delete Permanently">
-				<Icon type="trashFill" />
+				<Icon type="trashFill"/>
 				<span class="d-none d-sm-inline ms-2">Delete Permanently</span>
 			</button>
 		</div>
 		<div class="d-flex flex-wrap gap-2" v-else-if="!isCreateMode && !isEditing">
 			<button class="btn btn-outline-primary btn-sm" @click="startEditing" title="Edit" aria-label="Edit">
-				<Icon type="pen" />
+				<Icon type="pen"/>
 				<span class="d-none d-sm-inline ms-2">Edit</span>
 			</button>
 			<button class="btn btn-outline-secondary btn-sm" @click="copyToClipboard" title="Copy to clipboard" aria-label="Copy to clipboard">
-				<Icon type="copy" />
+				<Icon type="copy"/>
 				<span class="d-none d-sm-inline ms-2">Copy</span>
 			</button>
 			<button class="btn btn-outline-secondary btn-sm" v-if="!isFaved" @click="faveNote" title="Favourite" aria-label="Favourite">
-				<Icon type="star" />
+				<Icon type="star"/>
 				<span class="d-none d-sm-inline ms-2">Favourite</span>
 			</button>
 			<button class="btn btn-outline-secondary btn-sm" v-else @click="unfaveNote" title="Unfavourite" aria-label="Unfavourite">
-				<Icon type="starFill" />
+				<Icon type="starFill"/>
 				<span class="d-none d-sm-inline ms-2">Unfavourite</span>
 			</button>
 			<template v-if="!isArchived">
 				<button class="btn btn-outline-secondary btn-sm" v-if="!isPinned" @click="pinNote" title="Pin" aria-label="Pin">
-					<Icon type="pinAngle" />
+					<Icon type="pinAngle"/>
 					<span class="d-none d-sm-inline ms-2">Pin</span>
 				</button>
 				<button class="btn btn-outline-secondary btn-sm" v-else @click="unpinNote" title="Unpin" aria-label="Unpin">
-					<Icon type="pinAngleFill" />
+					<Icon type="pinAngleFill"/>
 					<span class="d-none d-sm-inline ms-2">Unpin</span>
 				</button>
 			</template>
 			<button class="btn btn-outline-secondary btn-sm" v-if="existingNote" @click="exportNote(existingNote)" title="Download" aria-label="Download">
-				<Icon type="download" />
+				<Icon type="download"/>
 				<span class="d-none d-sm-inline ms-2">Download</span>
 			</button>
 			<button class="btn btn-outline-secondary btn-sm" v-if="isArchived" @click="unarchiveNote" title="Unarchive" aria-label="Unarchive">
-				<Icon type="boxArrowUp" />
+				<Icon type="boxArrowUp"/>
 				<span class="d-none d-sm-inline ms-2">Unarchive</span>
 			</button>
 			<button class="btn btn-outline-secondary btn-sm" v-else @click="archiveNote" title="Archive" aria-label="Archive">
-				<Icon type="archive" />
+				<Icon type="archive"/>
 				<span class="d-none d-sm-inline ms-2">Archive</span>
 			</button>
 			<button class="btn btn-outline-danger btn-sm" @click="deleteNote" title="Delete" aria-label="Delete">
-				<Icon type="trash" />
+				<Icon type="trash"/>
 				<span class="d-none d-sm-inline ms-2">Delete</span>
 			</button>
 		</div>
 		<div class="d-flex flex-wrap gap-2" v-if="isEditing">
 			<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canUndo.value" @click="doUndo" title="Undo" aria-label="Undo">
-				<Icon type="arrowCounterclockwise" />
+				<Icon type="arrowCounterclockwise"/>
 				<span class="d-none d-sm-inline ms-2">Undo</span>
 			</button>
 			<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canRedo.value" @click="doRedo" title="Redo" aria-label="Redo">
-				<Icon type="arrowClockwise" />
+				<Icon type="arrowClockwise"/>
 				<span class="d-none d-sm-inline ms-2">Redo</span>
 			</button>
 			<button class="btn btn-primary btn-sm" :disabled="!hasUnsavedChanges" @click="saveNote" title="Save" aria-label="Save">
-				<Icon type="floppy" />
+				<Icon type="floppy"/>
 				<span class="d-none d-sm-inline ms-2">Save</span>
 			</button>
 			<button class="btn btn-outline-secondary btn-sm" @click="cancelEditing" title="Cancel" aria-label="Cancel">
-				<Icon type="xLg" />
+				<Icon type="xLg"/>
 				<span class="d-none d-sm-inline ms-2">Cancel</span>
 			</button>
 		</div>
@@ -507,7 +503,7 @@
 			<div class="badge text-bg-secondary">Created {{ formatDate(existingNote.createdAt) }}</div>
 			<div class="badge text-bg-secondary" v-if="existingNote.modifiedAt">Modified {{ formatDate(existingNote.modifiedAt) }}</div>
 		</div>
-		<hr />
+		<hr/>
 		<div v-if="!isContentLoaded" class="d-flex justify-content-center py-3">
 			<div class="spinner-border" role="status" aria-label="Loading note"></div>
 		</div>
@@ -515,14 +511,14 @@
 	</template>
 	<div class="edit-note">
 		<template v-if="isEditing">
-			<input v-model="editTitle" type="text" class="form-control form-control-lg" placeholder="Title" />
-			<hr class="my-1" />
+			<input v-model="editTitle" type="text" class="form-control form-control-lg" placeholder="Title"/>
+			<hr class="my-1"/>
 			<textarea ref="edit-text-area" :value="editContent" @input="onContentInput" class="form-control note-textarea" placeholder="Start writing..." rows="12"></textarea>
 		</template>
 	</div>
-	<hr class="my-1" />
-	<DisplayTagList :active-tags="editTags" :allow-edit="isEditing" :allow-create="true" @selection-changed="updateTags" />
-	<hr :class="{ [`mt-1`]: isEditing }" />
+	<hr class="my-1"/>
+	<DisplayTagList :active-tags="editTags" :allow-edit="isEditing" :allow-create="true" @selection-changed="setEditTags"/>
+	<hr :class="{ [`mt-1`]: isEditing }"/>
 	<div class="d-flex flex-wrap gap-2 mt-3" v-if="hasContent">
 		<span class="badge text-bg-secondary" v-if="sentenceCount">{{ sentenceCount }} sentences</span>
 		<span class="badge text-bg-secondary" v-if="wordCount">{{ wordCount }} words</span>

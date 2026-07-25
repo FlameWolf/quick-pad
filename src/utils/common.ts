@@ -18,7 +18,7 @@ export function haveSameItems<T>(a: readonly T[] = [], b: readonly T[] | undefin
 }
 
 export function copyNullableArray<T>(arr: T[] | undefined): T[] | undefined {
-	if(arr) {
+	if (arr) {
 		return Array.from(arr);
 	}
 	return undefined;

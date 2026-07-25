@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { computed, ref, toRef, useTemplateRef, watch } from "vue";
+	import { computed, ref, useTemplateRef, watch } from "vue";
 	import { emptyString } from "@/constants/common";
 	import { normaliseTag } from "@/utils/common";
 	import { contains, equals } from "@/utils/text-analysis";
@@ -97,7 +97,7 @@
 	watch(
 		selectedTags,
 		tags => {
-			if(shouldEmit.value) {
+			if (shouldEmit.value) {
 				emit("selectionChanged", tags);
 			}
 			shouldEmit.value = true;
@@ -105,13 +105,14 @@
 		{ deep: true }
 	);
 
-	watch(() => props.activeTags, tags => {
-		shouldEmit.value = false;
-		selectedTags.value = tags ?? [];
-	},
-	{
-		deep: true
-	});
+	watch(
+		() => props.activeTags,
+		tags => {
+			shouldEmit.value = false;
+			selectedTags.value = tags ?? [];
+		},
+		{ deep: true }
+	);
 </script>
 <template>
 	<div class="p-1 border rounded mb-3">
