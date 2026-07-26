@@ -117,7 +117,7 @@
 <template>
 	<div class="p-1 border rounded">
 		<button v-if="props.allowEdit" ref="dropdown-toggle" class="btn btn-sm btn-outline-primary dropdown-toggle" @click="toggle">Tags</button>
-		<label v-else class="small border border-primary rounded px-2 py-1">Tags:</label>
+		<label v-else class="small border border-primary rounded px-2 py-1">Tags</label>
 		<ul v-if="props.allowEdit && show" ref="dropdown-menu" class="dropdown-menu show p-2 mt-1">
 			<template v-if="props.allowManage">
 				<li>
