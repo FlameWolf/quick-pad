@@ -235,7 +235,9 @@
 	}
 
 	async function updateTagFilter(tags: string[]) {
-		notesStore.setSearchTags(tags);
+		if (!isSelecting.value) {
+			notesStore.setSearchTags(tags);
+		}
 	}
 
 	onMounted(() => {

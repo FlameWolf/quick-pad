@@ -6,6 +6,7 @@
 	import * as notesStore from "@/stores/notes";
 	import { confirm } from "@/composables/useConfirmDialogue";
 	import { useDropdown } from "@/composables/useDropdown";
+	import { isSelecting, selectedCount, selectedIds } from "@/composables/useNoteSelection";
 	import { requestSync } from "@/composables/useNotesSync";
 	import Icon from "@/components/Icon.vue";
 
@@ -41,6 +42,7 @@
 		}
 		return notesStore.tags.value.some(tag => equals(tag, normaliseTag(searchText.value)));
 	});
+	const enableActions = computed(() => !!(selectedCount.value && selectedTags.value.length));
 
 	function isTagSelected(tag: string) {
 		return selectedTags.value.includes(tag);
@@ -94,6 +96,14 @@
 		}
 	}
 
+	async function applyTags() {
+		notesStore.addTagsMultiple(Array.from(selectedIds.value), selectedTags.value);
+	}
+
+	async function removeTags() {
+		notesStore.removeTagsMultiple(Array.from(selectedIds.value), selectedTags.value);
+	}
+
 	watch(
 		selectedTags,
 		tags => {
@@ -104,6 +114,10 @@
 		},
 		{ deep: true }
 	);
+
+	watch(isSelecting, () => {
+		emit("selectionChanged", selectedTags.value);
+	});
 
 	watch(
 		() => props.activeTags,
@@ -143,11 +157,15 @@
 				</label>
 			</li>
 		</ul>
-		<div v-if="selectedTags.length" class="d-inline-flex flex-wrap gap-2 align-middle ms-3">
+		<div v-if="selectedTags.length" class="d-inline-flex flex-wrap gap-2 align-middle ms-2">
 			<div v-for="tag in selectedTags" class="badge text-bg-secondary" :class="{ [`py-2`]: !props.allowEdit }">
 				<span>{{ tag }}</span>
 				<button v-if="props.allowEdit" class="small btn-close ms-2" @click="unselectTag(tag)"></button>
 			</div>
+		</div>
+		<div v-if="props.allowManage && isSelecting" class="d-inline-flex gap-2 align-middle ms-2">
+			<button class="btn btn-sm btn-primary" :disabled="!enableActions" @click="applyTags">Apply</button>
+			<button class="btn btn-sm btn-primary" :disabled="!enableActions" @click="removeTags">Remove</button>
 		</div>
 	</div>
 </template>

@@ -196,7 +196,7 @@ export async function removeTags(id: UUID, tags: string[]) {
 	await applyToNote(id, note => note.removeTags(tags));
 }
 
-export async function removeTagMultiple(ids: ReadonlyArray<UUID>, tags: string[]) {
+export async function removeTagsMultiple(ids: ReadonlyArray<UUID>, tags: string[]) {
 	await applyToMany(ids, note => note.removeTags(tags));
 }
 
