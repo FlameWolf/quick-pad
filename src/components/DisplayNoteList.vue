@@ -234,6 +234,10 @@
 		requestSync(trashedNoteIds);
 	}
 
+	async function updateTagFilter(tags: string[]) {
+		notesStore.setSearchTags(tags);
+	}
+
 	onMounted(() => {
 		exitSelectionMode();
 	});
@@ -259,7 +263,7 @@
 			<div class="mt-3" role="status">{{ notesStore.isSearching.value ? "Searching..." : "Loading notes..." }}</div>
 		</div>
 	</template>
-	<EmptyState v-else-if="!hasNotes" :message="emptyMessage" :show-actions="view === `active` && !isSearchMode" @import="handleImport"/>
+	<EmptyState v-else-if="!hasNotes && !notesStore.searchTags.value.size" :message="emptyMessage" :show-actions="view === `active` && !isSearchMode" @import="handleImport"/>
 	<template v-else>
 		<div class="d-flex gap-2 mb-3 justify-content-end flex-wrap">
 			<template v-if="isSelecting">
@@ -308,7 +312,7 @@
 				</template>
 			</template>
 		</div>
-		<DisplayTagList class="mb-3" :allow-delete="true" :allow-edit="true" :allow-manage="true"/>
+		<DisplayTagList class="mb-3" :allow-delete="true" :allow-edit="true" :allow-manage="true" @selection-changed="updateTagFilter"/>
 		<template v-for="section in noteSections" :key="section.key">
 			<div v-if="section.divider" class="d-flex align-items-center my-4">
 				<div class="flex-grow-1 border-bottom"></div>

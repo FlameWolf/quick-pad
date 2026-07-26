@@ -113,6 +113,10 @@ body {
 	width: auto;
 }
 
+.ms-n1 {
+	margin-left: -0.25rem !important;
+}
+
 .card.note-card {
 	height: 12rem;
 }
