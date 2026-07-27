@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { computed, ref, useTemplateRef, watch } from "vue";
+	import { computed, onMounted, ref, useTemplateRef, watch } from "vue";
 	import { emptyString } from "@/constants/common";
 	import { normaliseTag, titleCase } from "@/utils/common";
 	import { getTime } from "@/utils/dates";
@@ -7,11 +7,10 @@
 	import * as notesStore from "@/stores/notes";
 	import { confirm } from "@/composables/useConfirmDialogue";
 	import { useDropdown } from "@/composables/useDropdown";
-	import { isSelecting, selectedCount, selectedIds } from "@/composables/useNoteSelection";
+	import { exitSelectionMode, isSelecting, selectedCount, selectedIds } from "@/composables/useNoteSelection";
 	import { requestSync } from "@/composables/useNotesSync";
 	import Icon from "@/components/Icon.vue";
 
-	let shouldEmit = true;
 	let lastSelected: string[] = [];
 	const props = defineProps<{
 		activeTags?: string[];
@@ -26,7 +25,7 @@
 	const dropdownToggle = useTemplateRef("dropdown-toggle");
 	const dropdownMenu = useTemplateRef("dropdown-menu");
 	const searchText = ref(emptyString);
-	const selectedTags = ref(props.activeTags ?? []);
+	const selectedTags = ref<string[]>([]);
 	const { show, toggle } = useDropdown(dropdownToggle, {
 		autoClose: false,
 		dropdown: dropdownMenu
@@ -124,18 +123,19 @@
 		if (notesStore.notes.value.some(note => selectedIds.value.has(note.id) && getTime(note.stateChangedAt) > now)) {
 			requestSync();
 		}
+		exitSelectionMode();
 	}
 
-	watch(
-		selectedTags,
-		tags => {
-			if (shouldEmit) {
+	onMounted(() => {
+		selectedTags.value = props.activeTags ?? [];
+		watch(
+			selectedTags,
+			tags => {
 				emit("selectionChanged", tags);
-			}
-			shouldEmit = true;
-		},
-		{ deep: true }
-	);
+			},
+			{ deep: true }
+		);
+	});
 
 	watch(isSelecting, (curr, prev) => {
 		if (prev === false) {
@@ -146,15 +146,6 @@
 		}
 		emit("selectionChanged", selectedTags.value);
 	});
-
-	watch(
-		() => props.activeTags,
-		tags => {
-			shouldEmit = false;
-			selectedTags.value = tags ?? [];
-		},
-		{ deep: true }
-	);
 </script>
 <template>
 	<div class="d-flex flex-wrap gap-2 p-1 border rounded">
