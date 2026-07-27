@@ -128,29 +128,37 @@
 						</span>
 						<span class="d-none d-md-inline ms-2">{{ user?.name ?? "Sync" }}</span>
 					</button>
-					<div v-if="showSyncMenu" class="dropdown-menu show end-0 mt-1">
-						<div class="dropdown-header text-muted small px-3 py-1 text-truncate">{{ user?.email }}</div>
-						<div class="dropdown-divider"></div>
-						<label class="dropdown-item">
-							<input type="checkbox" :checked="autoSyncEnabled" class="form-check-input" @click="handleToggleAutoSync"/>
-							<span class="ms-2">Auto-sync</span>
-						</label>
-						<div class="dropdown-divider"></div>
-						<button class="dropdown-item" @click="handleSync(false)" :disabled="isSyncing">
-							<Icon type="arrowRepeat"/>
-							<span class="ms-2">Sync</span>
-						</button>
-						<button class="dropdown-item" @click="handleSync(true)" :disabled="isSyncing">
-							<Icon type="lightningCharge"/>
-							<span class="ms-2">Force Sync</span>
-						</button>
-						<div v-if="lastSyncedLabel" class="dropdown-header text-muted small px-3 py-1">Last synced: {{ lastSyncedLabel }}</div>
-						<div class="dropdown-divider"></div>
-						<button class="dropdown-item text-danger" @click="handleSignOut">
-							<Icon type="boxArrowRight"/>
-							<span class="ms-2">Sign out</span>
-						</button>
-					</div>
+					<ul v-if="showSyncMenu" class="dropdown-menu show end-0 mt-1">
+						<li class="dropdown-header text-muted small px-3 py-1 text-truncate">{{ user?.email }}</li>
+						<li class="dropdown-divider"></li>
+						<li>
+							<label class="dropdown-item">
+								<input type="checkbox" :checked="autoSyncEnabled" class="form-check-input" @click="handleToggleAutoSync"/>
+								<span class="ms-2">Auto-sync</span>
+							</label>
+						</li>
+						<li class="dropdown-divider"></li>
+						<li>
+							<button class="dropdown-item" @click="handleSync(false)" :disabled="isSyncing">
+								<Icon type="arrowRepeat"/>
+								<span class="ms-2">Sync</span>
+							</button>
+						</li>
+						<li>
+							<button class="dropdown-item" @click="handleSync(true)" :disabled="isSyncing">
+								<Icon type="lightningCharge"/>
+								<span class="ms-2">Force Sync</span>
+							</button>
+						</li>
+						<li v-if="lastSyncedLabel" class="dropdown-header text-muted small px-3 py-1">Last synced: {{ lastSyncedLabel }}</li>
+						<li class="dropdown-divider"></li>
+						<li>
+							<button class="dropdown-item text-danger" @click="handleSignOut">
+								<Icon type="boxArrowRight"/>
+								<span class="ms-2">Sign out</span>
+							</button>
+						</li>
+					</ul>
 				</div>
 			</template>
 			<template v-else>
