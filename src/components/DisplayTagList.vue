@@ -172,11 +172,13 @@
 					</li>
 					<li class="dropdown-divider"></li>
 				</template>
-				<li class="dropdown-item" :class="{ [`input-group`]: props.allowCreate }">
-					<input v-model.trim="searchText" type="text" class="form-control form-control-sm" placeholder="Search"/>
-					<button v-if="props.allowCreate" class="btn btn-sm btn-outline-primary" :disabled="hasExactMatch" @click="createTag(searchText)">
-						<Icon type="plusLg"/>
-					</button>
+				<li class="dropdown-item">
+					<div class="flex-nowrap" :class="{ [`input-group`]: props.allowCreate }">
+						<input v-model.trim="searchText" type="text" class="form-control form-control-sm" placeholder="Search"/>
+						<button v-if="props.allowCreate" class="btn btn-sm btn-outline-primary" :disabled="hasExactMatch" @click="createTag(searchText)">
+							<Icon type="plusLg"/>
+						</button>
+					</div>
 				</li>
 				<li class="dropdown-divider"></li>
 				<li v-for="tag in filteredTags">

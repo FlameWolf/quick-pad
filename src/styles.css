@@ -24,6 +24,13 @@ body {
 	max-height: 0.875rem;
 }
 
+.dropdown-item {
+	&>span {
+		white-space: wrap;
+		word-break: break-word;
+	}
+}
+
 .dropdown-item:disabled {
 	opacity: 0.5;
 }
