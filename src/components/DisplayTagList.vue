@@ -11,6 +11,7 @@
 	import { requestSync } from "@/composables/useNotesSync";
 	import Icon from "@/components/Icon.vue";
 
+	let lastSelected: string[] = [];
 	const props = defineProps<{
 		activeTags?: string[];
 		allowCreate?: boolean;
@@ -136,7 +137,13 @@
 		{ deep: true }
 	);
 
-	watch(isSelecting, () => {
+	watch(isSelecting, (curr, prev) => {
+		if (prev === false) {
+			lastSelected = Array.from(selectedTags.value);
+		}
+		if (curr === false) {
+			selectedTags.value = Array.from(lastSelected);
+		}
 		emit("selectionChanged", selectedTags.value);
 	});
 
