@@ -5,6 +5,10 @@ export function camelToKebab(input: string) {
 		.toLowerCase();
 }
 
+export function titleCase(input: string) {
+	return input.toLowerCase().replace(/\b\w/g, match => match.toUpperCase());
+}
+
 export function normaliseTag(raw: string): string {
 	return raw.trim().replace(/\s+/g, " ").normalize("NFC");
 }

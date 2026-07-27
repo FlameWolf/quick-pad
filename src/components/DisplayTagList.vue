@@ -1,7 +1,7 @@
 <script setup lang="ts">
 	import { computed, ref, useTemplateRef, watch } from "vue";
 	import { emptyString } from "@/constants/common";
-	import { normaliseTag } from "@/utils/common";
+	import { normaliseTag, titleCase } from "@/utils/common";
 	import { getTime } from "@/utils/dates";
 	import { contains, equals } from "@/utils/text-analysis";
 	import * as notesStore from "@/stores/notes";
@@ -99,6 +99,17 @@
 
 	async function updateNoteTags(action: "add" | "remove") {
 		const now = Date.now();
+		const isAdding = action === "add";
+		const ok = await confirm({
+			title: `${titleCase(action)} tags`,
+			message: `The selected tags will be ${isAdding ? "added" : "removed"} ${isAdding ? "to" : "from"} the selected notes. Do you want to proceed?`,
+			confirmText: "Confirm",
+			cancelText: "Cancel",
+			variant: "warning"
+		});
+		if (!ok) {
+			return;
+		}
 		switch (action) {
 			case "add": {
 				notesStore.addTagsMultiple(Array.from(selectedIds.value), selectedTags.value);
@@ -161,8 +172,8 @@
 					</button>
 				</li>
 				<li class="dropdown-divider"></li>
-				<li v-for="tag in filteredTags" class="dropdown-item">
-					<label>
+				<li v-for="tag in filteredTags">
+					<label class="dropdown-item">
 						<input type="checkbox" :checked="isTagSelected(tag)" @change="toggleTagSelection(tag)"/>
 						<span class="ms-2">{{ tag }}</span>
 					</label>
