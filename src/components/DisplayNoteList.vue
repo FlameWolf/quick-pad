@@ -12,6 +12,7 @@
 	import Icon from "@/components/Icon.vue";
 	import EmptyState from "@/components/EmptyState.vue";
 	import SortControls from "@/components/SortControls.vue";
+	import DisplayTagList from "@/components/DisplayTagList.vue";
 	import NoteCard from "@/components/NoteCard.vue";
 	import SelectionActionBar from "@/components/SelectionActionBar.vue";
 	import type { NoteModel } from "@/models/NoteModel";
@@ -144,12 +145,13 @@
 
 	async function handleSelectionAction(key: SelectionAction["key"]) {
 		const ids = getSelectedIds();
-		if (ids.length === 0) {
+		const idCount = ids.length;
+		if (idCount === 0) {
 			return;
 		}
 		let syncNotes = true;
 		let purgeNotes = false;
-		const noun = ids.length === 1 ? "note" : "notes";
+		const noun = idCount === 1 ? "note" : "notes";
 		switch (key) {
 			case "export": {
 				await exportNotes(getSelectedNotes());
@@ -174,8 +176,8 @@
 			}
 			case "trash": {
 				const ok = await confirm({
-					title: `Move ${ids.length} ${noun} to Trash?`,
-					message: `${ids.length === 1 ? "This note" : "These notes"} can be restored from Trash within 30 days.`,
+					title: `Move ${idCount} ${noun} to Trash?`,
+					message: `${idCount === 1 ? "This note" : "These notes"} can be restored from Trash within 30 days.`,
 					confirmText: "Move to Trash",
 					cancelText: "Cancel",
 					variant: "danger"
@@ -192,7 +194,7 @@
 			}
 			case "permanent": {
 				const ok = await confirm({
-					title: `Permanently delete ${ids.length} ${noun}?`,
+					title: `Permanently delete ${idCount} ${noun}?`,
 					message: "This action cannot be undone.",
 					confirmText: "Delete Permanently",
 					cancelText: "Cancel",
@@ -232,6 +234,12 @@
 		requestSync(trashedNoteIds);
 	}
 
+	async function updateTagFilter(tags: string[]) {
+		if (!isSelecting.value) {
+			notesStore.setSearchTags(tags);
+		}
+	}
+
 	onMounted(() => {
 		exitSelectionMode();
 	});
@@ -257,7 +265,7 @@
 			<div class="mt-3" role="status">{{ notesStore.isSearching.value ? "Searching..." : "Loading notes..." }}</div>
 		</div>
 	</template>
-	<EmptyState v-else-if="!hasNotes" :message="emptyMessage" :show-actions="view === `active` && !isSearchMode" @import="handleImport"/>
+	<EmptyState v-else-if="!hasNotes && !notesStore.searchTags.value.size" :message="emptyMessage" :show-actions="view === `active` && !isSearchMode" @import="handleImport"/>
 	<template v-else>
 		<div class="d-flex gap-2 mb-3 justify-content-end flex-wrap">
 			<template v-if="isSelecting">
@@ -306,6 +314,7 @@
 				</template>
 			</template>
 		</div>
+		<DisplayTagList class="mb-3" :active-tags="Array.from(notesStore.searchTags.value)" :allow-create="isSelecting" :allow-delete="true" :allow-edit="true" :allow-manage="true" @selection-changed="updateTagFilter"/>
 		<template v-for="section in noteSections" :key="section.key">
 			<div v-if="section.divider" class="d-flex align-items-center my-4">
 				<div class="flex-grow-1 border-bottom"></div>
