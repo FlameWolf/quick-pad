@@ -11,6 +11,7 @@
 	import { requestSync } from "@/composables/useNotesSync";
 	import Icon from "@/components/Icon.vue";
 
+	let shouldEmit = true;
 	let lastSelected: string[] = [];
 	const props = defineProps<{
 		activeTags?: string[];
@@ -26,7 +27,6 @@
 	const dropdownMenu = useTemplateRef("dropdown-menu");
 	const searchText = ref(emptyString);
 	const selectedTags = ref(props.activeTags ?? []);
-	const shouldEmit = ref(true);
 	const { show, toggle } = useDropdown(dropdownToggle, {
 		autoClose: false,
 		dropdown: dropdownMenu
@@ -129,10 +129,10 @@
 	watch(
 		selectedTags,
 		tags => {
-			if (shouldEmit.value) {
+			if (shouldEmit) {
 				emit("selectionChanged", tags);
 			}
-			shouldEmit.value = true;
+			shouldEmit = true;
 		},
 		{ deep: true }
 	);
@@ -150,7 +150,7 @@
 	watch(
 		() => props.activeTags,
 		tags => {
-			shouldEmit.value = false;
+			shouldEmit = false;
 			selectedTags.value = tags ?? [];
 		},
 		{ deep: true }
