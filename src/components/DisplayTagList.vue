@@ -89,7 +89,7 @@
 			variant: "danger"
 		});
 		if (ok) {
-			tags.forEach(unselectTag);
+			selectedTags.value = selectedTags.value.filter(tag => !tags.includes(tag));
 			const affectedCount = await notesStore.deleteTags(tags.map(normaliseTag));
 			if (affectedCount) {
 				requestSync();
@@ -138,13 +138,19 @@
 	});
 
 	watch(isSelecting, (curr, prev) => {
-		if (prev === false) {
+		if (!prev) {
 			lastSelected = Array.from(selectedTags.value);
 		}
-		if (curr === false) {
+		if (!curr) {
 			selectedTags.value = Array.from(lastSelected);
 		}
 		emit("selectionChanged", selectedTags.value);
+	});
+
+	watch(() => props.allowEdit, value => {
+		if (!value) {
+			selectedTags.value = props.activeTags ?? [];
+		}
 	});
 </script>
 <template>
