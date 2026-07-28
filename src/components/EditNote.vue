@@ -2,8 +2,8 @@
 	import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from "vue";
 	import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 	import { emptyString } from "@/constants/common";
-	import { getSentenceCount, getWordCount, getCharacterCount } from "@/utils/text-analysis";
 	import { copyNullableArray, haveSameItems } from "@/utils/common";
+	import { getSentenceCount, getWordCount, getCharacterCount } from "@/utils/text-analysis";
 	import { debounce } from "@/utils/timing";
 	import { NoteModel } from "@/models/NoteModel";
 	import * as appStore from "@/stores/app";
@@ -155,10 +155,6 @@
 		}
 	}
 
-	async function setEditTags(tags: string[]) {
-		editTags.value = tags;
-	}
-
 	async function saveNote() {
 		const title = editTitle.value.trim() || "Untitled";
 		const content = editContent.value;
@@ -169,7 +165,7 @@
 		if (isCreateMode.value) {
 			await notesStore.addNote(note);
 			router.push(`/notes/${note.id}`);
-		} else if (existingNote.value) {
+		} else {
 			await notesStore.updateNote({ id: note.id, title, content });
 			loadedContent.value = content;
 		}
@@ -514,7 +510,7 @@
 			<textarea ref="edit-text-area" :value="editContent" @input="onContentInput" class="form-control note-textarea" placeholder="Start writing..." rows="12"></textarea>
 		</template>
 	</div>
-	<DisplayTagList v-if="!!editTags?.length || isEditing" class="my-3" :active-tags="editTags" :allow-edit="isEditing" :allow-create="true" @selection-changed="setEditTags"/>
+	<DisplayTagList v-if="!!editTags?.length || isEditing" class="my-3" :active-tags="editTags" :allow-edit="isEditing" :allow-create="true" @selection-changed="tags => editTags = tags"/>
 	<hr v-else/>
 	<div class="d-flex flex-wrap gap-2 mt-3" v-if="hasContent">
 		<span class="badge text-bg-secondary" v-if="sentenceCount">{{ sentenceCount }} sentences</span>

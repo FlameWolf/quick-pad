@@ -9,7 +9,6 @@ interface KVSchema {
 	"last-synced-to-local": string;
 	"last-synced-to-cloud": string;
 	"__migrated-to-idb": boolean;
-	[key: `tag:${string}`]: string;
 }
 
 type KVKey = keyof KVSchema;
