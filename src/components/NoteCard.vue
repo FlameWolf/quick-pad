@@ -41,7 +41,7 @@
 			</div>
 			<p class="card-text text-muted small overflow-hidden">{{ note.summary }}</p>
 		</div>
-		<div class="small w-100 position-absolute bottom-0">
+		<div class="bg-body small w-100 position-absolute bottom-0">
 			<div v-if="note.tags" class="d-flex gap-1 px-2 py-2">
 				<div class="badge text-bg-secondary" v-for="tag in note.tags">#{{ tag }}</div>
 			</div>
