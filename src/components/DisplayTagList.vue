@@ -147,11 +147,14 @@
 		emit("selectionChanged", selectedTags.value);
 	});
 
-	watch(() => props.allowEdit, value => {
-		if (!value) {
-			selectedTags.value = props.activeTags ?? [];
+	watch(
+		() => props.allowEdit,
+		value => {
+			if (!value) {
+				selectedTags.value = props.activeTags ?? [];
+			}
 		}
-	});
+	);
 </script>
 <template>
 	<div class="d-flex flex-wrap gap-2 p-1 border rounded">
