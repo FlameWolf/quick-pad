@@ -2,7 +2,7 @@
 	import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from "vue";
 	import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 	import { emptyString } from "@/constants/common";
-	import { copyNullableArray, haveSameItems } from "@/utils/common";
+	import { copyNullableArray, areArraysEqual, areSetsEqual } from "@/utils/common";
 	import { getSentenceCount, getWordCount, getCharacterCount } from "@/utils/text-analysis";
 	import { debounce } from "@/utils/timing";
 	import { NoteModel } from "@/models/NoteModel";
@@ -49,12 +49,12 @@
 			return false;
 		}
 		if (isCreateMode.value) {
-			return editTitle.value.trim().length > 0 || editContent.value.length > 0 || !!editTags.value?.length;
+			return editTitle.value.trim().length > 0 || editContent.value.length > 0 || !areSetsEqual(new Set(editTags.value), notesStore.searchTags.value);
 		}
 		if (!existingNote.value) {
 			return false;
 		}
-		return editTitle.value !== existingNote.value.title || editContent.value !== loadedContent.value || !haveSameItems(editTags.value, existingNote.value.tags);
+		return editTitle.value !== existingNote.value.title || editContent.value !== loadedContent.value || !areArraysEqual(editTags.value, existingNote.value.tags);
 	});
 	const draftId = computed(() => (isCreateMode.value ? "new" : props.id!));
 	const debouncedPushUndo = debounce((value: string) => undoRedo.push(value), 300);
@@ -389,6 +389,10 @@
 	watch(
 		existingNote,
 		note => {
+			if (isCreateMode) {
+				editTags.value = Array.from(notesStore.searchTags.value);
+				return;
+			}
 			if (note) {
 				editTags.value = copyNullableArray(note.tags);
 			}
@@ -510,7 +514,7 @@
 			<textarea ref="edit-text-area" :value="editContent" @input="onContentInput" class="form-control note-textarea" placeholder="Start writing..." rows="12"></textarea>
 		</template>
 	</div>
-	<DisplayTagList v-if="!!editTags?.length || isEditing" class="my-3" :active-tags="editTags" :allow-edit="isEditing" :allow-create="true" @selection-changed="tags => editTags = tags"/>
+	<DisplayTagList v-if="!!editTags?.length || isEditing" class="my-3" :active-tags="editTags" :allow-edit="isEditing" :allow-create="true" @selection-changed="tags => (editTags = tags)"/>
 	<hr v-else/>
 	<div class="d-flex flex-wrap gap-2 mt-3" v-if="hasContent">
 		<span class="badge text-bg-secondary" v-if="sentenceCount">{{ sentenceCount }} sentences</span>
