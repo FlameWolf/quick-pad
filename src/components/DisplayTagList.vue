@@ -156,12 +156,12 @@
 <template>
 	<div class="d-flex flex-wrap gap-2 p-1 border rounded">
 		<div class="dropdown">
-			<button v-if="props.allowEdit" ref="dropdown-toggle" class="btn btn-sm btn-outline-primary dropdown-toggle" @click="toggle">Tags</button>
-			<label v-else class="small border border-primary rounded px-2 py-1">Tags</label>
+			<button v-if="props.allowEdit" ref="dropdown-toggle" class="btn btn-sm btn-outline-secondary dropdown-toggle" @click="toggle">Tags</button>
+			<label v-else class="small border border-secondary rounded px-2 py-1">Tags</label>
 			<ul v-if="props.allowEdit && show" ref="dropdown-menu" class="dropdown-menu show mt-1 ms-n1">
 				<template v-if="props.allowManage">
 					<li class="dropdown-item">
-						<label class="btn btn-sm btn-outline-primary">
+						<label class="btn btn-sm btn-outline-secondary">
 							<input type="checkbox" :checked="allSelected" :disabled="!filteredTags.length" @change="toggleSelectAll"/>
 							<span class="ms-2">{{ allSelected ? "Deselect All" : "Select All" }}</span>
 						</label>
@@ -172,7 +172,7 @@
 				<li class="dropdown-item">
 					<div class="flex-nowrap" :class="{ [`input-group`]: props.allowCreate }">
 						<input v-model.trim="searchText" type="text" class="form-control form-control-sm" placeholder="Search"/>
-						<button v-if="props.allowCreate" class="btn btn-sm btn-outline-primary" :disabled="hasExactMatch" @click="createTag(searchText)">
+						<button v-if="props.allowCreate" class="btn btn-sm btn-outline-secondary" :disabled="hasExactMatch" @click="createTag(searchText)">
 							<Icon type="plusLg"/>
 						</button>
 					</div>
@@ -193,8 +193,8 @@
 			</div>
 		</div>
 		<div v-if="isSelecting" class="d-flex gap-2 ms-auto">
-			<button class="btn btn-sm btn-primary" :disabled="!enableActions" @click="updateNoteTags(`add`)">Apply</button>
-			<button class="btn btn-sm btn-primary" :disabled="!enableActions" @click="updateNoteTags(`remove`)">Remove</button>
+			<button class="btn btn-sm btn-outline-primary" :disabled="!enableActions" @click="updateNoteTags(`add`)">Apply</button>
+			<button class="btn btn-sm btn-outline-danger" :disabled="!enableActions" @click="updateNoteTags(`remove`)">Remove</button>
 		</div>
 	</div>
 </template>
