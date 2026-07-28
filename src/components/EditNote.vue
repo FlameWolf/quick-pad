@@ -2,7 +2,7 @@
 	import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from "vue";
 	import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 	import { emptyString } from "@/constants/common";
-	import { copyNullableArray, areArraysEqual, areSetsEqual } from "@/utils/common";
+	import { areArraysEqual, areSetsEqual, copyNullableArray } from "@/utils/common";
 	import { getSentenceCount, getWordCount, getCharacterCount } from "@/utils/text-analysis";
 	import { debounce } from "@/utils/timing";
 	import { NoteModel } from "@/models/NoteModel";

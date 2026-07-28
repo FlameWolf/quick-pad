@@ -192,7 +192,7 @@
 				<button v-if="props.allowEdit" class="small btn-close ms-2" @click="unselectTag(tag)"></button>
 			</div>
 		</div>
-		<div v-if="props.allowManage && isSelecting" class="d-flex gap-2 ms-auto">
+		<div v-if="isSelecting" class="d-flex gap-2 ms-auto">
 			<button class="btn btn-sm btn-primary" :disabled="!enableActions" @click="updateNoteTags(`add`)">Apply</button>
 			<button class="btn btn-sm btn-primary" :disabled="!enableActions" @click="updateNoteTags(`remove`)">Remove</button>
 		</div>
