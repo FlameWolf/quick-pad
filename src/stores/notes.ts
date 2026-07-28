@@ -1,6 +1,7 @@
 import { computed, reactive, ref, toRaw, toRef } from "vue";
 import { emptyString } from "@/constants/common";
 import { TRASH_RETENTION_MS } from "@/constants/notes";
+import { mergeArrays } from "@/utils/common";
 import { contains } from "@/utils/text-analysis";
 import { notesRepository } from "@/storage/NotesRepository";
 import { tagsRepository } from "@/storage/TagsRepository";
@@ -52,14 +53,12 @@ export async function hydrateNotes(): Promise<void> {
 	hydrated = true;
 	try {
 		store.notes = await notesRepository.loadAll();
-		store.tags = Array.from(
-			new Set(
-				store.notes
-					.map(note => note.tags)
-					.filter(Boolean)
-					.flat()
-					.concat(await tagsRepository.loadAll()) as string[]
-			)
+		store.tags = mergeArrays(
+			store.notes
+				.map(note => note.tags)
+				.filter(Boolean)
+				.flat() as string[],
+			await tagsRepository.loadAll()
 		);
 	} catch (err) {
 		store.notes = [];
@@ -94,6 +93,7 @@ export function setSearchTags(tags: string[]) {
 
 export async function addNote(note: NoteModel) {
 	store.notes.push(note);
+	store.tags = mergeArrays(store.tags, note.tags);
 	await notesRepository.saveFull(toRaw(note));
 }
 
@@ -101,6 +101,7 @@ export async function updateNote(data: { id: UUID; title: string; content: strin
 	const note = store.notes.find(note => note.id === data.id);
 	if (note) {
 		note.update(data.title, data.content);
+		store.tags = mergeArrays(store.tags, note.tags);
 		await notesRepository.saveFull(toRaw(note));
 	}
 }
@@ -186,10 +187,12 @@ export async function restoreFromTrashMultiple(ids: ReadonlyArray<UUID>) {
 
 export async function addTags(id: UUID, tags: string[]) {
 	await applyToNote(id, note => note.addTags(tags));
+	store.tags = mergeArrays(store.tags, tags);
 }
 
 export async function addTagsMultiple(ids: ReadonlyArray<UUID>, tags: string[]) {
 	await applyToMany(ids, note => note.addTags(tags));
+	store.tags = mergeArrays(store.tags, tags);
 }
 
 export async function removeTags(id: UUID, tags: string[]) {
@@ -238,6 +241,7 @@ function addOrUpdate(updatedNote: NoteModel) {
 	} else {
 		store.notes.splice(index, 1, updatedNote);
 	}
+	store.tags = mergeArrays(store.tags, updatedNote.tags);
 }
 
 export async function replaceNote(updatedNote: NoteModel) {
