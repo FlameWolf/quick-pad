@@ -354,8 +354,10 @@
 			isEditing.value = isCreateMode.value;
 			if (id && !isCreateMode.value) {
 				loadedContent.value = (await notesStore.getNoteContent(id)) ?? emptyString;
+				editTags.value = Array.from(existingNote.value?.tags ?? []);
 			} else {
 				loadedContent.value = emptyString;
+				editTags.value = Array.from(notesStore.searchTags.value);
 			}
 			isContentLoaded.value = true;
 			undoRedo.reset(loadedContent.value);
@@ -384,23 +386,6 @@
 			rootElement.style.setProperty("--font-scale-factor", factor.toString());
 		},
 		{ immediate: true }
-	);
-
-	watch(
-		existingNote,
-		note => {
-			if (isCreateMode) {
-				editTags.value = Array.from(notesStore.searchTags.value);
-				return;
-			}
-			if (note) {
-				editTags.value = copyNullableArray(note.tags);
-			}
-		},
-		{
-			deep: true,
-			immediate: true
-		}
 	);
 </script>
 
