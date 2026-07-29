@@ -354,7 +354,7 @@
 			isEditing.value = isCreateMode.value;
 			if (id && !isCreateMode.value) {
 				loadedContent.value = (await notesStore.getNoteContent(id)) ?? emptyString;
-				editTags.value = Array.from(existingNote.value?.tags ?? []);
+				editTags.value = copyNullableArray(existingNote.value?.tags);
 			} else {
 				loadedContent.value = emptyString;
 				editTags.value = Array.from(notesStore.searchTags.value);
