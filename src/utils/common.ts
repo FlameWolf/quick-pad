@@ -35,3 +35,14 @@ export function copyNullableArray<T>(arr: T[] | undefined): T[] | undefined {
 	}
 	return undefined;
 }
+
+export function computeSetHash(set: Set<unknown>): string {
+	const serialized = JSON.stringify(Array.from(set).sort());
+	let hash = 0;
+	for (let i = 0; i < serialized.length; i++) {
+		const char = serialized.charCodeAt(i);
+		hash = (hash << 5) - hash + char;
+		hash |= 0;
+	}
+	return hash.toString();
+}

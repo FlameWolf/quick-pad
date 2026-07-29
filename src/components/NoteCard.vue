@@ -1,6 +1,7 @@
 <script setup lang="ts">
 	import { computed } from "vue";
 	import { emptyString } from "@/constants/common";
+	import * as notesStore from "@/stores/notes";
 	import Icon from "@/components/Icon.vue";
 	import type { NoteModel } from "@/models/NoteModel";
 	import type { UUID } from "crypto";
@@ -26,6 +27,13 @@
 			emit("toggleSelect", note.value.id);
 		}
 	}
+
+	function addToSearchTags(tag: string) {
+		if (props.selectionMode) {
+			return;
+		}
+		notesStore.addSearchTag(tag);
+	}
 </script>
 <template>
 	<RouterLink :to="`/notes/${note.id}`" class="card note-card text-decoration-none position-relative" :class="{ selected: props.selectionMode && props.selected }" @click.capture="onClick">
@@ -43,7 +51,7 @@
 		</div>
 		<div class="bg-body small w-100 position-absolute bottom-0">
 			<div v-if="note.tags" class="d-flex gap-1 px-2 py-2">
-				<div class="badge text-bg-secondary" v-for="tag in note.tags">#{{ tag }}</div>
+				<a class="badge text-bg-secondary" v-for="tag in note.tags" role="button" @click.prevent="addToSearchTags(tag)">#{{ tag }}</a>
 			</div>
 			<div class="d-flex gap-1 px-2 py-2 border-top">
 				<div class="badge text-bg-secondary" v-if="note.sentenceCount">{{ note.sentenceCount }} sentences</div>
