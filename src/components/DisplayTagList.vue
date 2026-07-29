@@ -1,5 +1,6 @@
 <script setup lang="ts">
 	import { computed, onMounted, ref, useTemplateRef, watch } from "vue";
+	import { useRouter } from "vue-router";
 	import { emptyString } from "@/constants/common";
 	import { normaliseTag, titleCase } from "@/utils/common";
 	import { getTime } from "@/utils/dates";
@@ -22,6 +23,7 @@
 	const emit = defineEmits<{
 		selectionChanged: [tags: string[]];
 	}>();
+	const router = useRouter();
 	const dropdownToggle = useTemplateRef("dropdown-toggle");
 	const dropdownMenu = useTemplateRef("dropdown-menu");
 	const searchText = ref(emptyString);
@@ -126,6 +128,14 @@
 		exitSelectionMode();
 	}
 
+	function addToSearchTags(tag: string) {
+		if (props.allowEdit) {
+			return;
+		}
+		notesStore.addSearchTag(tag);
+		router.push("/");
+	}
+
 	onMounted(() => {
 		selectedTags.value = props.activeTags ?? [];
 		watch(
@@ -190,10 +200,10 @@
 			</ul>
 		</div>
 		<div v-if="selectedTags.length" class="d-flex flex-wrap gap-2">
-			<div v-for="tag in selectedTags" class="badge align-self-center text-bg-secondary" :class="{ [`py-2`]: !props.allowEdit }">
+			<component :is="props.allowEdit ? `div` : `a`" v-for="tag in selectedTags" class="badge align-self-center text-bg-secondary" :class="{ [`py-2`]: !props.allowEdit }" @click="addToSearchTags(tag)" v-bind="props.allowEdit ? {} : { [`role`]: `button` }">
 				<span>{{ tag }}</span>
 				<button v-if="props.allowEdit" class="small btn-close ms-2" @click="unselectTag(tag)"></button>
-			</div>
+			</component>
 		</div>
 		<div v-if="isSelecting" class="d-flex gap-2 ms-auto">
 			<button class="btn btn-sm btn-outline-primary" :disabled="!enableActions" @click="updateNoteTags(`add`)">Apply</button>
