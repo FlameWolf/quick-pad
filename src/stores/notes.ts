@@ -87,6 +87,10 @@ export function setSearchText(query: string) {
 		});
 }
 
+export function addSearchTag(tag: string) {
+	store.searchTags.add(tag);
+}
+
 export function setSearchTags(tags: string[]) {
 	store.searchTags = new Set(tags);
 }
