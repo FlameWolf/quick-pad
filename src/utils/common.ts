@@ -35,7 +35,3 @@ export function copyNullableArray<T>(arr: T[] | undefined): T[] | undefined {
 	}
 	return undefined;
 }
-
-export function computeSetKey(set: Set<unknown>): string {
-	return Array.from(set).sort().join(":");
-}

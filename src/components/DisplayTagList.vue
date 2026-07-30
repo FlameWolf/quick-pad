@@ -2,7 +2,7 @@
 	import { computed, onMounted, ref, useTemplateRef, watch } from "vue";
 	import { useRouter } from "vue-router";
 	import { emptyString } from "@/constants/common";
-	import { normaliseTag, titleCase } from "@/utils/common";
+	import { areSetsEqual, normaliseTag, titleCase } from "@/utils/common";
 	import { getTime } from "@/utils/dates";
 	import { contains, equals } from "@/utils/text-analysis";
 	import * as notesStore from "@/stores/notes";
@@ -12,6 +12,8 @@
 	import { requestSync } from "@/composables/useNotesSync";
 	import Icon from "@/components/Icon.vue";
 
+	let syncingUp = false;
+	let syncingDown = false;
 	let lastSelected: string[] = [];
 	const props = defineProps<{
 		activeTags?: string[];
@@ -46,6 +48,27 @@
 		return notesStore.tags.value.some(tag => equals(tag, normaliseTag(searchText.value)));
 	});
 	const enableActions = computed(() => !!(selectedCount.value && selectedTags.value.length));
+
+	function syncState(direction: "up" | "down") {
+		if (!props.allowEdit || isSelecting.value) {
+			return;
+		}
+		if (areSetsEqual(new Set(selectedTags.value), notesStore.searchTags.value)) {
+			return;
+		}
+		switch (direction) {
+			case "up": {
+				syncingUp = true;
+				notesStore.setSearchTags(selectedTags.value);
+				break;
+			}
+			case "down": {
+				syncingDown = true;
+				selectedTags.value = Array.from(notesStore.searchTags.value);
+				break;
+			}
+		}
+	}
 
 	function isTagSelected(tag: string) {
 		return selectedTags.value.includes(tag);
@@ -138,13 +161,6 @@
 
 	onMounted(() => {
 		selectedTags.value = props.activeTags ?? [];
-		watch(
-			selectedTags,
-			tags => {
-				emit("selectionChanged", tags);
-			},
-			{ deep: true }
-		);
 	});
 
 	watch(isSelecting, (curr, prev) => {
@@ -154,7 +170,6 @@
 		if (!curr) {
 			selectedTags.value = Array.from(lastSelected);
 		}
-		emit("selectionChanged", selectedTags.value);
 	});
 
 	watch(
@@ -165,6 +180,25 @@
 			}
 		}
 	);
+
+	watch(
+		selectedTags,
+		() => {
+			emit("selectionChanged", selectedTags.value);
+			if (!syncingDown) {
+				syncState("up");
+			}
+			syncingDown = false;
+		},
+		{ deep: true }
+	);
+
+	watch(notesStore.searchTags, () => {
+		if (!syncingUp) {
+			syncState("down");
+		}
+		syncingUp = false;
+	});
 </script>
 <template>
 	<div class="d-flex flex-wrap gap-2 p-1 border rounded">
