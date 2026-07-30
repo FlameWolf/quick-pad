@@ -196,7 +196,7 @@ async function runPull(force = false) {
 			continue;
 		}
 		remoteCount += readCount;
-		const changes = mergeNotesByModifiedAt(notesStore.notes.value, remoteNotes);
+		const changes = mergeNotesByModifiedAt(notesStore.notes.value as ReadonlyArray<NoteModel>, remoteNotes);
 		const changeCount = changes.length;
 		if (changeCount > 0) {
 			await notesStore.replaceMultiple(changes);
@@ -212,8 +212,8 @@ async function runPull(force = false) {
 async function runPush(purged: ReadonlyArray<UUID> = [], force = false) {
 	const syncStartedAt = new Date();
 	await purgeRemoteFiles(purged);
-	const candidates = force ? notesStore.notes.value : notesStore.notes.value.filter(n => noteEffectiveTime(n) > (lastSyncedToCloudAt.value?.getTime() ?? 0));
-	const results = await Promise.all(candidates.map(uploadNote));
+	const candidates = force ? notesStore.notes.value : notesStore.notes.value.filter(n => noteEffectiveTime(n as NoteModel) > (lastSyncedToCloudAt.value?.getTime() ?? 0));
+	const results = await Promise.all((candidates as ReadonlyArray<NoteModel>).map(uploadNote));
 	lastSyncedToCloudAt.value = syncStartedAt;
 	return {
 		conflicts: results.filter(r => r === "conflict").length
