@@ -1,4 +1,4 @@
-import { computed, reactive, ref, toRaw, toRef } from "vue";
+import { computed, reactive, readonly, ref, toRaw, toRef } from "vue";
 import { emptyString } from "@/constants/common";
 import { TRASH_RETENTION_MS } from "@/constants/notes";
 import { mergeArrays } from "@/utils/common";
@@ -27,8 +27,8 @@ const store = reactive<NotesState>({
 	isSearching: false
 });
 const contentMatchedIds = ref(new Set<UUID>());
-export const notes = toRef(() => store.notes);
-export const tags = toRef(() => store.tags);
+export const notes = readonly(toRef(() => store.notes));
+export const tags = readonly(toRef(() => store.tags));
 export const searchText = computed(() => store.searchText);
 export const searchTags = computed(() => store.searchTags);
 export const isLoading = computed(() => store.isLoading);
@@ -93,6 +93,13 @@ export function addSearchTag(tag: string) {
 
 export function setSearchTags(tags: string[]) {
 	store.searchTags = new Set(tags);
+}
+
+export function setNoteTags(id: UUID, tags: string[] | undefined) {
+	const note = store.notes.find(note => note.id === id);
+	if (note) {
+		note.tags = tags?.length ? tags : undefined;
+	}
 }
 
 export async function addNote(note: NoteModel) {

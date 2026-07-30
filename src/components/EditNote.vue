@@ -148,10 +148,10 @@
 			isEditing.value = false;
 			router.push(backRoute.value);
 		} else {
-			isEditing.value = false;
 			editTitle.value = existingNote.value?.title ?? emptyString;
 			editContent.value = loadedContent.value;
 			editTags.value = copyNullableArray(existingNote.value?.tags);
+			isEditing.value = false;
 		}
 	}
 
@@ -159,14 +159,16 @@
 		const title = editTitle.value.trim() || "Untitled";
 		const content = editContent.value;
 		const tags = editTags.value;
-		const note = isCreateMode.value ? new NoteModel(title, content) : existingNote.value!;
 		isEditing.value = false;
-		note.tags = tags?.length ? tags : undefined;
 		if (isCreateMode.value) {
+			const note = new NoteModel(title, content);
+			note.tags = tags?.length ? tags : undefined;
 			await notesStore.addNote(note);
 			router.push(`/notes/${note.id}`);
-		} else {
-			await notesStore.updateNote({ id: note.id, title, content });
+		} else if (existingNote.value) {
+			const noteId = existingNote.value.id;
+			notesStore.setNoteTags(noteId, tags);
+			await notesStore.updateNote({ id: noteId, title, content });
 			loadedContent.value = content;
 		}
 		clearDraft(draftId.value);
