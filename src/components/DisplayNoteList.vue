@@ -2,7 +2,6 @@
 	import { computed, onMounted, watch } from "vue";
 	import { onBeforeRouteLeave } from "vue-router";
 	import { bulkActions } from "@/constants/actions";
-	import { computeSetKey } from "@/utils/common";
 	import * as appStore from "@/stores/app";
 	import * as notesStore from "@/stores/notes";
 	import { confirm } from "@/composables/useConfirmDialogue";
@@ -235,12 +234,6 @@
 		requestSync(trashedNoteIds);
 	}
 
-	async function updateTagFilter(tags: string[]) {
-		if (!isSelecting.value) {
-			notesStore.setSearchTags(tags);
-		}
-	}
-
 	onMounted(() => {
 		exitSelectionMode();
 	});
@@ -315,7 +308,7 @@
 				</template>
 			</template>
 		</div>
-		<DisplayTagList class="mb-3" :key="computeSetKey(notesStore.searchTags.value)" :active-tags="Array.from(notesStore.searchTags.value)" :allow-create="isSelecting" :allow-delete="true" :allow-edit="true" :allow-manage="!isSelecting" @selection-changed="updateTagFilter"/>
+		<DisplayTagList class="mb-3" :active-tags="Array.from(notesStore.searchTags.value)" :allow-create="isSelecting" :allow-delete="true" :allow-edit="true" :allow-manage="!isSelecting"/>
 		<template v-for="section in noteSections" :key="section.key">
 			<div v-if="section.divider" class="d-flex align-items-center my-4">
 				<div class="flex-grow-1 border-bottom"></div>

@@ -88,7 +88,7 @@ export function setSearchText(query: string) {
 }
 
 export function addSearchTag(tag: string) {
-	store.searchTags.add(tag);
+	store.searchTags = new Set(Array.from(store.searchTags).concat(tag));
 }
 
 export function setSearchTags(tags: string[]) {
