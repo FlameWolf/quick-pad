@@ -183,9 +183,9 @@
 
 	watch(
 		selectedTags,
-		() => {
-			emit("selectionChanged", selectedTags.value);
-			if (!syncingDown) {
+		tags => {
+			emit("selectionChanged", tags);
+			if (!syncingDown && props.allowManage) {
 				syncState("up");
 			}
 			syncingDown = false;
