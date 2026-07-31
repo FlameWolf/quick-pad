@@ -14,6 +14,7 @@
 	import { exportNote } from "@/composables/useFileIO";
 	import { clearDraft, loadDraft, saveDraft } from "@/composables/useNoteDraft";
 	import { requestSync } from "@/composables/useNotesSync";
+	import { useTruncate } from "@/composables/useTruncate";
 	import { useUndoRedo } from "@/composables/useUndoRedo";
 	import Icon from "@/components/Icon.vue";
 	import DisplayTagList from "@/components/DisplayTagList.vue";
@@ -319,6 +320,8 @@
 		}
 	}
 
+	useTruncate(useTemplateRef("title-input"), editTitle, 1024);
+
 	onMounted(() => {
 		if (!listViewRoutes.includes(backRoute.value)) {
 			appStore.lastView.value = null;
@@ -496,7 +499,7 @@
 	</template>
 	<div class="edit-note">
 		<template v-if="isEditing">
-			<input v-model="editTitle" type="text" class="form-control form-control-lg" placeholder="Title"/>
+			<input ref="title-input" v-model.trim="editTitle" type="text" class="form-control form-control-lg" placeholder="Title"/>
 			<hr class="my-1"/>
 			<textarea ref="edit-text-area" :value="editContent" @input="onContentInput" class="form-control note-textarea" placeholder="Start writing..." rows="12"></textarea>
 		</template>
