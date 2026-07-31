@@ -30,7 +30,7 @@
 	const dropdownMenu = useTemplateRef("dropdown-menu");
 	const searchText = ref(emptyString);
 	const selectedTags = ref<string[]>([]);
-	const { show, toggle } = useDropdown(dropdownToggle, {
+	const dropdown = useDropdown(dropdownToggle, {
 		autoClose: false,
 		dropdown: dropdownMenu
 	});
@@ -106,6 +106,7 @@
 	async function deleteTags(tags: string[]) {
 		const hasMany = tags.length > 1;
 		const suffix = hasMany ? "s" : emptyString;
+		dropdown.toggle();
 		const ok = await confirm({
 			title: `Delete selected tag${suffix} permanently?`,
 			message: `The selected tag${suffix} will be deleted permanently. ${hasMany ? "They" : "It"} will also be removed from any notes that use ${hasMany ? "them" : "it"}.`,
@@ -203,16 +204,16 @@
 <template>
 	<div class="d-flex flex-wrap gap-2 p-1 border rounded">
 		<div class="dropdown">
-			<button v-if="props.allowEdit" ref="dropdown-toggle" class="btn btn-sm btn-outline-secondary dropdown-toggle" @click="toggle">Tags</button>
+			<button v-if="props.allowEdit" ref="dropdown-toggle" class="btn btn-sm btn-outline-secondary dropdown-toggle" @click="dropdown.toggle">Tags</button>
 			<label v-else class="small border border-secondary rounded px-2 py-1">Tags</label>
-			<ul v-if="props.allowEdit && show" ref="dropdown-menu" class="dropdown-menu show mt-1 ms-n1">
+			<ul v-if="props.allowEdit && dropdown.show.value" ref="dropdown-menu" class="dropdown-menu show tag-list mt-1 ms-n1">
 				<template v-if="props.allowManage">
-					<li class="dropdown-item">
-						<label class="btn btn-sm btn-outline-secondary">
+					<li class="dropdown-item d-flex flex-wrap gap-2">
+						<label class="btn btn-sm btn-outline-secondary flex-grow-1">
 							<input type="checkbox" class="form-check-input" :checked="allSelected" :disabled="!filteredTags.length" @change="toggleSelectAll"/>
 							<span class="ms-2">{{ allSelected ? "Deselect All" : "Select All" }}</span>
 						</label>
-						<button v-if="props.allowDelete" class="btn btn-sm btn-outline-danger ms-2" :disabled="!selectedTags.length" @click="deleteTags(selectedTags)">Delete Selected</button>
+						<button v-if="props.allowDelete" class="btn btn-sm btn-outline-danger flex-grow-1" :disabled="!selectedTags.length" @click="deleteTags(selectedTags)">Delete Selected</button>
 					</li>
 					<li class="dropdown-divider"></li>
 				</template>
