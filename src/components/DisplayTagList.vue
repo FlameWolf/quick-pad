@@ -209,7 +209,7 @@
 				<template v-if="props.allowManage">
 					<li class="dropdown-item">
 						<label class="btn btn-sm btn-outline-secondary">
-							<input type="checkbox" :checked="allSelected" :disabled="!filteredTags.length" @change="toggleSelectAll"/>
+							<input type="checkbox" class="form-check-input" :checked="allSelected" :disabled="!filteredTags.length" @change="toggleSelectAll"/>
 							<span class="ms-2">{{ allSelected ? "Deselect All" : "Select All" }}</span>
 						</label>
 						<button v-if="props.allowDelete" class="btn btn-sm btn-outline-danger ms-2" :disabled="!selectedTags.length" @click="deleteTags(selectedTags)">Delete Selected</button>
@@ -227,7 +227,7 @@
 				<li class="dropdown-divider"></li>
 				<li v-for="tag in filteredTags">
 					<label class="dropdown-item">
-						<input type="checkbox" :checked="isTagSelected(tag)" @change="toggleTagSelection(tag)"/>
+						<input type="checkbox" class="form-check-input" :checked="isTagSelected(tag)" @change="toggleTagSelection(tag)"/>
 						<span class="text-wrap text-break ms-2">{{ tag }}</span>
 					</label>
 				</li>
