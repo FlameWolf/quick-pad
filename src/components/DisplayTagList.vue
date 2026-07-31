@@ -10,6 +10,7 @@
 	import { useDropdown } from "@/composables/useDropdown";
 	import { exitSelectionMode, isSelecting, selectedCount, selectedIds } from "@/composables/useNoteSelection";
 	import { requestSync } from "@/composables/useNotesSync";
+	import { useTruncate } from "@/composables/useTruncate";
 	import Icon from "@/components/Icon.vue";
 
 	let syncingUp = false;
@@ -26,10 +27,10 @@
 		selectionChanged: [tags: string[]];
 	}>();
 	const router = useRouter();
-	const dropdownToggle = useTemplateRef("dropdown-toggle");
-	const dropdownMenu = useTemplateRef("dropdown-menu");
 	const searchText = ref(emptyString);
 	const selectedTags = ref<string[]>([]);
+	const dropdownToggle = useTemplateRef("dropdown-toggle");
+	const dropdownMenu = useTemplateRef("dropdown-menu");
 	const dropdown = useDropdown(dropdownToggle, {
 		autoClose: false,
 		dropdown: dropdownMenu
@@ -160,6 +161,8 @@
 		router.push("/");
 	}
 
+	useTruncate(useTemplateRef("tag-input"), searchText, 256);
+
 	onMounted(() => {
 		selectedTags.value = props.activeTags ?? [];
 	});
@@ -219,7 +222,7 @@
 				</template>
 				<li class="dropdown-item">
 					<div class="flex-nowrap" :class="{ [`input-group`]: props.allowCreate }">
-						<input v-model.trim="searchText" type="text" class="form-control form-control-sm" placeholder="Search"/>
+						<input ref="tag-input" v-model.trim="searchText" type="text" class="form-control form-control-sm" placeholder="Search"/>
 						<button v-if="props.allowCreate" class="btn btn-sm btn-outline-secondary" :disabled="hasExactMatch" @click="createTag(searchText)">
 							<Icon type="plusLg"/>
 						</button>
