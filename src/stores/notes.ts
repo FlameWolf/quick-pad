@@ -1,18 +1,21 @@
 import { computed, reactive, readonly, ref, toRaw, toRef } from "vue";
 import { emptyString } from "@/constants/common";
 import { TRASH_RETENTION_MS } from "@/constants/notes";
-import { mergeArrays } from "@/utils/common";
+import { arrayContainsSet, mergeArrays } from "@/utils/common";
 import { contains } from "@/utils/text-analysis";
 import { notesRepository } from "@/storage/NotesRepository";
 import { tagsRepository } from "@/storage/TagsRepository";
 import type { NoteModel } from "@/models/NoteModel";
 import type { UUID } from "crypto";
 
+type FilterType = "any" | "all";
+
 interface NotesState {
 	notes: NoteModel[];
 	tags: string[];
 	searchText: string;
 	searchTags: Set<string>;
+	tagFilter: FilterType;
 	isLoading: boolean;
 	isSearching: boolean;
 }
@@ -23,6 +26,7 @@ const store = reactive<NotesState>({
 	tags: [],
 	searchText: emptyString,
 	searchTags: new Set<string>(),
+	tagFilter: "any",
 	isLoading: true,
 	isSearching: false
 });
@@ -31,6 +35,7 @@ export const notes = readonly(toRef(() => store.notes));
 export const tags = readonly(toRef(() => store.tags));
 export const searchText = computed(() => store.searchText);
 export const searchTags = computed(() => store.searchTags);
+export const tagFilter = computed(() => store.tagFilter);
 export const isLoading = computed(() => store.isLoading);
 export const isSearching = computed(() => store.isSearching);
 export const searchResults = computed(() => {
@@ -39,7 +44,19 @@ export const searchResults = computed(() => {
 	if (store.searchTags.size === 0) {
 		return initial;
 	}
-	return initial.filter(note => note.tags?.some(tag => store.searchTags.has(tag)));
+	return initial.filter(note => {
+		switch (store.tagFilter) {
+			case "any": {
+				return note.tags?.some(tag => store.searchTags.has(tag));
+			}
+			case "all": {
+				if (!note.tags) {
+					return false;
+				}
+				return arrayContainsSet(note.tags, store.searchTags);
+			}
+		}
+	});
 });
 export const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt));
 export const favedNotes = computed(() => searchResults.value.filter(note => note.favedAt && !note.deletedAt));
@@ -93,6 +110,10 @@ export function addSearchTag(tag: string) {
 
 export function setSearchTags(tags: string[]) {
 	store.searchTags = new Set(tags);
+}
+
+export function setFilterType(type: FilterType) {
+	store.tagFilter = type;
 }
 
 export function setNoteTags(id: UUID, tags: string[] | undefined) {

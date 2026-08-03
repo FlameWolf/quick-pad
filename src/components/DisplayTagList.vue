@@ -22,6 +22,7 @@
 		allowDelete?: boolean;
 		allowEdit?: boolean;
 		allowManage?: boolean;
+		showFilterType?: boolean;
 	}>();
 	const emit = defineEmits<{
 		selectionChanged: [tags: string[]];
@@ -242,6 +243,17 @@
 				<span>{{ tag }}</span>
 				<button v-if="props.allowEdit" class="small btn-close ms-2" @click="unselectTag(tag)"></button>
 			</component>
+		</div>
+		<div v-if="props.showFilterType && selectedTags.length" class="input-group input-group-sm flex-nowrap w-auto ms-auto">
+			<span class="input-group-text">Match:</span>
+			<label class="btn btn-outline-secondary" :class="{ [`active`]: notesStore.tagFilter.value === `any` }">
+				<input type="radio" class="btn-check" name="filter-type" @change="notesStore.setFilterType(`any`)"/>
+				<span>Any</span>
+			</label>
+			<label class="btn btn-outline-secondary" :class="{ [`active`]: notesStore.tagFilter.value === `all` }">
+				<input type="radio" class="btn-check" name="filter-type" @change="notesStore.setFilterType(`all`)"/>
+				<span>All</span>
+			</label>
 		</div>
 		<div v-if="isSelecting" class="d-flex gap-2 ms-auto">
 			<button class="btn btn-sm btn-outline-primary" :disabled="!enableActions" @click="updateNoteTags(`add`)">Apply</button>
