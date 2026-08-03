@@ -35,3 +35,15 @@ export function copyNullableArray<T>(arr: T[] | undefined): T[] | undefined {
 	}
 	return undefined;
 }
+
+export function arrayContainsSet<T>(array: T[], set: Set<T>) {
+	if (array.length < set.size) {
+		return false;
+	}
+	for (const element of set) {
+		if (!array.includes(element)) {
+			return false;
+		}
+	}
+	return true;
+}
