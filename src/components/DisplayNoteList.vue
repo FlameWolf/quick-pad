@@ -10,6 +10,7 @@
 	import { getSortedNotes, setSortField, sortField, sortOrder, toggleSortDirection } from "@/composables/useNoteSort";
 	import { requestSync } from "@/composables/useNotesSync";
 	import Icon from "@/components/Icon.vue";
+	import Spinner from "@/components/Spinner.vue";
 	import EmptyState from "@/components/EmptyState.vue";
 	import SortControls from "@/components/SortControls.vue";
 	import DisplayTagList from "@/components/DisplayTagList.vue";
@@ -253,12 +254,7 @@
 			<span class="ms-2">Back to Notes</span>
 		</RouterLink>
 	</div>
-	<template v-if="notesStore.isLoading.value || notesStore.isSearching.value">
-		<div class="d-flex flex-column justify-content-center align-items-center">
-			<div class="spinner-border" aria-hidden="true"></div>
-			<div class="mt-3" role="status">{{ notesStore.isSearching.value ? "Searching..." : "Loading notes..." }}</div>
-		</div>
-	</template>
+	<Spinner v-if="notesStore.isLoading.value || notesStore.isSearching.value" :message="notesStore.isSearching.value ? `Searching...` : `Loading notes...`"/>
 	<EmptyState v-else-if="!hasNotes && !notesStore.searchTags.value.size" :message="emptyMessage" :show-actions="view === `active` && !isSearchMode" @import="handleImport"/>
 	<template v-else>
 		<div class="d-flex gap-2 mb-3 justify-content-end flex-wrap">
