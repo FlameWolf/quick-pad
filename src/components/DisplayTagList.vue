@@ -4,7 +4,7 @@
 	import { emptyString } from "@/constants/common";
 	import { areSetsEqual, normaliseTag, titleCase } from "@/utils/common";
 	import { getTime } from "@/utils/dates";
-	import { contains, equals } from "@/utils/text-analysis";
+	import { contains, equals, sort } from "@/utils/text-analysis";
 	import * as notesStore from "@/stores/notes";
 	import { confirm } from "@/composables/useConfirmDialogue";
 	import { useDropdown } from "@/composables/useDropdown";
@@ -36,19 +36,9 @@
 		autoClose: false,
 		dropdown: dropdownMenu
 	});
-	const filteredTags = computed(() => {
-		if (!searchText.value) {
-			return notesStore.tags.value;
-		}
-		return notesStore.tags.value.filter(tag => contains(tag, searchText.value));
-	});
+	const filteredTags = computed(() => sort(!searchText.value ? notesStore.tags.value : notesStore.tags.value.filter(tag => contains(tag, searchText.value))));
 	const allSelected = computed(() => filteredTags.value.every(tag => selectedTags.value.includes(tag)));
-	const hasExactMatch = computed(() => {
-		if (!searchText.value) {
-			return true;
-		}
-		return notesStore.tags.value.some(tag => equals(tag, normaliseTag(searchText.value)));
-	});
+	const hasExactMatch = computed(() => !searchText.value || notesStore.tags.value.some(tag => equals(tag, normaliseTag(searchText.value))));
 	const enableActions = computed(() => !!(selectedCount.value && selectedTags.value.length));
 
 	function syncState(direction: "up" | "down") {
