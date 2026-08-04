@@ -7,6 +7,17 @@ interface DriveFile {
 	modifiedTime: string;
 }
 
+interface Revision {
+	id: string;
+	modifiedTime: string;
+	size: string;
+	lastModifyingUser: {
+		displayName: string;
+		me: boolean;
+		emailAddress: string;
+	};
+}
+
 async function fetchOrThrow(url: string, init?: RequestInit): Promise<Response> {
 	const res = await fetch(url, init);
 	if (!res.ok) {
@@ -134,4 +145,32 @@ export async function deleteFile(filename: string): Promise<boolean> {
 	}
 	await deleteFileById(file.id);
 	return true;
+}
+
+export async function listRevisions(filename: string, pageToken?: string): Promise<{ pageToken: string | undefined; revisionList: Revision[] }> {
+	const fileId = (await findFile(filename))?.id;
+	if (!fileId) {
+		return {
+			pageToken: undefined,
+			revisionList: []
+		};
+	}
+	const revisions: Revision[] = [];
+	const params = new URLSearchParams({
+		pageSize: "25"
+	});
+	if (pageToken) {
+		params.set("pageToken", pageToken);
+	}
+	const res = await fetchOrThrow(`${DRIVE_API}/${fileId}/revisions/?${params}`, {
+		headers: await headers()
+	});
+	const data = await res.json();
+	if (Array.isArray(data.revisions)) {
+		revisions.push(...data.revisions);
+	}
+	return {
+		pageToken: data.nextPageToken,
+		revisionList: revisions
+	};
 }
