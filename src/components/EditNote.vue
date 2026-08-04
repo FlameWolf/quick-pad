@@ -18,6 +18,7 @@
 	import { useUndoRedo } from "@/composables/useUndoRedo";
 	import Icon from "@/components/Icon.vue";
 	import Spinner from "@/components/Spinner.vue";
+	import NoteRevisions from "@/components/NoteRevisions.vue";
 	import DisplayTagList from "@/components/DisplayTagList.vue";
 	import type { UUID } from "crypto";
 
@@ -486,6 +487,7 @@
 			</button>
 		</div>
 	</div>
+	<NoteRevisions v-if="existingNote" :note-id="existingNote.id"/>
 	<template v-if="!isEditing && existingNote">
 		<h2 class="note-title mb-3">{{ existingNote.title }}</h2>
 		<div class="d-flex flex-wrap gap-2">
