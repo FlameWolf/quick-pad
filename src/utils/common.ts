@@ -29,9 +29,9 @@ export function areSetsEqual(setA: Set<unknown>, setB: Set<unknown>) {
 	return setA.symmetricDifference(setB).size === 0;
 }
 
-export function copyNullableArray<T>(arr: T[] | undefined): T[] | undefined {
-	if (arr) {
-		return Array.from(arr);
+export function copyNullableArray<T>(array: T[] | undefined): T[] | undefined {
+	if (array) {
+		return Array.from(array);
 	}
 	return undefined;
 }
