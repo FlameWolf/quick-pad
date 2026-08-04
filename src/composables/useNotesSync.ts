@@ -125,10 +125,6 @@ function mergeNotesByModifiedAt(local: ReadonlyArray<NoteModel>, remote: Readonl
 	return changes;
 }
 
-function getFileName(id: UUID) {
-	return `${NOTE_PREFIX}${id}.json`;
-}
-
 async function readRemoteNotes(force = false, token?: string): Promise<{ token: string | undefined; notes: NoteModel[] }> {
 	const { pageToken, fileList } = await listFiles(NOTE_PREFIX, force ? null : lastSyncedToLocalAt.value, token);
 	const notes: NoteModel[] = [];
@@ -230,6 +226,10 @@ async function saveToCloud(purged: ReadonlyArray<UUID> = []) {
 	} finally {
 		state.isSyncing = false;
 	}
+}
+
+export function getFileName(id: UUID) {
+	return `${NOTE_PREFIX}${id}.json`;
 }
 
 export async function doPullAndPush({ force = false as boolean, purged = [] as ReadonlyArray<UUID> } = {}) {
