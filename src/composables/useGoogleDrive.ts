@@ -147,14 +147,7 @@ export async function deleteFile(filename: string): Promise<boolean> {
 	return true;
 }
 
-export async function listRevisions(filename: string, pageToken?: string): Promise<{ pageToken: string | undefined; revisionList: Revision[] }> {
-	const fileId = (await findFile(filename))?.id;
-	if (!fileId) {
-		return {
-			pageToken: undefined,
-			revisionList: []
-		};
-	}
+export async function listRevisionsById(fileId: string, pageToken?: string): Promise<{ pageToken: string | undefined; revisionList: Revision[] }> {
 	const revisions: Revision[] = [];
 	const params = new URLSearchParams({
 		pageSize: "25"
@@ -173,4 +166,27 @@ export async function listRevisions(filename: string, pageToken?: string): Promi
 		pageToken: data.nextPageToken,
 		revisionList: revisions
 	};
+}
+
+export async function listRevisions(filename: string): Promise<{
+	fileId: string | undefined;
+	pageToken: string | undefined;
+	revisionList: Revision[];
+}> {
+	const fileId = (await findFile(filename))?.id;
+	if (!fileId) {
+		return {
+			fileId,
+			pageToken: undefined,
+			revisionList: []
+		};
+	}
+	return Object.assign({ fileId }, await listRevisionsById(fileId));
+}
+
+export async function getRevisionContent(fileId: string, revisionId: string): Promise<unknown> {
+	const res = await fetchOrThrow(`${DRIVE_API}/${fileId}/revisions/${revisionId}?alt=media`, {
+		headers: await headers()
+	});
+	return res.json();
 }
