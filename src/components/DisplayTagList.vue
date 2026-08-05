@@ -218,7 +218,7 @@
 	});
 </script>
 <template>
-	<div class="d-flex flex-wrap gap-2 p-1 border rounded">
+	<div class="d-flex flex-wrap gap-2 p-1 border rounded inline-container">
 		<div class="dropdown">
 			<button v-if="props.allowEdit" ref="dropdown-toggle" class="btn btn-sm btn-outline-secondary dropdown-toggle" @click="dropdown.toggle">Tags</button>
 			<label v-else class="small border border-secondary rounded px-2 py-1">Tags</label>
@@ -242,8 +242,8 @@
 					</div>
 				</li>
 				<li class="dropdown-divider"></li>
-				<li v-for="tag in filteredTags">
-					<label class="dropdown-item">
+				<li class="d-flex flex-wrap gap-4 px-3">
+					<label v-for="tag in filteredTags">
 						<input type="checkbox" class="form-check-input" :checked="isTagSelected(tag)" @change="toggleTagSelection(tag)"/>
 						<span class="text-wrap text-break ms-2">{{ tag }}</span>
 					</label>
