@@ -9,8 +9,8 @@ type DropdownOptions = {
 export function useDropdown(trigger: TemplateRef<HTMLElement>, { initialState = false, autoClose = true, dropdown }: DropdownOptions = {}) {
 	const show = ref(initialState);
 
-	function toggle() {
-		show.value = !show.value;
+	function toggle(force?: boolean) {
+		show.value = force ?? !show.value;
 	}
 
 	function clickedOutside(event: MouseEvent) {

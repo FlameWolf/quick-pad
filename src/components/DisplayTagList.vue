@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from "vue";
+	import { computed, onMounted, ref, useTemplateRef, watch } from "vue";
 	import { useRouter } from "vue-router";
 	import { emptyString } from "@/constants/common";
 	import { areSetsEqual, normaliseTag, titleCase } from "@/utils/common";
@@ -30,7 +30,6 @@
 	const router = useRouter();
 	const searchText = ref(emptyString);
 	const selectedTags = ref<string[]>([]);
-	const appElem = document.getElementById("app")!;
 	const dropdownToggle = useTemplateRef("dropdown-toggle");
 	const dropdownMenu = useTemplateRef("dropdown-menu");
 	const dropdown = useDropdown(dropdownToggle, {
@@ -60,18 +59,6 @@
 				selectedTags.value = Array.from(notesStore.searchTags.value);
 				break;
 			}
-		}
-	}
-
-	function adjustAppHeight() {
-		appElem.removeAttribute("style");
-		const menuElem = dropdownMenu.value;
-		if (!menuElem) {
-			return;
-		}
-		const bottom = menuElem.getBoundingClientRect().bottom + window.scrollY;
-		if (bottom > appElem.offsetHeight) {
-			appElem.style.minHeight = `${bottom + 16}px`;
 		}
 	}
 
@@ -111,7 +98,7 @@
 	async function deleteTags(tags: string[]) {
 		const hasMany = tags.length > 1;
 		const suffix = hasMany ? "s" : emptyString;
-		dropdown.toggle();
+		dropdown.toggle(false);
 		const ok = await confirm({
 			title: `Delete selected tag${suffix} permanently?`,
 			message: `The selected tag${suffix} will be deleted permanently. ${hasMany ? "They" : "It"} will also be removed from any notes that use ${hasMany ? "them" : "it"}.`,
@@ -131,6 +118,7 @@
 	async function updateNoteTags(action: "add" | "remove") {
 		const now = Date.now();
 		const isAdding = action === "add";
+		dropdown.toggle(false);
 		const ok = await confirm({
 			title: `${titleCase(action)} tags`,
 			message: `The selected tags will be ${isAdding ? "added" : "removed"} ${isAdding ? "to" : "from"} the selected notes. Do you want to proceed?`,
@@ -169,15 +157,7 @@
 
 	onMounted(() => {
 		selectedTags.value = props.activeTags ?? [];
-		window.addEventListener("resize", adjustAppHeight);
 	});
-
-	onBeforeUnmount(() => {
-		window.removeEventListener("resize", adjustAppHeight);
-		setTimeout(adjustAppHeight);
-	});
-
-	watch([dropdown.show, filteredTags], () => setTimeout(adjustAppHeight));
 
 	watch(isSelecting, (curr, prev) => {
 		if (!prev) {
@@ -205,7 +185,6 @@
 				syncState("up");
 			}
 			syncingDown = false;
-			setTimeout(adjustAppHeight);
 		},
 		{ deep: true }
 	);
@@ -218,58 +197,62 @@
 	});
 </script>
 <template>
-	<div class="d-flex flex-wrap gap-2 p-1 border rounded inline-container">
-		<div class="dropdown">
-			<button v-if="props.allowEdit" ref="dropdown-toggle" class="btn btn-sm btn-outline-secondary dropdown-toggle" @click="dropdown.toggle">Tags</button>
-			<label v-else class="small border border-secondary rounded px-2 py-1">Tags</label>
-			<ul v-if="props.allowEdit && dropdown.show.value" ref="dropdown-menu" class="dropdown-menu show tag-list mt-1 ms-n1">
-				<template v-if="props.allowManage">
-					<li class="dropdown-item d-flex flex-wrap gap-2">
-						<label class="btn btn-sm btn-outline-secondary flex-grow-1">
-							<input type="checkbox" class="form-check-input" :checked="allSelected" :disabled="!filteredTags.length" @change="toggleSelectAll"/>
-							<span class="ms-2">{{ allSelected ? "Deselect All" : "Select All" }}</span>
-						</label>
-						<button v-if="props.allowDelete" class="btn btn-sm btn-outline-danger flex-grow-1" :disabled="!selectedTags.length" @click="deleteTags(selectedTags)">Delete Selected</button>
-					</li>
-					<li class="dropdown-divider"></li>
-				</template>
-				<li class="dropdown-item">
-					<div class="flex-nowrap" :class="{ [`input-group`]: props.allowCreate }">
-						<input ref="tag-input" v-model.trim="searchText" type="text" class="form-control form-control-sm" placeholder="Search"/>
-						<button v-if="props.allowCreate" class="btn btn-sm btn-outline-secondary" :disabled="hasExactMatch" @click="createTag(searchText)">
-							<Icon type="plusLg"/>
-						</button>
+	<div class="d-flex gap-1 p-1 border rounded" :class="{ [dropdown.show.value ? `flex-column` : `flex-wrap`]: true }">
+		<div class="dropdown w-100">
+			<div ref="dropdown-menu" class="d-flex gap-1 align-items-center" :class="{ [dropdown.show.value ? `flex-column` : `flex-wrap`]: true }">
+				<button v-if="props.allowEdit" ref="dropdown-toggle" class="btn btn-sm btn-outline-secondary align-self-start dropdown-toggle" @click="dropdown.toggle()">Tags</button>
+				<label v-else class="small align-self-start border border-secondary rounded px-2 py-1">Tags</label>
+				<div v-if="props.allowEdit && dropdown.show.value" class="dropdown-menu show w-100 position-relative">
+					<template v-if="props.allowManage">
+						<div class="dropdown-item d-flex gap-2">
+							<label class="btn btn-sm btn-outline-secondary flex-grow-1">
+								<input type="checkbox" class="form-check-input" :checked="allSelected" :disabled="!filteredTags.length" @change="toggleSelectAll"/>
+								<span class="ms-2">{{ allSelected ? "Deselect All" : "Select All" }}</span>
+							</label>
+							<button v-if="props.allowDelete" class="btn btn-sm btn-outline-danger flex-grow-1" :disabled="!selectedTags.length" @click="deleteTags(selectedTags)">Delete Selected</button>
+						</div>
+						<div class="dropdown-divider"></div>
+					</template>
+					<div class="dropdown-item">
+						<div class="flex-nowrap" :class="{ [`input-group`]: props.allowCreate }">
+							<input ref="tag-input" v-model.trim="searchText" type="text" class="form-control form-control-sm" placeholder="Search"/>
+							<button v-if="props.allowCreate" class="btn btn-sm btn-outline-secondary" :disabled="hasExactMatch" @click="createTag(searchText)">
+								<Icon type="plusLg"/>
+							</button>
+						</div>
 					</div>
-				</li>
-				<li class="dropdown-divider"></li>
-				<li class="d-flex flex-wrap gap-4 px-3">
-					<label v-for="tag in filteredTags">
-						<input type="checkbox" class="form-check-input" :checked="isTagSelected(tag)" @change="toggleTagSelection(tag)"/>
-						<span class="text-wrap text-break ms-2">{{ tag }}</span>
-					</label>
-				</li>
-			</ul>
-		</div>
-		<div v-if="selectedTags.length" class="d-flex flex-wrap gap-2">
-			<component :is="props.allowEdit ? `div` : `a`" v-for="tag in selectedTags" class="badge align-self-center text-bg-secondary" :class="{ [`py-2`]: !props.allowEdit }" @click="addToSearchTags(tag)" v-bind="props.allowEdit ? {} : { [`role`]: `button` }">
-				<span>{{ tag }}</span>
-				<button v-if="props.allowEdit" class="small btn-close ms-2" @click="unselectTag(tag)"></button>
-			</component>
-		</div>
-		<div v-if="props.showFilterType && selectedTags.length" class="input-group input-group-sm flex-nowrap w-auto ms-auto">
-			<span class="input-group-text">Match:</span>
-			<label class="btn btn-outline-secondary" :class="{ [`active`]: notesStore.tagFilter.value === `any` }">
-				<input type="radio" class="btn-check" name="filter-type" @change="notesStore.setFilterType(`any`)"/>
-				<span>Any</span>
-			</label>
-			<label class="btn btn-outline-secondary" :class="{ [`active`]: notesStore.tagFilter.value === `all` }">
-				<input type="radio" class="btn-check" name="filter-type" @change="notesStore.setFilterType(`all`)"/>
-				<span>All</span>
-			</label>
-		</div>
-		<div v-if="isSelecting" class="d-flex gap-2 ms-auto">
-			<button class="btn btn-sm btn-outline-primary" :disabled="!enableActions" @click="updateNoteTags(`add`)">Apply</button>
-			<button class="btn btn-sm btn-outline-danger" :disabled="!enableActions" @click="updateNoteTags(`remove`)">Remove</button>
+					<div class="dropdown-divider"></div>
+					<div class="d-flex flex-wrap gap-4 px-3">
+						<label v-for="tag in filteredTags">
+							<input type="checkbox" class="form-check-input" :checked="isTagSelected(tag)" @change="toggleTagSelection(tag)"/>
+							<span class="text-wrap text-break ms-2">{{ tag }}</span>
+						</label>
+					</div>
+				</div>
+				<template v-else-if="selectedTags.length">
+					<component :is="props.allowEdit ? `div` : `a`" v-for="tag in selectedTags" class="badge text-bg-secondary" :class="{ [`py-2`]: !props.allowEdit }" @click="addToSearchTags(tag)" v-bind="props.allowEdit ? {} : { [`role`]: `button` }">
+						<span>{{ tag }}</span>
+						<button v-if="props.allowEdit" class="small btn-close ms-2" @click="unselectTag(tag)"></button>
+					</component>
+				</template>
+				<template v-if="selectedTags.length">
+					<div v-if="props.showFilterType" class="input-group input-group-sm flex-nowrap w-auto ms-auto">
+						<span class="input-group-text">Match:</span>
+						<label class="btn btn-outline-secondary" :class="{ [`active`]: notesStore.tagFilter.value === `any` }">
+							<input type="radio" class="btn-check" name="filter-type" @change="notesStore.setFilterType(`any`)"/>
+							<span>Any</span>
+						</label>
+						<label class="btn btn-outline-secondary" :class="{ [`active`]: notesStore.tagFilter.value === `all` }">
+							<input type="radio" class="btn-check" name="filter-type" @change="notesStore.setFilterType(`all`)"/>
+							<span>All</span>
+						</label>
+					</div>
+					<div v-else-if="isSelecting" class="d-flex gap-1 ms-auto">
+						<button class="btn btn-sm btn-outline-primary" :disabled="!enableActions" @click="updateNoteTags(`add`)">Apply</button>
+						<button class="btn btn-sm btn-outline-danger" :disabled="!enableActions" @click="updateNoteTags(`remove`)">Remove</button>
+					</div>
+				</template>
+			</div>
 		</div>
 	</div>
 </template>

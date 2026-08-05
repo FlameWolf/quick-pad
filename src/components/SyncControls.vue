@@ -113,7 +113,7 @@
 		<template v-if="isReady">
 			<template v-if="isSignedIn">
 				<div class="dropdown">
-					<button ref="sync-menu-trigger" class="btn btn-outline-secondary btn-sm" @click="toggleSyncMenu" :disabled="isSyncing" :title="syncError ? `Sync error: ${syncError}` : `Google Drive Sync`" aria-label="Google Drive Sync">
+					<button ref="sync-menu-trigger" class="btn btn-outline-secondary btn-sm" @click="toggleSyncMenu()" :disabled="isSyncing" :title="syncError ? `Sync error: ${syncError}` : `Google Drive Sync`" aria-label="Google Drive Sync">
 						<span v-if="isSyncing">
 							<div class="spinner-border spinner-border-sm" role="status"></div>
 						</span>
