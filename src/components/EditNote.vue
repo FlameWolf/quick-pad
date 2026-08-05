@@ -493,7 +493,7 @@
 		</div>
 		<hr/>
 		<div v-if="!isContentLoaded" class="d-flex justify-content-center py-3">
-			<div class="spinner-border" role="status" aria-label="Loading note"></div>
+			<div class="spinner-border" role="status" aria-label="Loading note..."></div>
 		</div>
 		<div v-else class="note-content">{{ loadedContent }}</div>
 	</template>
