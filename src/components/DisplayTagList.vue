@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { computed, onMounted, ref, useTemplateRef, watch } from "vue";
+	import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from "vue";
 	import { useRouter } from "vue-router";
 	import { emptyString } from "@/constants/common";
 	import { areSetsEqual, normaliseTag, titleCase } from "@/utils/common";
@@ -30,6 +30,7 @@
 	const router = useRouter();
 	const searchText = ref(emptyString);
 	const selectedTags = ref<string[]>([]);
+	const appElem = document.getElementById("app")!;
 	const dropdownToggle = useTemplateRef("dropdown-toggle");
 	const dropdownMenu = useTemplateRef("dropdown-menu");
 	const dropdown = useDropdown(dropdownToggle, {
@@ -59,6 +60,18 @@
 				selectedTags.value = Array.from(notesStore.searchTags.value);
 				break;
 			}
+		}
+	}
+
+	function adjustAppHeight() {
+		appElem.removeAttribute("style");
+		const menuElem = dropdownMenu.value;
+		if (!menuElem) {
+			return;
+		}
+		const bottom = menuElem.getBoundingClientRect().bottom + window.scrollY;
+		if (bottom > appElem.offsetHeight) {
+			appElem.style.minHeight = `${bottom + 16}px`;
 		}
 	}
 
@@ -156,7 +169,14 @@
 
 	onMounted(() => {
 		selectedTags.value = props.activeTags ?? [];
+		window.addEventListener("resize", adjustAppHeight);
 	});
+
+	onBeforeUnmount(() => {
+		window.removeEventListener("resize", adjustAppHeight);
+	});
+
+	watch([dropdown.show, filteredTags], () => setTimeout(adjustAppHeight));
 
 	watch(isSelecting, (curr, prev) => {
 		if (!prev) {
@@ -184,6 +204,7 @@
 				syncState("up");
 			}
 			syncingDown = false;
+			setTimeout(adjustAppHeight);
 		},
 		{ deep: true }
 	);
