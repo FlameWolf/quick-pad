@@ -204,7 +204,7 @@
 				<label v-else class="small align-self-start border border-secondary rounded px-2 py-1">Tags</label>
 				<div v-if="props.allowEdit && dropdown.show.value" class="dropdown-menu show w-100 position-relative">
 					<template v-if="props.allowManage">
-						<div class="dropdown-item d-flex gap-2">
+						<div class="d-flex gap-2 px-3 py-1">
 							<label class="btn btn-sm btn-outline-secondary flex-grow-1">
 								<input type="checkbox" class="form-check-input" :checked="allSelected" :disabled="!filteredTags.length" @change="toggleSelectAll"/>
 								<span class="ms-2">{{ allSelected ? "Deselect All" : "Select All" }}</span>
@@ -213,8 +213,8 @@
 						</div>
 						<div class="dropdown-divider"></div>
 					</template>
-					<div class="dropdown-item">
-						<div class="flex-nowrap" :class="{ [`input-group`]: props.allowCreate }">
+					<div class="d-flex gap-2 px-3 py-1">
+						<div class="flex-nowrap w-100" :class="{ [`input-group`]: props.allowCreate }">
 							<input ref="tag-input" v-model.trim="searchText" type="text" class="form-control form-control-sm" placeholder="Search"/>
 							<button v-if="props.allowCreate" class="btn btn-sm btn-outline-secondary" :disabled="hasExactMatch" @click="createTag(searchText)">
 								<Icon type="plusLg"/>
