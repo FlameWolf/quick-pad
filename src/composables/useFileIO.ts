@@ -1,5 +1,6 @@
 import { emptyString } from "@/constants/common";
 import { isTextFile } from "@/utils/file-detection";
+import { sort } from "@/utils/text-analysis";
 import { NoteModel } from "@/models/NoteModel";
 import * as notesStore from "@/stores/notes";
 import { addNotification } from "@/stores/notifications";
@@ -32,6 +33,10 @@ function sanitizeFilename(name: string): string {
 	return name.replace(/[<>:"/\\|?*]+/g, "_").trim() || "Untitled";
 }
 
+function formatOutput(content: string, tags?: string[]): string {
+	return `${content}${tags?.length ? `\n\nTags: ${sort(tags).join(", ")}` : emptyString}\n`;
+}
+
 export function importFiles(): Promise<number> {
 	return new Promise(resolve => {
 		const errors: ImportError[] = [];
@@ -56,8 +61,7 @@ export function importFiles(): Promise<number> {
 				try {
 					const content = await file.text();
 					const title = file.name.replace(/\.txt$/i, emptyString) || "Untitled";
-					const note = new NoteModel(title, content);
-					await notesStore.addNote(note);
+					await notesStore.addNote(new NoteModel(title, content));
 					count++;
 				} catch (err) {
 					errors.push({
@@ -77,7 +81,7 @@ export function importFiles(): Promise<number> {
 
 export async function exportNote(note: NoteModel) {
 	const content = (await notesStore.getNoteContent(note.id)) ?? emptyString;
-	const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+	const blob = new Blob([formatOutput(content, note.tags)], { type: "text/plain;charset=utf-8" });
 	triggerDownload(blob, `${sanitizeFilename(note.title)}.txt`);
 }
 
@@ -96,7 +100,7 @@ export async function exportNotes(notes: NoteModel[]) {
 		}
 		usedNames.add(uniqueName);
 		const content = (await notesStore.getNoteContent(note.id)) ?? emptyString;
-		zip.file(`${uniqueName}.txt`, content);
+		zip.file(`${uniqueName}.txt`, formatOutput(content, note.tags));
 	}
 	const blob = await zip.generateAsync({ type: "blob" });
 	triggerDownload(blob, "quick-pad-notes.zip");
