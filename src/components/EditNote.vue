@@ -163,7 +163,7 @@
 		isEditing.value = false;
 		if (isCreateMode.value) {
 			const note = new NoteModel(title, content);
-			note.tags = tags?.length ? tags : undefined;
+			note.tags = tags?.length ? Array.from(tags) : undefined;
 			await notesStore.addNote(note);
 			router.push(`/notes/${note.id}`);
 		} else if (existingNote.value) {
