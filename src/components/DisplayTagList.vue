@@ -36,6 +36,9 @@
 		autoClose: false,
 		dropdown: dropdownMenu
 	});
+	const flexModifiers = computed(() => ({
+		[props.allowEdit && dropdown.show.value ? "flex-column" : "flex-wrap"]: true
+	}));
 	const filteredTags = computed(() => sort(!searchText.value ? notesStore.tags.value : notesStore.tags.value.filter(tag => contains(tag, searchText.value))));
 	const allSelected = computed(() => filteredTags.value.every(tag => selectedTags.value.includes(tag)));
 	const hasExactMatch = computed(() => !searchText.value || notesStore.tags.value.some(tag => equals(tag, normaliseTag(searchText.value))));
@@ -197,9 +200,9 @@
 	});
 </script>
 <template>
-	<div class="d-flex gap-1 p-1 border rounded" :class="{ [dropdown.show.value ? `flex-column` : `flex-wrap`]: true }">
+	<div class="d-flex gap-1 p-1 border rounded" :class="flexModifiers">
 		<div class="dropdown w-100">
-			<div ref="dropdown-menu" class="d-flex gap-1 align-items-center" :class="{ [dropdown.show.value ? `flex-column` : `flex-wrap`]: true }">
+			<div ref="dropdown-menu" class="d-flex gap-1 align-items-center" :class="flexModifiers">
 				<button v-if="props.allowEdit" ref="dropdown-toggle" class="btn btn-sm btn-outline-secondary align-self-start dropdown-toggle" @click="dropdown.toggle()">Tags</button>
 				<label v-else class="small align-self-start border border-secondary rounded px-2 py-1">Tags</label>
 				<div v-if="props.allowEdit && dropdown.show.value" class="dropdown-menu show w-100 position-relative tag-list">
