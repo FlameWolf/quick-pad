@@ -75,12 +75,6 @@ export async function hydrateSyncMetadata(): Promise<void> {
 	lastSyncedToLocalAt.value = storedLocal ? new Date(storedLocal) : null;
 	lastSyncedToCloudAt.value = storedCloud ? new Date(storedCloud) : null;
 	state.autoSyncEnabled = storedAutoSync === undefined ? true : storedAutoSync;
-	watch(
-		() => state.autoSyncEnabled,
-		async flag => {
-			await setKV(AUTO_SYNC_KEY, flag);
-		}
-	);
 	watch(lastSyncedToLocalAt, async date => {
 		if (date) {
 			await setKV(LAST_SYNCED_TO_LOCAL_KEY, date.toISOString());
@@ -95,6 +89,12 @@ export async function hydrateSyncMetadata(): Promise<void> {
 			await deleteKV(LAST_SYNCED_TO_CLOUD_KEY);
 		}
 	});
+	watch(
+		() => state.autoSyncEnabled,
+		async flag => {
+			await setKV(AUTO_SYNC_KEY, flag);
+		}
+	);
 }
 
 function noteEffectiveTime(note: NoteModel): number {
