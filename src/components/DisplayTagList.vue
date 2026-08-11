@@ -37,7 +37,7 @@
 		dropdown: dropdownMenu
 	});
 	const flexModifiers = computed(() => ({
-		[props.allowEdit && dropdown.show.value ? "flex-column" : "flex-wrap"]: true
+		[dropdown.show.value ? "flex-column" : "flex-wrap"]: true
 	}));
 	const filteredTags = computed(() => sort(!searchText.value ? notesStore.tags.value : notesStore.tags.value.filter(tag => contains(tag, searchText.value))));
 	const allSelected = computed(() => filteredTags.value.every(tag => selectedTags.value.includes(tag)));
@@ -175,6 +175,7 @@
 		() => props.allowEdit,
 		value => {
 			if (!value) {
+				dropdown.toggle(false);
 				selectedTags.value = props.activeTags ?? [];
 			}
 		}
@@ -205,7 +206,7 @@
 			<div ref="dropdown-menu" class="d-flex gap-1 align-items-center" :class="flexModifiers">
 				<button v-if="props.allowEdit" ref="dropdown-toggle" class="btn btn-sm btn-outline-secondary align-self-start dropdown-toggle" @click="dropdown.toggle()">Tags</button>
 				<label v-else class="small align-self-start border border-secondary rounded px-2 py-1">Tags</label>
-				<div v-if="props.allowEdit && dropdown.show.value" class="dropdown-menu show w-100 position-relative tag-list">
+				<div v-if="dropdown.show.value" class="dropdown-menu show w-100 position-relative tag-list">
 					<template v-if="props.allowManage">
 						<div class="d-flex gap-2 px-3 py-1">
 							<label class="btn btn-sm btn-outline-secondary flex-grow-1">
