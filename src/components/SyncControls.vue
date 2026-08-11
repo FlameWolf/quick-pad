@@ -97,8 +97,8 @@
 				}
 			}, 6000);
 		}
-		await hydrateAuthState();
 		await hydrateSyncMetadata();
+		await hydrateAuthState();
 		tryRestoreSession();
 	});
 
