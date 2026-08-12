@@ -14,6 +14,7 @@ export interface NoteMetaJSON {
 	archivedAt?: string;
 	deletedAt?: string;
 	stateChangedAt?: string;
+	colour?: string;
 	tags?: string[];
 	summary: string;
 	sentenceCount: number;
@@ -36,6 +37,7 @@ export class NoteModel {
 	archivedAt?: Date;
 	deletedAt?: Date;
 	stateChangedAt?: Date;
+	colour?: string;
 	tags?: string[];
 	summary!: string;
 	sentenceCount!: number;
@@ -119,6 +121,16 @@ export class NoteModel {
 		this.stateChangedAt = new Date();
 	}
 
+	setColour(colour: string) {
+		this.colour = colour;
+		this.stateChangedAt = new Date();
+	}
+
+	unsetColour() {
+		this.colour = undefined;
+		this.stateChangedAt = new Date();
+	}
+
 	addTags(tags: string[]) {
 		tags.forEach(tag => {
 			if (!tag) {
@@ -157,6 +169,7 @@ export class NoteModel {
 			archivedAt: this.archivedAt?.toISOString(),
 			deletedAt: this.deletedAt?.toISOString(),
 			stateChangedAt: this.stateChangedAt?.toISOString(),
+			colour: this.colour,
 			tags: this.tags,
 			summary: this.summary,
 			sentenceCount: this.sentenceCount,
@@ -180,6 +193,7 @@ export class NoteModel {
 		note.archivedAt = parseValidDate(data.archivedAt);
 		note.deletedAt = parseValidDate(data.deletedAt);
 		note.stateChangedAt = parseValidDate(data.stateChangedAt);
+		note.colour = data.colour;
 		note.tags = data.tags;
 		if (typeof data.summary === "string" && isValidCount(data.sentenceCount) && isValidCount(data.wordCount) && isValidCount(data.characterCount)) {
 			note.summary = data.summary;
