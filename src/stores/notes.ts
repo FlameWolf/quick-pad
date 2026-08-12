@@ -14,6 +14,7 @@ interface NotesState {
 	notes: NoteModel[];
 	tags: string[];
 	searchText: string;
+	searchColours: Set<string>;
 	searchTags: Set<string>;
 	tagFilter: FilterType;
 	isLoading: boolean;
@@ -25,6 +26,7 @@ const store = reactive<NotesState>({
 	notes: [],
 	tags: [],
 	searchText: emptyString,
+	searchColours: new Set<string>(),
 	searchTags: new Set<string>(),
 	tagFilter: "any",
 	isLoading: true,
@@ -34,29 +36,34 @@ const contentMatchedIds = ref(new Set<UUID>());
 export const notes = readonly(toRef(() => store.notes));
 export const tags = readonly(toRef(() => store.tags));
 export const searchText = computed(() => store.searchText);
+export const searchColours = computed(() => store.searchColours);
 export const searchTags = computed(() => store.searchTags);
 export const tagFilter = computed(() => store.tagFilter);
 export const isLoading = computed(() => store.isLoading);
 export const isSearching = computed(() => store.isSearching);
 export const searchResults = computed(() => {
 	const trimmed = store.searchText.trim();
-	const initial = trimmed ? store.notes.filter(note => contains(note.title, trimmed) || contentMatchedIds.value.has(note.id)) : store.notes;
-	if (store.searchTags.size === 0) {
-		return initial;
+	const predicates: Array<(note: NoteModel) => boolean> = [];
+	if (trimmed) {
+		predicates.push(note => contains(note.title, trimmed) || contentMatchedIds.value.has(note.id));
 	}
-	return initial.filter(note => {
-		switch (store.tagFilter) {
-			case "any": {
-				return note.tags?.some(tag => store.searchTags.has(tag));
-			}
-			case "all": {
-				if (!note.tags) {
-					return false;
+	if (store.searchColours.size > 0) {
+		predicates.push(note => !!note.colour && store.searchColours.has(note.colour));
+	}
+	if (store.searchTags.size > 0) {
+		predicates.push(note => {
+			switch (store.tagFilter) {
+				case "any": {
+					return note.tags?.some(tag => store.searchTags.has(tag)) ?? false;
 				}
-				return arrayContainsSet(note.tags, store.searchTags);
+				case "all": {
+					return !!note.tags && arrayContainsSet(note.tags, store.searchTags);
+				}
 			}
-		}
-	});
+		});
+	}
+	const results = store.notes.filter(note => predicates.every(predicate => predicate(note)));
+	return results;
 });
 export const activeNotes = computed(() => searchResults.value.filter(note => !note.archivedAt && !note.deletedAt));
 export const favedNotes = computed(() => searchResults.value.filter(note => note.favedAt && !note.deletedAt));
@@ -215,6 +222,22 @@ export async function restoreFromTrash(id: UUID) {
 
 export async function restoreFromTrashMultiple(ids: ReadonlyArray<UUID>) {
 	await applyToMany(ids, note => note.restore());
+}
+
+export async function setColour(id: UUID, colour: string) {
+	await applyToNote(id, note => note.setColour(colour));
+}
+
+export async function setColourMultiple(ids: ReadonlyArray<UUID>, colour: string) {
+	await applyToMany(ids, note => note.setColour(colour));
+}
+
+export async function unsetColour(id: UUID) {
+	await applyToNote(id, note => note.unsetColour);
+}
+
+export async function unsetColourMultiple(ids: ReadonlyArray<UUID>) {
+	await applyToMany(ids, note => note.unsetColour);
 }
 
 export async function addTags(id: UUID, tags: string[]) {
