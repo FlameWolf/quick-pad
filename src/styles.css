@@ -47,6 +47,12 @@ body {
 	width: auto;
 }
 
+.colour-circle {
+	width: 2.5rem;
+	height: 2.5rem;
+	border-radius: 50%;
+}
+
 .ms-n1 {
 	margin-left: -0.25rem !important;
 }

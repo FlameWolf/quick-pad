@@ -324,6 +324,6 @@
 				<NoteCard v-for="note in section.notes" :key="note.id" :note="note" :selection-mode="isSelecting" :selected="isSelected(note.id)" @toggle-select="toggleSelection"/>
 			</div>
 		</template>
-		<SelectionActionBar v-if="isSelecting && selectedCount > 0" :selected-count="selectedCount" :actions="selectionActions" @action="handleSelectionAction" @cancel="exitSelectionMode"/>
+		<SelectionActionBar v-if="isSelecting && selectedCount > 0" :selected-count="selectedCount" :actions="selectionActions" :show-colours="true" @action="handleSelectionAction" @cancel="exitSelectionMode"/>
 	</template>
 </template>
