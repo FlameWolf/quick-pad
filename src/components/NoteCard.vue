@@ -38,7 +38,7 @@
 </script>
 <template>
 	<RouterLink :to="`/notes/${note.id}`" class="card note-card text-decoration-none position-relative" :class="{ ...colourClass, selected: props.selectionMode && props.selected }" @click.capture="onClick">
-		<div class="d-flex gap-2 small position-absolute top-0 p-2 status-badge">
+		<div v-if="note.pinnedAt || note.favedAt" class="d-flex gap-2 small position-absolute top-0 p-2 status-badge">
 			<Icon v-if="note.pinnedAt" type="pinAngleFill"/>
 			<Icon v-if="note.favedAt" type="starFill"/>
 		</div>

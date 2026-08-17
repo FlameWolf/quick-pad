@@ -5,6 +5,12 @@
 	--editor-bg-colour: var(--bs-body-bg);
 }
 
+:root[data-bs-theme="dark"] {
+	.badge.text-bg-info>.btn-close {
+		--bs-btn-close-opacity: 0.9;
+	}
+}
+
 body {
 	min-width: 12rem;
 	min-height: 100vh;
@@ -31,7 +37,14 @@ body {
 }
 
 .tag-list {
+	background-color: unset;
+	color: unset;
 	z-index: unset;
+
+	.form-control {
+		background-color: color-mix(in srgb, var(--bs-body-bg) 50%, transparent);
+		color: unset;
+	}
 }
 
 .notes-grid {

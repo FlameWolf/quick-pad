@@ -20,7 +20,7 @@
 	});
 </script>
 <template>
-	<nav class="navbar navbar-expand bg-body-tertiary border-bottom px-2 mb-4">
+	<nav class="navbar navbar-expand bg-body-tertiary border-bottom px-2">
 		<div class="container gap-2">
 			<RouterLink to="/notes" class="navbar-brand">
 				<img class="logo" src="/logo.svg" alt="QuickPad Logo"/>
@@ -32,10 +32,10 @@
 			</div>
 		</div>
 	</nav>
-	<main class="flex-grow-1 container px-2 pb-4" :class="{ [`bg-${currentColour}`]: !!currentColour }">
+	<main class="flex-grow-1 container px-2 py-4" :class="{ [`bg-${currentColour}`]: !!currentColour }">
 		<RouterView/>
 	</main>
-	<footer class="bg-body-tertiary border-top mt-4">
+	<footer class="bg-body-tertiary border-top">
 		<div class="d-flex flex-wrap justify-content-center align-items-center gap-3 small text-muted px-2 py-3">
 			<span>QuickPad</span>
 			<RouterLink to="/privacy" class="link-secondary text-decoration-none">Privacy Policy</RouterLink>

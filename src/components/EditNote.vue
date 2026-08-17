@@ -417,77 +417,77 @@
 			<span class="ms-2">Back</span>
 		</RouterLink>
 		<div class="d-flex flex-wrap gap-2 ms-auto">
-			<button class="btn btn-outline-secondary btn-sm" @click="setFontScaling(`+`)" title="Increase font size" aria-label="Increase font size">
+			<button class="btn btn-secondary btn-sm" @click="setFontScaling(`+`)" title="Increase font size" aria-label="Increase font size">
 				<Icon type="aPlus"/>
 			</button>
-			<button class="btn btn-outline-secondary btn-sm" @click="setFontScaling(`-`)" title="Decrease font size" aria-label="Decrease font size">
+			<button class="btn btn-secondary btn-sm" @click="setFontScaling(`-`)" title="Decrease font size" aria-label="Decrease font size">
 				<Icon type="aMinus"/>
 			</button>
 		</div>
 		<div class="d-flex flex-wrap gap-2" v-if="!isCreateMode && !isEditing && isTrashed">
-			<button class="btn btn-outline-primary btn-sm" @click="restoreNote" title="Restore" aria-label="Restore">
+			<button class="btn btn-primary btn-sm" @click="restoreNote" title="Restore" aria-label="Restore">
 				<Icon type="reply"/>
 				<span class="d-none d-sm-inline ms-2">Restore</span>
 			</button>
-			<button class="btn btn-outline-secondary btn-sm" v-if="existingNote" @click="exportNote(existingNote)" title="Export" aria-label="Export">
+			<button class="btn btn-secondary btn-sm" v-if="existingNote" @click="exportNote(existingNote)" title="Export" aria-label="Export">
 				<Icon type="download"/>
 				<span class="d-none d-sm-inline ms-2">Export</span>
 			</button>
-			<button class="btn btn-outline-danger btn-sm" @click="permanentlyDeleteNote" title="Delete Permanently" aria-label="Delete Permanently">
+			<button class="btn btn-danger btn-sm" @click="permanentlyDeleteNote" title="Delete Permanently" aria-label="Delete Permanently">
 				<Icon type="trashFill"/>
 				<span class="d-none d-sm-inline ms-2">Delete Permanently</span>
 			</button>
 		</div>
 		<div class="d-flex flex-wrap gap-2" v-else-if="!isCreateMode && !isEditing">
-			<button class="btn btn-outline-primary btn-sm" @click="startEditing" title="Edit" aria-label="Edit">
+			<button class="btn btn-primary btn-sm" @click="startEditing" title="Edit" aria-label="Edit">
 				<Icon type="pen"/>
 				<span class="d-none d-sm-inline ms-2">Edit</span>
 			</button>
-			<button class="btn btn-outline-secondary btn-sm" @click="copyToClipboard" title="Copy to clipboard" aria-label="Copy to clipboard">
+			<button class="btn btn-secondary btn-sm" @click="copyToClipboard" title="Copy to clipboard" aria-label="Copy to clipboard">
 				<Icon type="copy"/>
 				<span class="d-none d-sm-inline ms-2">Copy</span>
 			</button>
-			<button class="btn btn-outline-secondary btn-sm" v-if="!isFaved" @click="faveNote" title="Favourite" aria-label="Favourite">
+			<button class="btn btn-secondary btn-sm" v-if="!isFaved" @click="faveNote" title="Favourite" aria-label="Favourite">
 				<Icon type="star"/>
 				<span class="d-none d-sm-inline ms-2">Favourite</span>
 			</button>
-			<button class="btn btn-outline-secondary btn-sm" v-else @click="unfaveNote" title="Unfavourite" aria-label="Unfavourite">
+			<button class="btn btn-secondary btn-sm" v-else @click="unfaveNote" title="Unfavourite" aria-label="Unfavourite">
 				<Icon type="starFill"/>
 				<span class="d-none d-sm-inline ms-2">Unfavourite</span>
 			</button>
 			<template v-if="!isArchived">
-				<button class="btn btn-outline-secondary btn-sm" v-if="!isPinned" @click="pinNote" title="Pin" aria-label="Pin">
+				<button class="btn btn-secondary btn-sm" v-if="!isPinned" @click="pinNote" title="Pin" aria-label="Pin">
 					<Icon type="pinAngle"/>
 					<span class="d-none d-sm-inline ms-2">Pin</span>
 				</button>
-				<button class="btn btn-outline-secondary btn-sm" v-else @click="unpinNote" title="Unpin" aria-label="Unpin">
+				<button class="btn btn-secondary btn-sm" v-else @click="unpinNote" title="Unpin" aria-label="Unpin">
 					<Icon type="pinAngleFill"/>
 					<span class="d-none d-sm-inline ms-2">Unpin</span>
 				</button>
 			</template>
-			<button class="btn btn-outline-secondary btn-sm" v-if="existingNote" @click="exportNote(existingNote)" title="Download" aria-label="Download">
+			<button class="btn btn-secondary btn-sm" v-if="existingNote" @click="exportNote(existingNote)" title="Download" aria-label="Download">
 				<Icon type="download"/>
 				<span class="d-none d-sm-inline ms-2">Download</span>
 			</button>
-			<button class="btn btn-outline-secondary btn-sm" v-if="isArchived" @click="unarchiveNote" title="Unarchive" aria-label="Unarchive">
+			<button class="btn btn-secondary btn-sm" v-if="isArchived" @click="unarchiveNote" title="Unarchive" aria-label="Unarchive">
 				<Icon type="boxArrowUp"/>
 				<span class="d-none d-sm-inline ms-2">Unarchive</span>
 			</button>
-			<button class="btn btn-outline-secondary btn-sm" v-else @click="archiveNote" title="Archive" aria-label="Archive">
+			<button class="btn btn-secondary btn-sm" v-else @click="archiveNote" title="Archive" aria-label="Archive">
 				<Icon type="archive"/>
 				<span class="d-none d-sm-inline ms-2">Archive</span>
 			</button>
-			<button class="btn btn-outline-danger btn-sm" @click="deleteNote" title="Delete" aria-label="Delete">
+			<button class="btn btn-danger btn-sm" @click="deleteNote" title="Delete" aria-label="Delete">
 				<Icon type="trash"/>
 				<span class="d-none d-sm-inline ms-2">Delete</span>
 			</button>
 		</div>
 		<div class="d-flex flex-wrap gap-2" v-if="isEditing">
-			<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canUndo.value" @click="doUndo" title="Undo" aria-label="Undo">
+			<button class="btn btn-secondary btn-sm" :disabled="!undoRedo.canUndo.value" @click="doUndo" title="Undo" aria-label="Undo">
 				<Icon type="arrowCounterclockwise"/>
 				<span class="d-none d-sm-inline ms-2">Undo</span>
 			</button>
-			<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canRedo.value" @click="doRedo" title="Redo" aria-label="Redo">
+			<button class="btn btn-secondary btn-sm" :disabled="!undoRedo.canRedo.value" @click="doRedo" title="Redo" aria-label="Redo">
 				<Icon type="arrowClockwise"/>
 				<span class="d-none d-sm-inline ms-2">Redo</span>
 			</button>
@@ -495,7 +495,7 @@
 				<Icon type="floppy"/>
 				<span class="d-none d-sm-inline ms-2">Save</span>
 			</button>
-			<button class="btn btn-outline-secondary btn-sm" @click="cancelEditing" title="Cancel" aria-label="Cancel">
+			<button class="btn btn-secondary btn-sm" @click="cancelEditing" title="Cancel" aria-label="Cancel">
 				<Icon type="xLg"/>
 				<span class="d-none d-sm-inline ms-2">Cancel</span>
 			</button>
