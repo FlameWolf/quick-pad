@@ -33,7 +33,7 @@ type FromName<T extends keyof TypeMap> = TypeMap[T];
 type View = "active" | "favourited" | "archived" | "trash";
 
 interface SelectionAction {
-	key: "export" | "fave" | "unfave" | "archive" | "unarchive" | "trash" | "restore" | "permanent";
+	key: "export" | `colour:${string}` | "fave" | "unfave" | "archive" | "unarchive" | "trash" | "restore" | "permanent";
 	label: string;
 	variant: "primary" | "secondary" | "danger" | "outline-primary" | "outline-secondary" | "outline-danger";
 }
