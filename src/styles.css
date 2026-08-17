@@ -50,73 +50,70 @@ body {
 .colour-circle {
 	width: 2.5rem;
 	height: 2.5rem;
+}
 
-	/*! purgecss start ignore */
-	&.black {
-		background-color: #000000
-	}
+.bg-black {
+	background-color: #000000;
+}
 
-	&.silver {
-		background-color: #c0c0c0
-	}
+.bg-silver {
+	background-color: #C0C0C0;
+}
 
-	&.gray {
-		background-color: #808080
-	}
+.bg-gray {
+	background-color: #808080;
+}
 
-	&.white {
-		background-color: #ffffff
-	}
+.bg-white {
+	background-color: #FFFFFF;
+}
 
-	&.maroon {
-		background-color: #800000
-	}
+.bg-maroon {
+	background-color: #800000;
+}
 
-	&.red {
-		background-color: #ff0000
-	}
+.bg-red {
+	background-color: #FF0000;
+}
 
-	&.purple {
-		background-color: #800080
-	}
+.bg-purple {
+	background-color: #800080;
+}
 
-	&.fuchsia {
-		background-color: #ff00ff
-	}
+.bg-fuchsia {
+	background-color: #FF00FF;
+}
 
-	&.green {
-		background-color: #008000
-	}
+.bg-green {
+	background-color: #008000;
+}
 
-	&.lime {
-		background-color: #00ff00
-	}
+.bg-lime {
+	background-color: #00FF00;
+}
 
-	&.olive {
-		background-color: #808000
-	}
+.bg-olive {
+	background-color: #808000;
+}
 
-	&.yellow {
-		background-color: #ffff00
-	}
+.bg-yellow {
+	background-color: #FFFF00;
+}
 
-	&.navy {
-		background-color: #000080
-	}
+.bg-navy {
+	background-color: #000080;
+}
 
-	&.blue {
-		background-color: #0000ff
-	}
+.bg-blue {
+	background-color: #0000FF;
+}
 
-	&.teal {
-		background-color: #008080
-	}
+.bg-teal {
+	background-color: #008080;
+}
 
-	&.aqua {
-		background-color: #00ffff
-	}
-
-	/*! purgecss end ignore */
+.bg-aqua {
+	background-color: #00FFFF;
 }
 
 .ms-n1 {
