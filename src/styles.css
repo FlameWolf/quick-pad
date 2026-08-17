@@ -50,9 +50,11 @@ body {
 .colour-circle {
 	width: 2.5rem;
 	height: 2.5rem;
+	border: var(--bs-border-width) var(--bs-border-style) var(--bs-body-color);
 
 	&.vibgyor {
 		background: linear-gradient(135deg, violet, indigo, blue, green, yellow, orange, red);
+		border-color: var(--bs-border-color);
 	}
 
 	&.toolbar-icon {
@@ -60,6 +62,10 @@ body {
 		width: 1.75rem;
 		height: 1.75rem;
 	}
+}
+
+.bg-none {
+	background: repeating-conic-gradient(#808080 0 25%, #0000 0 50%) 50% / 10px 10px;
 }
 
 .bg-black {
@@ -70,7 +76,7 @@ body {
 	background-color: #C0C0C0;
 }
 
-.bg-gray {
+.bg-grey {
 	background-color: #808080;
 }
 

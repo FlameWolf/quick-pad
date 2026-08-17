@@ -317,7 +317,7 @@
 				</template>
 			</template>
 		</div>
-		<div v-if="dropdown.show.value" ref="dropdown-menu" class="mb-3">
+		<div v-if="dropdown.show.value" ref="dropdown-menu" class="d-flex justify-content-end mb-3">
 			<DisplayColourList/>
 		</div>
 		<DisplayTagList class="mb-3" :active-tags="Array.from(notesStore.searchTags.value)" :allow-create="isSelecting" :allow-delete="true" :allow-edit="true" :allow-manage="!isSelecting" :show-filter-type="!isSelecting"/>
