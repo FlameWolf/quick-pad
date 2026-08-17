@@ -241,11 +241,11 @@ export async function setColourMultiple(ids: ReadonlyArray<UUID>, colour: string
 }
 
 export async function unsetColour(id: UUID) {
-	await applyToNote(id, note => note.unsetColour);
+	await applyToNote(id, note => note.unsetColour());
 }
 
 export async function unsetColourMultiple(ids: ReadonlyArray<UUID>) {
-	await applyToMany(ids, note => note.unsetColour);
+	await applyToMany(ids, note => note.unsetColour());
 }
 
 export async function addTags(id: UUID, tags: string[]) {
