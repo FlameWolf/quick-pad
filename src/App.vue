@@ -2,6 +2,7 @@
 	import "@/styles.css";
 	import { onMounted } from "vue";
 	import { RouterView } from "vue-router";
+	import { currentColour } from "@/stores/app";
 	import { hydrateNotes } from "@/stores/notes";
 	import { isNavigating } from "@/router";
 	import { purgeStaleDrafts } from "@/composables/useNoteDraft";
@@ -31,7 +32,7 @@
 			</div>
 		</div>
 	</nav>
-	<main class="flex-grow-1 container px-2 pb-4">
+	<main class="flex-grow-1 container px-2 pb-4" :class="{ [`bg-${currentColour?.toLowerCase()}`]: !!currentColour }">
 		<RouterView/>
 	</main>
 	<footer class="bg-body-tertiary border-top mt-4">

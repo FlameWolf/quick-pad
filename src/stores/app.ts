@@ -4,14 +4,17 @@ import { FONT_SCALE_FACTOR } from "@/constants/ui";
 
 interface AppState {
 	lastView: View | null | undefined;
+	currentColour: Colour | undefined;
 	fontScaleFactor: number;
 }
 
 const store = reactive<AppState>({
 	lastView: null,
+	currentColour: undefined,
 	fontScaleFactor: getFontScaleFactor()
 });
 export const lastView = toRef(store, "lastView");
+export const currentColour = toRef(store, "currentColour");
 export const fontScaleFactor = computed(() => store.fontScaleFactor);
 
 function getFontScaleFactor(): number {

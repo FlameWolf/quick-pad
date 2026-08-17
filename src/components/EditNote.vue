@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from "vue";
+	import { computed, onBeforeUnmount, onMounted, onUnmounted, ref, useTemplateRef, watch } from "vue";
 	import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 	import { emptyString } from "@/constants/common";
 	import { areArraysEqual, areSetsEqual, copyNullableArray } from "@/utils/common";
@@ -31,6 +31,7 @@
 	const isEditing = ref(isCreateMode.value);
 	const editTitle = ref(existingNote.value?.title ?? emptyString);
 	const editContent = ref(emptyString);
+	const editColour = ref<Colour | undefined>();
 	const editTags = ref<string[] | undefined>();
 	const loadedContent = ref(emptyString);
 	const isContentLoaded = ref(isCreateMode.value);
@@ -339,6 +340,10 @@
 		window.removeEventListener("beforeunload", onBeforeUnload);
 	});
 
+	onUnmounted(() => {
+		appStore.currentColour.value = undefined;
+	});
+
 	onBeforeRouteLeave(async () => {
 		if (!hasUnsavedChanges.value) {
 			return true;
@@ -356,9 +361,11 @@
 			isContentLoaded.value = isCreateMode.value;
 			loadedContent.value = emptyString;
 			editContent.value = emptyString;
+			editColour.value = undefined;
 			isEditing.value = isCreateMode.value;
 			if (id && !isCreateMode.value) {
 				loadedContent.value = (await notesStore.getNoteContent(id)) ?? emptyString;
+				editColour.value = existingNote.value?.colour as Colour;
 				editTags.value = copyNullableArray(existingNote.value?.tags);
 			} else {
 				loadedContent.value = emptyString;
@@ -380,15 +387,24 @@
 		{ deep: true }
 	);
 
+	watch(editColour, colour => {
+		appStore.currentColour.value = colour;
+	});
+
 	watch(
-		appStore.fontScaleFactor,
-		factor => {
+		[appStore.fontScaleFactor, appStore.currentColour],
+		([factor, colour]) => {
 			const rootElement = document.documentElement;
 			if (factor === 0) {
 				rootElement.style.removeProperty("--font-scale-factor");
-				return;
+			} else {
+				rootElement.style.setProperty("--font-scale-factor", factor.toString());
 			}
-			rootElement.style.setProperty("--font-scale-factor", factor.toString());
+			if (colour === undefined) {
+				rootElement.style.removeProperty("--editor-bg-colour");
+			} else {
+				rootElement.style.setProperty("--editor-bg-colour", colour);
+			}
 		},
 		{ immediate: true }
 	);
