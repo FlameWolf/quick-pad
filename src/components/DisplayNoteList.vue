@@ -2,6 +2,7 @@
 	import { computed, onMounted, useTemplateRef, watch } from "vue";
 	import { onBeforeRouteLeave } from "vue-router";
 	import { bulkActions } from "@/constants/actions";
+	import { colours } from "@/constants/colours";
 	import * as appStore from "@/stores/app";
 	import * as notesStore from "@/stores/notes";
 	import { confirm } from "@/composables/useConfirmDialogue";
@@ -151,6 +152,10 @@
 		}
 	}
 
+	function isValidColour(input: string): boolean {
+		return colours.includes(input as Colour);
+	}
+
 	async function handleSelectionAction(key: SelectionAction["key"]) {
 		const ids = getSelectedIds();
 		const idCount = ids.length;
@@ -214,6 +219,12 @@
 				await notesStore.permanentlyDeleteMultiple(ids);
 				purgeNotes = true;
 				break;
+			}
+			default: {
+				if (isValidColour(key)) {
+					await notesStore.setColourMultiple(ids, key);
+					break;
+				}
 			}
 		}
 		if (syncNotes) {
