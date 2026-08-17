@@ -15,8 +15,8 @@
 	const dropupTrigger = useTemplateRef("dropup-trigger");
 	const dropdown = useDropdown(dropupTrigger);
 
-	function colourSelected(colour: string) {
-		emit("action", `colour:${colour}`);
+	function colourSelected(colour: Colour) {
+		emit("action", colour);
 	}
 </script>
 
