@@ -158,7 +158,7 @@
 
 	function updateSearchColours(colour: Colour) {
 		switch (colour) {
-			case "None": {
+			case "none": {
 				notesStore.setSearchColours([]);
 				break;
 			}
@@ -235,7 +235,7 @@
 			}
 			default: {
 				if (isValidColour(key)) {
-					if (key === "None") {
+					if (key === "none") {
 						await notesStore.unsetColourMultiple(ids);
 						break;
 					}

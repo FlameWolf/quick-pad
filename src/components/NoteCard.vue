@@ -13,7 +13,7 @@
 	}>();
 	const emit = defineEmits<{ toggleSelect: [id: UUID] }>();
 	const note = computed(() => props.note);
-	const colourClass = computed(() => (note.value.colour ? { [`bg-${note.value.colour.toLowerCase()}`]: true } : {}));
+	const colourClass = computed(() => (note.value.colour ? { [`bg-${note.value.colour}`]: true } : {}));
 
 	function formatDate(date?: Date): string {
 		if (!date) {

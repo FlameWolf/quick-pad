@@ -32,7 +32,7 @@
 			</div>
 		</div>
 	</nav>
-	<main class="flex-grow-1 container px-2 pb-4" :class="{ [`bg-${currentColour?.toLowerCase()}`]: !!currentColour }">
+	<main class="flex-grow-1 container px-2 pb-4" :class="{ [`bg-${currentColour}`]: !!currentColour }">
 		<RouterView/>
 	</main>
 	<footer class="bg-body-tertiary border-top mt-4">

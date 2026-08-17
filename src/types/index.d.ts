@@ -32,7 +32,7 @@ type FromName<T extends keyof TypeMap> = TypeMap[T];
 
 type View = "active" | "favourited" | "archived" | "trash";
 
-type Colour = "None" | "Black" | "Silver" | "Grey" | "White" | "Maroon" | "Red" | "Purple" | "Fuchsia" | "Green" | "Lime" | "Olive" | "Yellow" | "Navy" | "Blue" | "Teal" | "Aqua";
+type Colour = "none" | "black" | "silver" | "grey" | "white" | "maroon" | "red" | "purple" | "fuchsia" | "green" | "lime" | "olive" | "yellow" | "navy" | "blue" | "teal" | "aqua";
 
 interface SelectionAction {
 	key: Colour | "export" | "fave" | "unfave" | "archive" | "unarchive" | "trash" | "restore" | "permanent";
