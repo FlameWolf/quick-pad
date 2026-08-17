@@ -156,6 +156,19 @@
 		return colours.includes(input as Colour);
 	}
 
+	function updateSearchColours(colour: Colour) {
+		switch (colour) {
+			case "None": {
+				notesStore.setSearchColours([]);
+				break;
+			}
+			default: {
+				notesStore.toggleSearchColour(colour);
+				break;
+			}
+		}
+	}
+
 	async function handleSelectionAction(key: SelectionAction["key"]) {
 		const ids = getSelectedIds();
 		const idCount = ids.length;
@@ -333,7 +346,7 @@
 			</template>
 		</div>
 		<div v-if="dropdown.show.value" ref="dropdown-menu" class="d-flex justify-content-end mb-3">
-			<DisplayColourList/>
+			<DisplayColourList @selection-changed="updateSearchColours"/>
 		</div>
 		<DisplayTagList class="mb-3" :active-tags="Array.from(notesStore.searchTags.value)" :allow-create="isSelecting" :allow-delete="true" :allow-edit="true" :allow-manage="!isSelecting" :show-filter-type="!isSelecting"/>
 		<template v-for="section in noteSections" :key="section.key">

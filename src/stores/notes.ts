@@ -111,16 +111,20 @@ export function setSearchText(query: string) {
 		});
 }
 
-export function addSearchColour(colour: string) {
-	store.searchColours = new Set(Array.from(store.searchColours).concat(colour));
+export function toggleSearchColour(colour: string) {
+	if (!store.searchColours.has(colour)) {
+		store.searchColours.add(colour);
+		return;
+	}
+	store.searchColours.delete(colour);
 }
 
 export function setSearchColours(colours: string[]) {
-	store.searchTags = new Set(colours);
+	store.searchColours = new Set(colours);
 }
 
 export function addSearchTag(tag: string) {
-	store.searchTags = new Set(Array.from(store.searchTags).concat(tag));
+	store.searchTags.add(tag);
 }
 
 export function setSearchTags(tags: string[]) {
