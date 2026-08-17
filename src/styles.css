@@ -50,6 +50,16 @@ body {
 .colour-circle {
 	width: 2.5rem;
 	height: 2.5rem;
+
+	&.vibgyor {
+		background: linear-gradient(135deg, violet, indigo, blue, green, yellow, orange, red);
+	}
+
+	&.toolbar-icon {
+		align-self: center;
+		width: 1.75rem;
+		height: 1.75rem;
+	}
 }
 
 .bg-black {
