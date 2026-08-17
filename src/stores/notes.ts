@@ -111,6 +111,14 @@ export function setSearchText(query: string) {
 		});
 }
 
+export function addSearchColour(colour: string) {
+	store.searchColours = new Set(Array.from(store.searchColours).concat(colour));
+}
+
+export function setSearchColours(colours: string[]) {
+	store.searchTags = new Set(colours);
+}
+
 export function addSearchTag(tag: string) {
 	store.searchTags = new Set(Array.from(store.searchTags).concat(tag));
 }
