@@ -222,9 +222,13 @@
 			}
 			default: {
 				if (isValidColour(key)) {
+					if (key === "None") {
+						await notesStore.unsetColourMultiple(ids);
+						break;
+					}
 					await notesStore.setColourMultiple(ids, key);
-					break;
 				}
+				break;
 			}
 		}
 		if (syncNotes) {

@@ -66,70 +66,90 @@ body {
 
 .bg-none {
 	background: repeating-conic-gradient(#808080 0 25%, #0000 0 50%) 50% / 10px 10px;
+
+	&.note-card {
+		background: transparent;
+	}
 }
 
 .bg-black {
-	background-color: #000000;
+	background-color: black;
+	color: color-mix(in oklab, oklch(from black round(1.21 - L) 0 0) 80%, hsl(from black calc(h + 180) s l));
 }
 
 .bg-silver {
-	background-color: #C0C0C0;
+	background-color: silver;
+	color: color-mix(in oklab, oklch(from silver round(1.21 - L) 0 0) 80%, hsl(from silver calc(h + 180) s l));
 }
 
 .bg-grey {
-	background-color: #808080;
+	background-color: grey;
+	color: color-mix(in oklab, oklch(from grey round(1.21 - L) 0 0) 80%, hsl(from grey calc(h + 180) s l));
 }
 
 .bg-white {
-	background-color: #FFFFFF;
+	background-color: white;
+	color: color-mix(in oklab, oklch(from white round(1.21 - L) 0 0) 80%, hsl(from white calc(h + 180) s l));
 }
 
 .bg-maroon {
-	background-color: #800000;
+	background-color: maroon;
+	color: color-mix(in oklab, oklch(from maroon round(1.21 - L) 0 0) 80%, hsl(from maroon calc(h + 180) s l));
 }
 
 .bg-red {
-	background-color: #FF0000;
+	background-color: red;
+	color: color-mix(in oklab, oklch(from red round(1.21 - L) 0 0) 80%, hsl(from red calc(h + 180) s l));
 }
 
 .bg-purple {
-	background-color: #800080;
+	background-color: purple;
+	color: color-mix(in oklab, oklch(from purple round(1.21 - L) 0 0) 80%, hsl(from purple calc(h + 180) s l));
 }
 
 .bg-fuchsia {
-	background-color: #FF00FF;
+	background-color: fuchsia;
+	color: color-mix(in oklab, oklch(from fuchsia round(1.21 - L) 0 0) 80%, hsl(from fuchsia calc(h + 180) s l));
 }
 
 .bg-green {
-	background-color: #008000;
+	background-color: green;
+	color: color-mix(in oklab, oklch(from green round(1.21 - L) 0 0) 80%, hsl(from green calc(h + 180) s l));
 }
 
 .bg-lime {
-	background-color: #00FF00;
+	background-color: lime;
+	color: color-mix(in oklab, oklch(from lime round(1.21 - L) 0 0) 80%, hsl(from lime calc(h + 180) s l));
 }
 
 .bg-olive {
-	background-color: #808000;
+	background-color: olive;
+	color: color-mix(in oklab, oklch(from olive round(1.21 - L) 0 0) 80%, hsl(from olive calc(h + 180) s l));
 }
 
 .bg-yellow {
-	background-color: #FFFF00;
+	background-color: yellow;
+	color: color-mix(in oklab, oklch(from yellow round(1.21 - L) 0 0) 80%, hsl(from yellow calc(h + 180) s l));
 }
 
 .bg-navy {
-	background-color: #000080;
+	background-color: navy;
+	color: color-mix(in oklab, oklch(from navy round(1.21 - L) 0 0) 80%, hsl(from navy calc(h + 180) s l));
 }
 
 .bg-blue {
-	background-color: #0000FF;
+	background-color: blue;
+	color: color-mix(in oklab, oklch(from blue round(1.21 - L) 0 0) 80%, hsl(from blue calc(h + 180) s l));
 }
 
 .bg-teal {
-	background-color: #008080;
+	background-color: teal;
+	color: color-mix(in oklab, oklch(from teal round(1.21 - L) 0 0) 80%, hsl(from teal calc(h + 180) s l));
 }
 
 .bg-aqua {
-	background-color: #00FFFF;
+	background-color: aqua;
+	color: color-mix(in oklab, oklch(from aqua round(1.21 - L) 0 0) 80%, hsl(from aqua calc(h + 180) s l));
 }
 
 .ms-n1 {
@@ -143,6 +163,16 @@ body {
 .note-card {
 	transition: box-shadow 0.15s ease;
 	overflow: hidden;
+
+	&>.card-body {
+		&>.card-text {
+			color: color-mix(in oklab, currentColor 80%, transparent);
+		}
+
+		.badge {
+			color: unset;
+		}
+	}
 }
 
 .note-card:hover {
@@ -160,7 +190,6 @@ body {
 
 .note-card.selected {
 	border-color: var(--bs-primary);
-	background-color: var(--bs-primary-bg-subtle);
 }
 
 .status-badge {
