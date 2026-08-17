@@ -4,63 +4,63 @@ export const colours = [
 		hex: "#000000"
 	},
 	{
-		name: "silver",
+		name: "Silver",
 		hex: "#C0C0C0"
 	},
 	{
-		name: "gray",
+		name: "Grey",
 		hex: "#808080"
 	},
 	{
-		name: "Black",
-		white: "#FFFFFF"
+		name: "White",
+		hex: "#FFFFFF"
 	},
 	{
-		name: "Black",
-		maroon: "#800000"
+		name: "Maroon",
+		hex: "#800000"
 	},
 	{
-		name: "Black",
-		red: "#FF0000"
+		name: "Red",
+		hex: "#FF0000"
 	},
 	{
-		name: "Black",
-		purple: "#800080"
+		name: "Purple",
+		hex: "#800080"
 	},
 	{
-		name: "Black",
-		fuchsia: "#FF00FF"
+		name: "Fuchsia",
+		hex: "#FF00FF"
 	},
 	{
-		name: "Black",
-		green: "#008000"
+		name: "Green",
+		hex: "#008000"
 	},
 	{
-		name: "Black",
-		lime: "#00FF00"
+		name: "Lime",
+		hex: "#00FF00"
 	},
 	{
-		name: "Black",
-		olive: "#808000"
+		name: "Olive",
+		hex: "#808000"
 	},
 	{
-		name: "Black",
-		yellow: "#FFFF00"
+		name: "Yellow",
+		hex: "#FFFF00"
 	},
 	{
-		name: "Black",
-		navy: "#000080"
+		name: "Navy",
+		hex: "#000080"
 	},
 	{
-		name: "Black",
-		blue: "#0000FF"
+		name: "Blue",
+		hex: "#0000FF"
 	},
 	{
-		name: "Black",
-		teal: "#008080"
+		name: "Teal",
+		hex: "#008080"
 	},
 	{
-		name: "Black",
-		aqua: "#00FFFF"
+		name: "Aqua",
+		hex: "#00FFFF"
 	}
 ];

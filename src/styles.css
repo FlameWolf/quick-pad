@@ -50,7 +50,73 @@ body {
 .colour-circle {
 	width: 2.5rem;
 	height: 2.5rem;
-	border-radius: 50%;
+
+	/*! purgecss start ignore */
+	&.black {
+		background-color: #000000
+	}
+
+	&.silver {
+		background-color: #c0c0c0
+	}
+
+	&.gray {
+		background-color: #808080
+	}
+
+	&.white {
+		background-color: #ffffff
+	}
+
+	&.maroon {
+		background-color: #800000
+	}
+
+	&.red {
+		background-color: #ff0000
+	}
+
+	&.purple {
+		background-color: #800080
+	}
+
+	&.fuchsia {
+		background-color: #ff00ff
+	}
+
+	&.green {
+		background-color: #008000
+	}
+
+	&.lime {
+		background-color: #00ff00
+	}
+
+	&.olive {
+		background-color: #808000
+	}
+
+	&.yellow {
+		background-color: #ffff00
+	}
+
+	&.navy {
+		background-color: #000080
+	}
+
+	&.blue {
+		background-color: #0000ff
+	}
+
+	&.teal {
+		background-color: #008080
+	}
+
+	&.aqua {
+		background-color: #00ffff
+	}
+
+	/*! purgecss end ignore */
 }
 
 .ms-n1 {
