@@ -60,7 +60,7 @@
 		if (!existingNote.value) {
 			return false;
 		}
-		return editTitle.value !== existingNote.value.title || editContent.value !== loadedContent.value || !areArraysEqual(editTags.value, existingNote.value.tags);
+		return editTitle.value !== existingNote.value.title || editContent.value !== loadedContent.value || editColour.value !== existingNote.value.colour || !areArraysEqual(editTags.value, existingNote.value.tags);
 	});
 	const draftId = computed(() => (isCreateMode.value ? "new" : props.id!));
 	const debouncedPushUndo = debounce((value: string) => undoRedo.push(value), 300);
