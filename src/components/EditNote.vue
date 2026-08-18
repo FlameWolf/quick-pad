@@ -11,12 +11,14 @@
 	import { addNotification } from "@/stores/notifications";
 	import { listViewRoutes } from "@/router";
 	import { confirm } from "@/composables/useConfirmDialogue";
+	import { useDropdown } from "@/composables/useDropdown";
 	import { exportNote } from "@/composables/useFileIO";
 	import { clearDraft, loadDraft, saveDraft } from "@/composables/useNoteDraft";
 	import { requestSync } from "@/composables/useNotesSync";
 	import { useTruncate } from "@/composables/useTruncate";
 	import { useUndoRedo } from "@/composables/useUndoRedo";
 	import Icon from "@/components/Icon.vue";
+	import DisplayColourList from "@/components/DisplayColourList.vue";
 	import DisplayTagList from "@/components/DisplayTagList.vue";
 	import type { UUID } from "crypto";
 
@@ -36,6 +38,8 @@
 	const loadedContent = ref(emptyString);
 	const isContentLoaded = ref(isCreateMode.value);
 	const editTextArea = useTemplateRef("edit-text-area");
+	const dropdownToggle = useTemplateRef("dropdown-toggle");
+	const dropdown = useDropdown(dropdownToggle);
 	const undoRedo = useUndoRedo(editContent.value);
 	const sentenceCount = computed(() => (isEditing.value ? getSentenceCount(editContent.value) : (existingNote.value?.sentenceCount ?? 0)));
 	const wordCount = computed(() => (isEditing.value ? getWordCount(editContent.value) : (existingNote.value?.wordCount ?? 0)));
@@ -160,21 +164,36 @@
 	async function saveNote() {
 		const title = editTitle.value.trim() || "Untitled";
 		const content = editContent.value;
+		const colour = editColour.value;
 		const tags = editTags.value;
 		isEditing.value = false;
 		if (isCreateMode.value) {
 			const note = new NoteModel(title, content);
 			note.tags = tags?.length ? Array.from(tags) : undefined;
+			note.colour = colour;
 			await notesStore.addNote(note);
 			router.push(`/notes/${note.id}`);
 		} else if (existingNote.value) {
 			const noteId = existingNote.value.id;
 			notesStore.setNoteTags(noteId, tags);
+			if (colour) {
+				notesStore.setColour(noteId, colour);
+			} else {
+				notesStore.unsetColour(noteId);
+			}
 			await notesStore.updateNote({ id: noteId, title, content });
 			loadedContent.value = content;
 		}
 		clearDraft(draftId.value);
 		requestSync();
+	}
+
+	async function setColour(colour: Colour) {
+		if (colour === "none") {
+			editColour.value = undefined;
+			return;
+		}
+		editColour.value = colour;
 	}
 
 	async function deleteNote() {
@@ -483,6 +502,7 @@
 			</button>
 		</div>
 		<div class="d-flex flex-wrap gap-2" v-if="isEditing">
+			<div ref="dropdown-toggle" class="colour-circle toolbar-icon rounded-circle" :class="{ [!!editColour ? `bg-${editColour}` : `vibgyor`]: true }" @click="dropdown.toggle()" role="button" aria-label="Apply Colour"></div>
 			<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canUndo.value" @click="doUndo" title="Undo" aria-label="Undo">
 				<Icon type="arrowCounterclockwise"/>
 				<span class="d-none d-sm-inline ms-2">Undo</span>
@@ -500,6 +520,9 @@
 				<span class="d-none d-sm-inline ms-2">Cancel</span>
 			</button>
 		</div>
+	</div>
+	<div v-if="dropdown.show.value" class="d-flex justify-content-end mb-3">
+		<DisplayColourList mode="edit" :current="editColour" @selection-changed="setColour"/>
 	</div>
 	<template v-if="!isEditing && existingNote">
 		<h2 class="note-title mb-3">{{ existingNote.title }}</h2>
