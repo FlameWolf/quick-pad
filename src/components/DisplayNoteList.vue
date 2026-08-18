@@ -1,10 +1,12 @@
 <script setup lang="ts">
-	import { computed, onMounted, watch } from "vue";
+	import { computed, onMounted, useTemplateRef, watch } from "vue";
 	import { onBeforeRouteLeave } from "vue-router";
 	import { bulkActions } from "@/constants/actions";
+	import { colours } from "@/constants/colours";
 	import * as appStore from "@/stores/app";
 	import * as notesStore from "@/stores/notes";
 	import { confirm } from "@/composables/useConfirmDialogue";
+	import { useDropdown } from "@/composables/useDropdown";
 	import { exportAllNotes, exportNotes, importFiles } from "@/composables/useFileIO";
 	import { clearSelection, enterSelectionMode, exitSelectionMode, isSelected, isSelecting, selectAll, selectedCount, toggleSelection } from "@/composables/useNoteSelection";
 	import { getSortedNotes, setSortField, sortField, sortOrder, toggleSortDirection } from "@/composables/useNoteSort";
@@ -12,6 +14,7 @@
 	import Icon from "@/components/Icon.vue";
 	import EmptyState from "@/components/EmptyState.vue";
 	import SortControls from "@/components/SortControls.vue";
+	import DisplayColourList from "@/components/DisplayColourList.vue";
 	import DisplayTagList from "@/components/DisplayTagList.vue";
 	import NoteCard from "@/components/NoteCard.vue";
 	import SelectionActionBar from "@/components/SelectionActionBar.vue";
@@ -26,6 +29,12 @@
 	};
 
 	const props = defineProps<{ view?: View }>();
+	const dropdownToggle = useTemplateRef("dropdown-toggle");
+	const dropdownMenu = useTemplateRef("dropdown-menu");
+	const dropdown = useDropdown(dropdownToggle, {
+		autoClose: false,
+		dropdown: dropdownMenu
+	});
 	const view = computed<View>(() => props.view ?? "active");
 	const isSearchMode = computed(() => !!notesStore.searchText.value);
 	const sourceNotes = computed(() => {
@@ -143,6 +152,23 @@
 		}
 	}
 
+	function isValidColour(input: string): boolean {
+		return colours.includes(input as Colour);
+	}
+
+	function updateSearchColours(colour: Colour) {
+		switch (colour) {
+			case "none": {
+				notesStore.setSearchColours([]);
+				break;
+			}
+			default: {
+				notesStore.toggleSearchColour(colour);
+				break;
+			}
+		}
+	}
+
 	async function handleSelectionAction(key: SelectionAction["key"]) {
 		const ids = getSelectedIds();
 		const idCount = ids.length;
@@ -207,6 +233,16 @@
 				purgeNotes = true;
 				break;
 			}
+			default: {
+				if (isValidColour(key)) {
+					if (key === "none") {
+						await notesStore.unsetColourMultiple(ids);
+						break;
+					}
+					await notesStore.setColourMultiple(ids, key);
+				}
+				break;
+			}
 		}
 		if (syncNotes) {
 			requestSync(purgeNotes ? ids : undefined);
@@ -259,7 +295,7 @@
 			<div class="mt-3" role="status">{{ notesStore.isSearching.value ? "Searching..." : "Loading notes..." }}</div>
 		</div>
 	</template>
-	<EmptyState v-else-if="!hasNotes && !notesStore.searchTags.value.size" :message="emptyMessage" :show-actions="view === `active` && !isSearchMode" @import="handleImport"/>
+	<EmptyState v-else-if="!hasNotes && !notesStore.searchTags.value.size && !notesStore.searchColours.value.size" :message="emptyMessage" :show-actions="view === `active` && !isSearchMode" @import="handleImport"/>
 	<template v-else>
 		<div class="d-flex gap-2 mb-3 justify-content-end flex-wrap">
 			<template v-if="isSelecting">
@@ -274,6 +310,7 @@
 			</template>
 			<template v-else>
 				<SortControls :sort-field="sortField" :sort-order="sortOrder" @change-field="setSortField" @toggle-direction="toggleSortDirection"/>
+				<div ref="dropdown-toggle" class="colour-circle vibgyor toolbar-icon rounded-circle" :class="{ active: !!notesStore.searchColours.value.size }" @click="dropdown.toggle()" role="button" aria-label="Colour Filters"></div>
 				<button class="btn btn-outline-secondary btn-sm" @click="enterSelectionMode" title="Select" aria-label="Select">
 					<Icon type="check2Square"/>
 					<span class="d-none d-sm-inline ms-2">Select</span>
@@ -308,6 +345,9 @@
 				</template>
 			</template>
 		</div>
+		<div v-if="dropdown.show.value" ref="dropdown-menu" class="d-flex justify-content-end mb-3">
+			<DisplayColourList @selection-changed="updateSearchColours"/>
+		</div>
 		<DisplayTagList class="mb-3" :active-tags="Array.from(notesStore.searchTags.value)" :allow-create="isSelecting" :allow-delete="true" :allow-edit="true" :allow-manage="!isSelecting" :show-filter-type="!isSelecting"/>
 		<template v-for="section in noteSections" :key="section.key">
 			<div v-if="section.divider" class="d-flex align-items-center my-4">
@@ -324,6 +364,6 @@
 				<NoteCard v-for="note in section.notes" :key="note.id" :note="note" :selection-mode="isSelecting" :selected="isSelected(note.id)" @toggle-select="toggleSelection"/>
 			</div>
 		</template>
-		<SelectionActionBar v-if="isSelecting && selectedCount > 0" :selected-count="selectedCount" :actions="selectionActions" @action="handleSelectionAction" @cancel="exitSelectionMode"/>
+		<SelectionActionBar v-if="isSelecting && selectedCount > 0" :selected-count="selectedCount" :actions="selectionActions" :show-colours="true" @action="handleSelectionAction" @cancel="exitSelectionMode"/>
 	</template>
 </template>

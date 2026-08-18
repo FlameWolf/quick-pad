@@ -13,6 +13,7 @@
 	}>();
 	const emit = defineEmits<{ toggleSelect: [id: UUID] }>();
 	const note = computed(() => props.note);
+	const colourClass = computed(() => (note.value.colour ? { [`bg-${note.value.colour}`]: true } : {}));
 
 	function formatDate(date?: Date): string {
 		if (!date) {
@@ -36,8 +37,8 @@
 	}
 </script>
 <template>
-	<RouterLink :to="`/notes/${note.id}`" class="card note-card text-decoration-none position-relative" :class="{ selected: props.selectionMode && props.selected }" @click.capture="onClick">
-		<div class="d-flex gap-2 small position-absolute top-0 p-2 status-badge">
+	<RouterLink :to="`/notes/${note.id}`" class="card note-card text-decoration-none position-relative" :class="{ ...colourClass, selected: props.selectionMode && props.selected }" @click.capture="onClick">
+		<div v-if="note.pinnedAt || note.favedAt" class="d-flex gap-2 small position-absolute top-0 p-2 status-badge">
 			<Icon v-if="note.pinnedAt" type="pinAngleFill"/>
 			<Icon v-if="note.favedAt" type="starFill"/>
 		</div>
@@ -45,11 +46,11 @@
 			<input v-if="props.selectionMode" type="checkbox" class="form-check-input selection-checkbox rounded-circle" :checked="props.selected"/>
 			<div class="d-flex gap-1 mb-2">
 				<div class="text-truncate">{{ note.title }}</div>
-				<div class="badge align-self-center text-muted border ms-auto">{{ formatDate(note.modifiedAt ?? note.createdAt) }}</div>
+				<div class="badge align-self-center border ms-auto">{{ formatDate(note.modifiedAt ?? note.createdAt) }}</div>
 			</div>
-			<p class="card-text text-muted small overflow-hidden">{{ note.summary }}</p>
+			<p class="card-text small overflow-hidden">{{ note.summary }}</p>
 		</div>
-		<div class="bg-body small w-100 position-absolute bottom-0">
+		<div class="bg-body small w-100 position-absolute bottom-0 opacity-75">
 			<div v-if="note.tags" class="d-flex gap-1 px-2 py-2">
 				<a class="badge text-bg-secondary" v-for="tag in note.tags" role="button" @click.prevent="addToSearchTags(tag)">#{{ tag }}</a>
 			</div>
