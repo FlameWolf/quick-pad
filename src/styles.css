@@ -263,14 +263,14 @@ body {
 
 .edit-note .form-control,
 .edit-note .form-control-lg {
-	background-color: color-mix(in oklab, var(--editor-bg-colour) 87.5%, var(--bs-body-bg));
+	background-color: color-mix(in oklab, var(--editor-bg-colour) 75%, var(--bs-body-color) 6.25%, var(--editor-text-colour));
 	color: unset;
 	padding: 0.5rem;
 	border: none;
 
 	/*! purgecss start ignore */
 	&:focus {
-		background-color: color-mix(in oklab, var(--editor-bg-colour) 75%, var(--bs-body-bg));
+		background-color: color-mix(in oklab, var(--editor-bg-colour) 87.5%, var(--editor-text-colour) 6.25%, var(--bs-body-color));
 	}
 
 	/*! purgecss end ignore */
