@@ -62,7 +62,7 @@ body {
 	text-decoration: none;
 	width: 2.5rem;
 	height: 2.5rem;
-	border: var(--bs-border-width) var(--bs-border-style) var(--bs-body-color);
+	border: var(--bs-border-width) var(--bs-border-style) var(--editor-highlight-colour);
 
 	&.vibgyor {
 		background: linear-gradient(135deg, violet, indigo, blue, green, yellow, orange, red);
@@ -208,6 +208,7 @@ body {
 }
 
 .card.note-card {
+	--bs-card-border-color: color-mix(in oklab, var(--editor-border-colour) 50%, var(--bs-border-color));
 	height: 12rem;
 }
 
@@ -245,6 +246,7 @@ body {
 
 .status-badge {
 	background-color: rgb(from var(--bs-body-bg) r g b / 0.75);
+	color: var(--bs-body-color);
 	border-bottom-right-radius: 0.5rem;
 }
 
