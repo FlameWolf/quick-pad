@@ -66,6 +66,7 @@ body {
 
 	&.vibgyor {
 		background: linear-gradient(135deg, violet, indigo, blue, green, yellow, orange, red);
+		text-shadow: 0 0 1pt black;
 		border-color: var(--bs-border-color);
 	}
 

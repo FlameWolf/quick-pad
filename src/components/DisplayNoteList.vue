@@ -310,7 +310,7 @@
 			</template>
 			<template v-else>
 				<SortControls :sort-field="sortField" :sort-order="sortOrder" @change-field="setSortField" @toggle-direction="toggleSortDirection"/>
-				<div ref="dropdown-toggle" class="colour-circle vibgyor toolbar-icon rounded-circle" @click="dropdown.toggle()" role="button" aria-label="Colour Filters"></div>
+				<div ref="dropdown-toggle" class="colour-circle vibgyor toolbar-icon rounded-circle" :class="{ active: !!notesStore.searchColours.value.size }" @click="dropdown.toggle()" role="button" aria-label="Colour Filters"></div>
 				<button class="btn btn-outline-secondary btn-sm" @click="enterSelectionMode" title="Select" aria-label="Select">
 					<Icon type="check2Square"/>
 					<span class="d-none d-sm-inline ms-2">Select</span>
