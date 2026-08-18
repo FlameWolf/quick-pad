@@ -204,8 +204,8 @@
 	<div class="d-flex gap-1 p-1 border rounded" :class="flexModifiers">
 		<div class="dropdown w-100">
 			<div ref="dropdown-menu" class="d-flex gap-1 align-items-center" :class="flexModifiers">
-				<button v-if="props.allowEdit" ref="dropdown-toggle" class="btn btn-sm btn-secondary align-self-start dropdown-toggle" @click="dropdown.toggle()">Tags</button>
-				<label v-else class="small align-self-start border border-secondary rounded px-2 py-1">Tags</label>
+				<button v-if="props.allowEdit" ref="dropdown-toggle" class="btn btn-sm btn-outline-secondary align-self-start dropdown-toggle" @click="dropdown.toggle()">Tags</button>
+				<label v-else class="small align-self-start border rounded px-2 py-1">Tags</label>
 				<div v-if="dropdown.show.value" class="dropdown-menu show w-100 position-relative tag-list">
 					<template v-if="props.allowManage">
 						<div class="d-flex gap-2 px-3 py-1">
@@ -220,21 +220,23 @@
 					<div class="d-flex gap-2 px-3 py-1">
 						<div class="flex-nowrap w-100" :class="{ [`input-group`]: props.allowCreate }">
 							<input ref="tag-input" v-model.trim="searchText" type="text" class="form-control form-control-sm" placeholder="Search"/>
-							<button v-if="props.allowCreate" class="btn btn-sm btn-primary" :disabled="hasExactMatch" @click="createTag(searchText)">
+							<button v-if="props.allowCreate" class="btn btn-sm btn-outline-secondary" :disabled="hasExactMatch" @click="createTag(searchText)">
 								<Icon type="plusLg"/>
 							</button>
 						</div>
 					</div>
-					<div class="dropdown-divider"></div>
-					<div class="d-flex flex-wrap gap-4 px-3">
-						<label v-for="tag in filteredTags">
-							<input type="checkbox" class="form-check-input" :checked="isTagSelected(tag)" @change="toggleTagSelection(tag)"/>
-							<span class="text-wrap text-break ms-2">{{ tag }}</span>
-						</label>
-					</div>
+					<template v-if="filteredTags.length">
+						<div class="dropdown-divider"></div>
+						<div class="d-flex flex-wrap gap-4 px-3">
+							<label v-for="tag in filteredTags">
+								<input type="checkbox" class="form-check-input" :checked="isTagSelected(tag)" @change="toggleTagSelection(tag)"/>
+								<span class="text-wrap text-break ms-2">{{ tag }}</span>
+							</label>
+						</div>
+					</template>
 				</div>
 				<template v-else-if="selectedTags.length">
-					<component :is="props.allowEdit ? `div` : `a`" v-for="tag in selectedTags" class="badge text-bg-info" :class="{ [`py-2`]: !props.allowEdit }" @click="addToSearchTags(tag)" v-bind="props.allowEdit ? {} : { [`role`]: `button` }">
+					<component :is="props.allowEdit ? `div` : `a`" v-for="tag in selectedTags" class="badge text-bg-secondary" :class="{ [`py-2`]: !props.allowEdit }" @click="addToSearchTags(tag)" v-bind="props.allowEdit ? {} : { [`role`]: `button` }">
 						<span>{{ tag }}</span>
 						<button v-if="props.allowEdit" class="small btn-close ms-2" @click="unselectTag(tag)"></button>
 					</component>

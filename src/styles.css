@@ -3,12 +3,9 @@
 :root {
 	--font-scale-factor: 0;
 	--editor-bg-colour: var(--bs-body-bg);
-}
-
-:root[data-bs-theme="dark"] {
-	.badge.text-bg-info>.btn-close {
-		--bs-btn-close-opacity: 0.9;
-	}
+	--editor-text-colour: oklch(from var(--editor-bg-colour) round(1.21 - L) 0 0);
+	--editor-highlight-colour: color-mix(in oklab, var(--editor-text-colour) 80%, hsl(from aqua calc(h + 180) s l));
+	--editor-border-colour: color-mix(in srgb, var(--editor-highlight-colour) 75%, transparent);
 }
 
 body {
@@ -174,6 +171,35 @@ body {
 .bg-aqua {
 	background-color: aqua;
 	color: color-mix(in oklab, oklch(from aqua round(1.21 - L) 0 0) 80%, hsl(from aqua calc(h + 180) s l));
+}
+
+.bg-black,
+.bg-silver,
+.bg-grey,
+.bg-white,
+.bg-maroon,
+.bg-red,
+.bg-purple,
+.bg-fuchsia,
+.bg-green,
+.bg-lime,
+.bg-olive,
+.bg-yellow,
+.bg-navy,
+.bg-blue,
+.bg-teal,
+.bg-aqua {
+	--bs-border-color: var(--editor-border-colour);
+
+	.dropdown-menu {
+		--bs-dropdown-border-color: var(--editor-border-colour);
+		--bs-dropdown-divider-bg: var(--editor-border-colour);
+	}
+
+	button[class*="btn-outline-"] {
+		--bs-btn-border-color: var(--editor-border-colour);
+		--bs-btn-color: var(--editor-highlight-colour);
+	}
 }
 
 .ms-n1 {
