@@ -3,22 +3,18 @@
 	import * as notesStore from "@/stores/notes";
 
 	const props = defineProps<{
-		mode?: "filter" | "edit";
-		current?: Colour;
+		filterMode?: boolean;
+		selected?: Colour;
 	}>();
 	const emit = defineEmits<{
 		selectionChanged: [colour: Colour];
 	}>();
 
 	function isActive(colour: Colour) {
-		switch (props.mode) {
-			case "edit": {
-				return props.current === colour;
-			}
-			default: {
-				return notesStore.searchColours.value.has(colour);
-			}
+		if (props.filterMode) {
+			return notesStore.searchColours.value.has(colour);
 		}
+		return props.selected === colour;
 	}
 </script>
 <template>
