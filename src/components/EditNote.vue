@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { computed, onBeforeUnmount, onMounted, onUnmounted, ref, useTemplateRef, watch } from "vue";
+	import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from "vue";
 	import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 	import { emptyString } from "@/constants/common";
 	import { areArraysEqual, areSetsEqual, copyNullableArray } from "@/utils/common";
@@ -57,10 +57,11 @@
 		if (isCreateMode.value) {
 			return editTitle.value.trim().length > 0 || editContent.value.length > 0 || !areSetsEqual(new Set(editTags.value), notesStore.searchTags.value);
 		}
-		if (!existingNote.value) {
+		const note = existingNote.value;
+		if (!note) {
 			return false;
 		}
-		return editTitle.value !== existingNote.value.title || editContent.value !== loadedContent.value || editColour.value !== existingNote.value.colour || !areArraysEqual(editTags.value, existingNote.value.tags);
+		return editTitle.value !== note.title || editContent.value !== loadedContent.value || editColour.value !== note.colour || !areArraysEqual(editTags.value, note.tags);
 	});
 	const draftId = computed(() => (isCreateMode.value ? "new" : props.id!));
 	const debouncedPushUndo = debounce((value: string) => undoRedo.push(value), 300);
@@ -169,18 +170,18 @@
 		isEditing.value = false;
 		if (isCreateMode.value) {
 			const note = new NoteModel(title, content);
-			note.tags = tags?.length ? Array.from(tags) : undefined;
 			note.colour = colour;
+			note.tags = tags?.length ? Array.from(tags) : undefined;
 			await notesStore.addNote(note);
 			router.push(`/notes/${note.id}`);
 		} else if (existingNote.value) {
 			const noteId = existingNote.value.id;
-			notesStore.setNoteTags(noteId, tags);
 			if (colour) {
 				notesStore.setColour(noteId, colour);
 			} else {
 				notesStore.unsetColour(noteId);
 			}
+			notesStore.setNoteTags(noteId, tags);
 			await notesStore.updateNote({ id: noteId, title, content });
 			loadedContent.value = content;
 		}
@@ -188,7 +189,7 @@
 		requestSync();
 	}
 
-	async function setColour(colour: Colour) {
+	async function updateColour(colour: Colour) {
 		if (colour === "none") {
 			editColour.value = undefined;
 			return;
@@ -354,13 +355,10 @@
 	onBeforeUnmount(() => {
 		persistDraft.cancel();
 		debouncedPushUndo.cancel();
+		appStore.currentColour.value = undefined;
 		window.removeEventListener("pagehide", flushDraft);
 		window.removeEventListener("resize", adjustTextAreaHeight);
 		window.removeEventListener("beforeunload", onBeforeUnload);
-	});
-
-	onUnmounted(() => {
-		appStore.currentColour.value = undefined;
 	});
 
 	onBeforeRouteLeave(async () => {
@@ -383,9 +381,10 @@
 			editColour.value = undefined;
 			isEditing.value = isCreateMode.value;
 			if (id && !isCreateMode.value) {
+				const note = existingNote.value;
 				loadedContent.value = (await notesStore.getNoteContent(id)) ?? emptyString;
-				editColour.value = existingNote.value?.colour as Colour;
-				editTags.value = copyNullableArray(existingNote.value?.tags);
+				editColour.value = note?.colour as Colour;
+				editTags.value = copyNullableArray(note?.tags);
 			} else {
 				loadedContent.value = emptyString;
 				editTags.value = Array.from(notesStore.searchTags.value);
@@ -522,7 +521,7 @@
 		</div>
 	</div>
 	<div v-if="dropdown.show.value" class="d-flex justify-content-end mb-3">
-		<DisplayColourList mode="edit" :current="editColour" @selection-changed="setColour"/>
+		<DisplayColourList :selected="editColour" @selection-changed="updateColour"/>
 	</div>
 	<template v-if="!isEditing && existingNote">
 		<h2 class="note-title mb-3">{{ existingNote.title }}</h2>

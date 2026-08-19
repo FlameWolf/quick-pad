@@ -295,7 +295,7 @@
 			<div class="mt-3" role="status">{{ notesStore.isSearching.value ? "Searching..." : "Loading notes..." }}</div>
 		</div>
 	</template>
-	<EmptyState v-else-if="!hasNotes && !notesStore.searchTags.value.size && !notesStore.searchColours.value.size" :message="emptyMessage" :show-actions="view === `active` && !isSearchMode" @import="handleImport"/>
+	<EmptyState v-else-if="!(hasNotes || notesStore.searchTags.value.size || notesStore.searchColours.value.size)" :message="emptyMessage" :show-actions="view === `active` && !isSearchMode" @import="handleImport"/>
 	<template v-else>
 		<div class="d-flex gap-2 mb-3 justify-content-end flex-wrap">
 			<template v-if="isSelecting">
@@ -346,7 +346,7 @@
 			</template>
 		</div>
 		<div v-if="dropdown.show.value" ref="dropdown-menu" class="d-flex justify-content-end mb-3">
-			<DisplayColourList @selection-changed="updateSearchColours"/>
+			<DisplayColourList :filter-mode="true" @selection-changed="updateSearchColours"/>
 		</div>
 		<DisplayTagList class="mb-3" :active-tags="Array.from(notesStore.searchTags.value)" :allow-create="isSelecting" :allow-delete="true" :allow-edit="true" :allow-manage="!isSelecting" :show-filter-type="!isSelecting"/>
 		<template v-for="section in noteSections" :key="section.key">
