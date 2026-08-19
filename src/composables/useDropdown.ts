@@ -17,12 +17,14 @@ export function useDropdown(trigger: TemplateRef<HTMLElement>, { initialState = 
 		if (!show.value) {
 			return;
 		}
-		const target = event.target as Node;
-		if (trigger.value?.contains(target)) {
-			return;
-		}
-		if (!autoClose && dropdown?.value?.contains(target)) {
-			return;
+		const path = event.composedPath();
+		for (const target of path) {
+			if (target === trigger.value) {
+				return;
+			}
+			if (!autoClose && target === dropdown?.value) {
+				return;
+			}
 		}
 		show.value = false;
 	}

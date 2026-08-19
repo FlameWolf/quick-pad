@@ -1,6 +1,7 @@
 <script setup lang="ts">
 	import { colours } from "@/constants/colours";
 	import * as notesStore from "@/stores/notes";
+	import Icon from "@/components/Icon.vue";
 
 	const props = defineProps<{
 		filterMode?: boolean;
@@ -19,6 +20,8 @@
 </script>
 <template>
 	<div class="d-flex flex-wrap gap-2 p-2 border rounded">
-		<a v-for="colour in colours" class="colour-circle rounded-circle" :class="{ [`bg-${colour}`]: true, active: isActive(colour) }" @click="emit(`selectionChanged`, colour)" role="button" :aria-label="colour"></a>
+		<a v-for="colour in colours" class="colour-circle rounded-circle" :class="{ [`bg-${colour}`]: true }" @click="emit(`selectionChanged`, colour)" role="button" :aria-label="colour">
+			<Icon v-if="isActive(colour)" type="check2"/>
+		</a>
 	</div>
 </template>
