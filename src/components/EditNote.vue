@@ -155,9 +155,11 @@
 			isEditing.value = false;
 			router.push(backRoute.value);
 		} else {
-			editTitle.value = existingNote.value?.title ?? emptyString;
+			const note = existingNote.value;
+			editTitle.value = note?.title ?? emptyString;
 			editContent.value = loadedContent.value;
-			editTags.value = copyNullableArray(existingNote.value?.tags);
+			editColour.value = note?.colour as Colour;
+			editTags.value = copyNullableArray(note?.tags);
 			isEditing.value = false;
 		}
 	}
