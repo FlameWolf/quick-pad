@@ -156,10 +156,12 @@
 			router.push(backRoute.value);
 		} else {
 			const note = existingNote.value;
-			editTitle.value = note?.title ?? emptyString;
-			editContent.value = loadedContent.value;
-			editColour.value = note?.colour as Colour;
-			editTags.value = copyNullableArray(note?.tags);
+			if (note) {
+				editTitle.value = note.title ?? emptyString;
+				editContent.value = loadedContent.value;
+				editColour.value = note.colour as Colour;
+				editTags.value = copyNullableArray(note.tags);
+			}
 			isEditing.value = false;
 		}
 	}
@@ -374,42 +376,28 @@
 		return ok;
 	});
 
-	async function resetEditor(callback?: () => Promise<void>) {
-		isContentLoaded.value = isCreateMode.value;
-		loadedContent.value = emptyString;
-		editContent.value = emptyString;
-		editColour.value = undefined;
-		editTags.value = undefined;
-		isEditing.value = isCreateMode.value;
-		await callback?.();
-		isContentLoaded.value = true;
-		undoRedo.reset(loadedContent.value);
-		await restoreDraft();
-	}
-
 	watch(
 		() => props.id,
-		async () => {
-			await resetEditor(async () => {
-				if (isCreateMode.value) {
-					editTags.value = Array.from(notesStore.searchTags.value);
+		async id => {
+			isContentLoaded.value = isCreateMode.value;
+			loadedContent.value = emptyString;
+			editContent.value = emptyString;
+			editColour.value = undefined;
+			editTags.value = undefined;
+			isEditing.value = isCreateMode.value;
+			if (id && !isCreateMode.value) {
+				const note = existingNote.value;
+				if (note) {
+					loadedContent.value = (await notesStore.getNoteContent(id)) ?? emptyString;
+					editColour.value = note.colour as Colour;
+					editTags.value = copyNullableArray(note.tags);
 				}
-			});
-		},
-		{ immediate: true }
-	);
-
-	watch(
-		existingNote,
-		async note => {
-			await resetEditor(async () => {
-				if (!note) {
-					return;
-				}
-				loadedContent.value = (await notesStore.getNoteContent(note.id)) ?? emptyString;
-				editColour.value = note.colour as Colour;
-				editTags.value = copyNullableArray(note.tags);
-			});
+			} else {
+				editTags.value = Array.from(notesStore.searchTags.value);
+			}
+			isContentLoaded.value = true;
+			undoRedo.reset(loadedContent.value);
+			await restoreDraft();
 		},
 		{ immediate: true }
 	);
