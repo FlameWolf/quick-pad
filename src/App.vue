@@ -3,7 +3,7 @@
 	import { onMounted } from "vue";
 	import { RouterView } from "vue-router";
 	import { currentColour } from "@/stores/app";
-	import { hydrateNotes } from "@/stores/notes";
+	import { isLoading, hydrateNotes } from "@/stores/notes";
 	import { isNavigating } from "@/router";
 	import { purgeStaleDrafts } from "@/composables/useNoteDraft";
 	import Icon from "@/components/Icon.vue";
@@ -33,7 +33,11 @@
 		</div>
 	</nav>
 	<main class="flex-grow-1 container px-2 py-4" :class="{ [`bg-${currentColour}`]: !!currentColour }">
-		<RouterView/>
+		<div v-if="isLoading" class="d-flex flex-column justify-content-center align-items-center">
+			<div class="spinner-border" aria-hidden="true"></div>
+			<div class="mt-3" role="status">Loading notes...</div>
+		</div>
+		<RouterView v-else/>
 	</main>
 	<footer class="bg-body-tertiary border-top">
 		<div class="d-flex flex-wrap justify-content-center align-items-center gap-3 small text-muted px-2 py-3">
