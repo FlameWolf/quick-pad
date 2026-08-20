@@ -193,12 +193,16 @@
 		{ deep: true }
 	);
 
-	watch(notesStore.searchTags, () => {
-		if (!syncingUp) {
-			syncState("down");
-		}
-		syncingUp = false;
-	});
+	watch(
+		notesStore.searchTags,
+		() => {
+			if (!syncingUp) {
+				syncState("down");
+			}
+			syncingUp = false;
+		},
+		{ deep: true }
+	);
 </script>
 <template>
 	<div class="d-flex gap-1 p-1 border rounded" :class="flexModifiers">
