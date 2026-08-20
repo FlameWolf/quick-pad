@@ -228,6 +228,10 @@ body {
 			color: unset;
 		}
 	}
+
+	&>.bg-body {
+		--bs-bg-opacity: 0.875;
+	}
 }
 
 .note-card:hover {

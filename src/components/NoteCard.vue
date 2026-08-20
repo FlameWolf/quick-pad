@@ -50,7 +50,7 @@
 			</div>
 			<p class="card-text small overflow-hidden">{{ note.summary }}</p>
 		</div>
-		<div class="bg-body small w-100 position-absolute bottom-0 opacity-75">
+		<div class="bg-body small w-100 position-absolute bottom-0">
 			<div v-if="note.tags" class="d-flex gap-1 px-2 py-2">
 				<a class="badge text-bg-secondary" v-for="tag in note.tags" role="button" @click.prevent="addToSearchTags(tag)">#{{ tag }}</a>
 			</div>
