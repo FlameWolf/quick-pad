@@ -374,26 +374,42 @@
 		return ok;
 	});
 
+	async function resetEditor(callback?: () => Promise<void>) {
+		isContentLoaded.value = isCreateMode.value;
+		loadedContent.value = emptyString;
+		editContent.value = emptyString;
+		editColour.value = undefined;
+		editTags.value = undefined;
+		isEditing.value = isCreateMode.value;
+		await callback?.();
+		isContentLoaded.value = true;
+		undoRedo.reset(loadedContent.value);
+		await restoreDraft();
+	}
+
 	watch(
 		() => props.id,
-		async id => {
-			isContentLoaded.value = isCreateMode.value;
-			loadedContent.value = emptyString;
-			editContent.value = emptyString;
-			editColour.value = undefined;
-			isEditing.value = isCreateMode.value;
-			if (id && !isCreateMode.value) {
-				const note = existingNote.value;
-				loadedContent.value = (await notesStore.getNoteContent(id)) ?? emptyString;
-				editColour.value = note?.colour as Colour;
-				editTags.value = copyNullableArray(note?.tags);
-			} else {
-				loadedContent.value = emptyString;
-				editTags.value = Array.from(notesStore.searchTags.value);
-			}
-			isContentLoaded.value = true;
-			undoRedo.reset(loadedContent.value);
-			await restoreDraft();
+		async () => {
+			await resetEditor(async () => {
+				if (isCreateMode.value) {
+					editTags.value = Array.from(notesStore.searchTags.value);
+				}
+			});
+		},
+		{ immediate: true }
+	);
+
+	watch(
+		existingNote,
+		async note => {
+			await resetEditor(async () => {
+				if (!note) {
+					return;
+				}
+				loadedContent.value = (await notesStore.getNoteContent(note.id)) ?? emptyString;
+				editColour.value = note.colour as Colour;
+				editTags.value = copyNullableArray(note.tags);
+			});
 		},
 		{ immediate: true }
 	);
@@ -410,24 +426,6 @@
 	watch(editColour, colour => {
 		appStore.currentColour.value = colour;
 	});
-
-	watch(
-		[appStore.fontScaleFactor, appStore.currentColour],
-		([factor, colour]) => {
-			const rootElement = document.documentElement;
-			if (factor === 0) {
-				rootElement.style.removeProperty("--font-scale-factor");
-			} else {
-				rootElement.style.setProperty("--font-scale-factor", factor.toString());
-			}
-			if (colour === undefined) {
-				rootElement.style.removeProperty("--editor-bg-colour");
-			} else {
-				rootElement.style.setProperty("--editor-bg-colour", colour);
-			}
-		},
-		{ immediate: true }
-	);
 </script>
 
 <template>
