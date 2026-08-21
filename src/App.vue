@@ -3,13 +3,14 @@
 	import { onMounted } from "vue";
 	import { RouterView } from "vue-router";
 	import { currentColour } from "@/stores/app";
-	import { hydrateNotes } from "@/stores/notes";
+	import { isLoading, hydrateNotes } from "@/stores/notes";
 	import { isNavigating } from "@/router";
 	import { purgeStaleDrafts } from "@/composables/useNoteDraft";
 	import Icon from "@/components/Icon.vue";
 	import SearchBar from "@/components/SearchBar.vue";
 	import SyncControls from "@/components/SyncControls.vue";
 	import ThemeToggle from "@/components/ThemeToggle.vue";
+	import Spinner from "@/components/Spinner.vue";
 	import ScrollButtons from "@/components/ScrollButtons.vue";
 	import NotificationList from "@/components/NotificationList.vue";
 	import ConfirmDialogue from "@/components/ConfirmDialogue.vue";
@@ -33,7 +34,8 @@
 		</div>
 	</nav>
 	<main class="flex-grow-1 container px-2 py-4" :class="{ [`bg-${currentColour}`]: !!currentColour }">
-		<RouterView/>
+		<Spinner v-if="isLoading" message="Loading notes..."/>
+		<RouterView v-else/>
 	</main>
 	<footer class="bg-body-tertiary border-top">
 		<div class="d-flex flex-wrap justify-content-center align-items-center gap-3 small text-muted px-2 py-3">

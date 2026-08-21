@@ -19,6 +19,7 @@
 	import { useUndoRedo } from "@/composables/useUndoRedo";
 	import Icon from "@/components/Icon.vue";
 	import DisplayColourList from "@/components/DisplayColourList.vue";
+	import Spinner from "@/components/Spinner.vue";
 	import DisplayTagList from "@/components/DisplayTagList.vue";
 	import type { UUID } from "crypto";
 
@@ -156,10 +157,12 @@
 			router.push(backRoute.value);
 		} else {
 			const note = existingNote.value;
-			editTitle.value = note?.title ?? emptyString;
-			editContent.value = loadedContent.value;
-			editColour.value = note?.colour as Colour;
-			editTags.value = copyNullableArray(note?.tags);
+			if (note) {
+				editTitle.value = note.title ?? emptyString;
+				editContent.value = loadedContent.value;
+				editColour.value = note.colour as Colour;
+				editTags.value = copyNullableArray(note.tags);
+			}
 			isEditing.value = false;
 		}
 	}
@@ -381,14 +384,16 @@
 			loadedContent.value = emptyString;
 			editContent.value = emptyString;
 			editColour.value = undefined;
+			editTags.value = undefined;
 			isEditing.value = isCreateMode.value;
 			if (id && !isCreateMode.value) {
 				const note = existingNote.value;
-				loadedContent.value = (await notesStore.getNoteContent(id)) ?? emptyString;
-				editColour.value = note?.colour as Colour;
-				editTags.value = copyNullableArray(note?.tags);
+				if (note) {
+					loadedContent.value = (await notesStore.getNoteContent(id)) ?? emptyString;
+					editColour.value = note.colour as Colour;
+					editTags.value = copyNullableArray(note.tags);
+				}
 			} else {
-				loadedContent.value = emptyString;
 				editTags.value = Array.from(notesStore.searchTags.value);
 			}
 			isContentLoaded.value = true;
@@ -410,24 +415,6 @@
 	watch(editColour, colour => {
 		appStore.currentColour.value = colour;
 	});
-
-	watch(
-		[appStore.fontScaleFactor, appStore.currentColour],
-		([factor, colour]) => {
-			const rootElement = document.documentElement;
-			if (factor === 0) {
-				rootElement.style.removeProperty("--font-scale-factor");
-			} else {
-				rootElement.style.setProperty("--font-scale-factor", factor.toString());
-			}
-			if (colour === undefined) {
-				rootElement.style.removeProperty("--editor-bg-colour");
-			} else {
-				rootElement.style.setProperty("--editor-bg-colour", colour);
-			}
-		},
-		{ immediate: true }
-	);
 </script>
 
 <template>
@@ -532,9 +519,7 @@
 			<div class="badge text-bg-secondary" v-if="existingNote.modifiedAt">Modified {{ formatDate(existingNote.modifiedAt) }}</div>
 		</div>
 		<hr/>
-		<div v-if="!isContentLoaded" class="d-flex justify-content-center py-3">
-			<div class="spinner-border" role="status" aria-label="Loading note..."></div>
-		</div>
+		<Spinner v-if="!isContentLoaded" message="Loading note..." :show-message="false"/>
 		<div v-else class="note-content">{{ loadedContent }}</div>
 	</template>
 	<div class="edit-note">

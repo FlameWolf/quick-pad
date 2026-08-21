@@ -1,4 +1,4 @@
-import { computed, reactive, toRef } from "vue";
+import { computed, reactive, toRef, watch } from "vue";
 import { emptyString } from "@/constants/common";
 import { FONT_SCALE_FACTOR } from "@/constants/ui";
 
@@ -36,3 +36,21 @@ export function setFontScaleFactor(factor: number) {
 	}
 	localStorage.setItem(FONT_SCALE_FACTOR, factor.toString());
 }
+
+watch(
+	[fontScaleFactor, currentColour],
+	([factor, colour]) => {
+		const rootElement = document.documentElement;
+		if (factor === 0) {
+			rootElement.style.removeProperty("--font-scale-factor");
+		} else {
+			rootElement.style.setProperty("--font-scale-factor", factor.toString());
+		}
+		if (colour === undefined) {
+			rootElement.style.removeProperty("--bg-colour-base");
+		} else {
+			rootElement.style.setProperty("--bg-colour-base", colour);
+		}
+	},
+	{ immediate: true }
+);
