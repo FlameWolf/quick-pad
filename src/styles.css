@@ -177,12 +177,17 @@ body {
 .bg-blue,
 .bg-teal,
 .bg-aqua {
-	--bs-border-color: color-mix(in oklab, var(--bg-colour-base) 25%, var(--editor-text-colour));
+	--bs-border-color: color-mix(in oklab, var(--editor-text-colour) 87.5%, var(--bs-body-color));
 	--bs-card-border-color: var(--bs-border-color);
 	--current-bg-colour: color-mix(in oklab, var(--bg-colour-base) 75%, var(--bs-body-bg));
 	--current-text-colour: oklch(from var(--current-bg-colour) round(1.21 - L) 0 0);
 	background-color: color-mix(in oklab, var(--bg-colour-base) 75%, var(--bs-body-bg));
 	color: color-mix(in oklab, var(--current-text-colour) 87.5%, hsl(from var(--current-bg-colour) calc(h + 180) s l));
+
+	hr {
+		border-color: var(--editor-border-colour);
+		opacity: 0.75;
+	}
 
 	.dropdown-menu {
 		--bs-dropdown-border-color: var(--editor-border-colour);
@@ -193,6 +198,11 @@ body {
 		--bs-btn-border-color: var(--editor-border-colour);
 		--bs-btn-color: var(--editor-highlight-colour);
 	}
+
+	&.card.note-card {
+		--bs-border-color: color-mix(in oklab, var(--editor-border-colour) 87.5%, var(--bg-colour-base));
+		--bs-card-border-color: var(--bs-border-color);
+	}
 }
 
 .ms-n1 {
@@ -200,12 +210,9 @@ body {
 }
 
 .card.note-card {
+	--bs-border-color: color-mix(in oklab, var(--editor-border-colour) 50%, var(--bg-colour-base));
+	--bs-card-border-color: var(--bs-border-color);
 	height: 12rem;
-
-	&:not([class*=bg-]) {
-		--bs-border-color: color-mix(in oklab, var(--bs-body-bg) 25%, var(--bs-body-color));
-		--bs-card-border-color: var(--bs-border-color);
-	}
 }
 
 .note-card {
