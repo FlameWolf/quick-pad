@@ -8,7 +8,7 @@
 </script>
 <template>
 	<template v-if="!props.minimal">
-		<div class="d-flex flex-column justify-content-center" :class="{ [showMessage ? `align-items-center` : `py-3`]: true }">
+		<div class="d-flex flex-column justify-content-center align-items-center" :class="{ [`py-3`]: !showMessage }">
 			<div class="spinner-border" aria-hidden="true" :aria-label="showMessage ? undefined : props.message"></div>
 			<div v-if="showMessage" class="mt-3" role="status">{{ props.message ?? "Loading..." }}</div>
 		</div>
