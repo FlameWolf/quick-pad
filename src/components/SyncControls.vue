@@ -5,6 +5,7 @@
 	import { useDropdown } from "@/composables/useDropdown";
 	import { hydrateAuthState, isConfigured, isReady, isSignedIn, signIn, signOut, tryRestoreSession, user } from "@/composables/useGoogleAuth";
 	import { autoSyncEnabled, doPullAndPush, hydrateSyncMetadata, isSyncing, lastSyncedAt, requestSync, setAutoSync, syncError } from "@/composables/useNotesSync";
+	import Spinner from "@/components/Spinner.vue";
 	import Icon from "@/components/Icon.vue";
 
 	let readyTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -115,7 +116,7 @@
 				<div class="dropdown">
 					<button ref="sync-menu-trigger" class="btn btn-outline-secondary btn-sm" @click="toggleSyncMenu()" :disabled="isSyncing" :title="syncError ? `Sync error: ${syncError}` : `Google Drive Sync`" aria-label="Google Drive Sync">
 						<span v-if="isSyncing">
-							<div class="spinner-border spinner-border-sm" role="status"></div>
+							<Spinner :minimal="true"/>
 						</span>
 						<span v-else-if="syncError" class="text-warning">
 							<Icon type="exclamationTriangle"/>
@@ -173,7 +174,7 @@
 				<span class="d-none d-sm-inline ms-2">Sign-in unavailable</span>
 			</button>
 			<button v-else class="btn btn-outline-secondary btn-sm" disabled aria-label="Initialising Google Sign-In">
-				<span class="spinner-border spinner-border-sm" role="status"></span>
+				<Spinner :minimal="true" tag="span"/>
 			</button>
 		</template>
 	</template>

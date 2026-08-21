@@ -19,6 +19,7 @@
 	import { useUndoRedo } from "@/composables/useUndoRedo";
 	import Icon from "@/components/Icon.vue";
 	import DisplayColourList from "@/components/DisplayColourList.vue";
+	import Spinner from "@/components/Spinner.vue";
 	import DisplayTagList from "@/components/DisplayTagList.vue";
 	import type { UUID } from "crypto";
 
@@ -518,9 +519,7 @@
 			<div class="badge text-bg-secondary" v-if="existingNote.modifiedAt">Modified {{ formatDate(existingNote.modifiedAt) }}</div>
 		</div>
 		<hr/>
-		<div v-if="!isContentLoaded" class="d-flex justify-content-center py-3">
-			<div class="spinner-border" role="status" aria-label="Loading note..."></div>
-		</div>
+		<Spinner v-if="!isContentLoaded" message="Loading note..." :show-message="false"/>
 		<div v-else class="note-content">{{ loadedContent }}</div>
 	</template>
 	<div class="edit-note">

@@ -10,6 +10,7 @@
 	import SearchBar from "@/components/SearchBar.vue";
 	import SyncControls from "@/components/SyncControls.vue";
 	import ThemeToggle from "@/components/ThemeToggle.vue";
+	import Spinner from "@/components/Spinner.vue";
 	import ScrollButtons from "@/components/ScrollButtons.vue";
 	import NotificationList from "@/components/NotificationList.vue";
 	import ConfirmDialogue from "@/components/ConfirmDialogue.vue";
@@ -33,10 +34,7 @@
 		</div>
 	</nav>
 	<main class="flex-grow-1 container px-2 py-4" :class="{ [`bg-${currentColour}`]: !!currentColour }">
-		<div v-if="isLoading" class="d-flex flex-column justify-content-center align-items-center">
-			<div class="spinner-border" aria-hidden="true"></div>
-			<div class="mt-3" role="status">Loading notes...</div>
-		</div>
+		<Spinner v-if="isLoading" message="Loading notes..."/>
 		<RouterView v-else/>
 	</main>
 	<footer class="bg-body-tertiary border-top">
