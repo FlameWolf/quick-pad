@@ -169,11 +169,11 @@
 			</template>
 		</template>
 		<template v-else>
-			<button v-if="authTimedOut" class="btn btn-outline-secondary btn-sm" disabled title="Google Sign-In library could not be loaded" aria-label="Sign-in unavailable">
+			<button v-if="authTimedOut" class="btn btn-outline-secondary btn-sm" :disabled="true" title="Google Sign-In library could not be loaded" aria-label="Sign-in unavailable">
 				<Icon type="cloudSlash"/>
 				<span class="d-none d-sm-inline ms-2">Sign-in unavailable</span>
 			</button>
-			<button v-else class="btn btn-outline-secondary btn-sm" disabled aria-label="Initialising Google Sign-In">
+			<button v-else class="btn btn-outline-secondary btn-sm" :disabled="true" aria-label="Initialising Google Sign-In">
 				<Spinner :minimal="true" tag="span"/>
 			</button>
 		</template>

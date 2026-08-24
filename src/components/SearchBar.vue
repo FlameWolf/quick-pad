@@ -1,10 +1,12 @@
 <script setup lang="ts">
 	import { computed, useTemplateRef } from "vue";
+	import { useRoute } from "vue-router";
 	import { emptyString } from "@/constants/common";
 	import { debounce } from "@/utils/timing";
 	import * as notesStore from "@/stores/notes";
 	import { listViewRoutes } from "@/router";
 
+	const route = useRoute();
 	const searchInput = useTemplateRef("search-input");
 	const isSearchMode = computed(() => !!notesStore.searchText.value);
 	const debouncedSearch = debounce(() => {
@@ -19,7 +21,7 @@
 </script>
 <template>
 	<div class="me-auto position-relative">
-		<input ref="search-input" type="text" class="form-control pe-5" placeholder="Search" aria-label="Search notes" :disabled="!listViewRoutes.includes($route.path)" @input="debouncedSearch"/>
+		<input ref="search-input" type="text" class="form-control pe-5" placeholder="Search" aria-label="Search notes" :disabled="!listViewRoutes.includes(route.path)" @input="debouncedSearch"/>
 		<button v-if="isSearchMode" class="btn-close small position-absolute top-50 end-0 translate-middle-y me-2" @click="clearSearch" aria-label="Clear search"></button>
 	</div>
 </template>
