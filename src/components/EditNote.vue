@@ -27,8 +27,8 @@
 		id?: UUID;
 		backRoute?: string;
 	}>();
-	const router = useRouter();
 	const route = useRoute();
+	const router = useRouter();
 	const isCreateMode = computed(() => route.path === "/notes/new");
 	const existingNote = computed(() => (props.id && !isCreateMode.value ? notesStore.getNote(props.id) : undefined));
 	const isEditing = ref(isCreateMode.value);
