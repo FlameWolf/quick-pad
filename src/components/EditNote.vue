@@ -490,7 +490,7 @@
 			</button>
 		</div>
 		<div class="d-flex flex-wrap gap-2" v-if="isEditing">
-			<div ref="dropdown-toggle" class="colour-circle toolbar-icon rounded-circle" :class="{ [!!editColour ? `bg-${editColour}` : `vibgyor`]: true }" @click="dropdown.toggle()" role="button" aria-label="Apply Colour"></div>
+			<div ref="dropdown-toggle" class="colour-circle toolbar-icon rounded-circle" :class="!!editColour ? `bg-${editColour}` : `vibgyor`" @click="dropdown.toggle()" role="button" aria-label="Apply Colour"></div>
 			<button class="btn btn-outline-secondary btn-sm" :disabled="!undoRedo.canUndo.value" @click="doUndo" title="Undo" aria-label="Undo">
 				<Icon type="arrowCounterclockwise"/>
 				<span class="d-none d-sm-inline ms-2">Undo</span>

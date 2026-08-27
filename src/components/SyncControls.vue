@@ -9,8 +9,8 @@
 	import Icon from "@/components/Icon.vue";
 
 	let readyTimeout: ReturnType<typeof setTimeout> | null = null;
-	const syncMenuTrigger = useTemplateRef("sync-menu-trigger");
-	const { show: showSyncMenu, toggle: toggleSyncMenu } = useDropdown(syncMenuTrigger);
+	const dropdownTrigger = useTemplateRef("dropdown-trigger");
+	const dropdown = useDropdown(dropdownTrigger);
 	const authTimedOut = ref(false);
 
 	async function handleSync(force = false) {
@@ -114,7 +114,7 @@
 		<template v-if="isReady">
 			<template v-if="isSignedIn">
 				<div class="dropdown">
-					<button ref="sync-menu-trigger" class="btn btn-outline-secondary btn-sm" @click="toggleSyncMenu()" :disabled="isSyncing" :title="syncError ? `Sync error: ${syncError}` : `Google Drive Sync`" aria-label="Google Drive Sync">
+					<button ref="dropdown-trigger" class="btn btn-outline-secondary btn-sm" @click="dropdown.toggle()" :disabled="isSyncing" :title="syncError ? `Sync error: ${syncError}` : `Google Drive Sync`" aria-label="Google Drive Sync">
 						<span v-if="isSyncing">
 							<Spinner :minimal="true"/>
 						</span>
@@ -129,7 +129,7 @@
 						</span>
 						<span class="d-none d-md-inline ms-2">{{ user?.name ?? "Sync" }}</span>
 					</button>
-					<ul v-if="showSyncMenu" class="dropdown-menu show end-0 mt-1">
+					<ul v-if="dropdown.show.value" class="dropdown-menu show end-0 mt-1">
 						<li class="dropdown-header text-muted small px-3 py-1 text-truncate">{{ user?.email }}</li>
 						<li class="dropdown-divider"></li>
 						<li>

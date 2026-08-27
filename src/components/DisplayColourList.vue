@@ -20,7 +20,7 @@
 </script>
 <template>
 	<div class="d-flex flex-wrap gap-2 p-2 border rounded">
-		<a v-for="colour in colours" class="colour-circle rounded-circle" :class="{ [`bg-${colour}`]: true }" @click="emit(`selectionChanged`, colour)" role="button" :aria-label="colour">
+		<a v-for="colour in colours" class="colour-circle rounded-circle" :class="`bg-${colour}`" @click="emit(`selectionChanged`, colour)" role="button" :aria-label="colour">
 			<Icon v-if="isActive(colour)" type="check2"/>
 		</a>
 	</div>
