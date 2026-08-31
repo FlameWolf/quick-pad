@@ -21,6 +21,7 @@
 		<select id="sort-by-select" class="form-select form-select-sm sort-select" :value="props.sortField" @change="onSortFieldChange" aria-label="Sort notes by">
 			<option value="modifiedAt">Updated</option>
 			<option value="createdAt">Created</option>
+			<option value="colour">Colour</option>
 			<option value="title">Title</option>
 			<option value="sentenceCount">Sentences</option>
 			<option value="wordCount">Words</option>
