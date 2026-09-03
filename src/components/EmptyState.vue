@@ -1,7 +1,11 @@
 <script setup lang="ts">
 	import Icon from "@/components/Icon.vue";
 
-	const props = defineProps<{ message: string; showActions: boolean }>();
+	const props = defineProps<{
+		message: string;
+		showActions: boolean;
+		showCreate: boolean;
+	}>();
 	const emit = defineEmits<{ import: [] }>();
 </script>
 <template>
@@ -12,9 +16,9 @@
 				<path d="M1 6v-.5a.5.5 0 0 1 1 0V6h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0V9h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1z"/>
 			</svg>
 		</div>
-		<p class="text-muted mb-3">{{ props.message }}</p>
+		<p class="text-muted mb-3" v-html="props.message"></p>
 		<div v-if="props.showActions" class="d-flex flex-column gap-2 align-items-center">
-			<div class="d-flex gap-2 justify-content-center flex-wrap">
+			<div v-if="props.showCreate" class="d-flex gap-2 justify-content-center flex-wrap">
 				<RouterLink to="/notes/new" class="btn btn-primary">Create a note</RouterLink>
 				<button class="btn btn-outline-secondary" @click="emit(`import`)">Import from files</button>
 			</div>
