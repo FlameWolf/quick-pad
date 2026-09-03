@@ -93,15 +93,6 @@
 		}
 	});
 	const emptyMessage = computed(() => {
-		if (isSearchMode.value) {
-			const message = `No results found for <mark>${notesStore.searchText.value}</mark>`;
-			switch (view.value) {
-				case "active":
-					return `${message}. Look in:`;
-				default:
-					return message;
-			}
-		}
 		switch (view.value) {
 			case "favourited":
 				return "No favourited notes";
@@ -297,7 +288,15 @@
 		</RouterLink>
 	</div>
 	<Spinner v-if="notesStore.isLoading.value || notesStore.isSearching.value" :message="notesStore.isSearching.value ? `Searching...` : `Loading notes...`"/>
-	<EmptyState v-else-if="!(hasNotes || notesStore.searchTags.value.size || notesStore.searchColours.value.size)" :message="emptyMessage" :show-actions="view === `active`" :show-create="!isSearchMode" @import="handleImport"/>
+	<EmptyState v-else-if="!(hasNotes || notesStore.searchTags.value.size || notesStore.searchColours.value.size)" :show-actions="view === `active`" :show-create="!isSearchMode" @import="handleImport">
+		<template v-if="isSearchMode">
+			<span>No results found for <mark>{{ notesStore.searchText }}</mark></span>
+			<div v-if="view === `active`" class="mt-3">
+				<em>Look in:</em>
+			</div>
+		</template>
+		<template v-else>{{ emptyMessage }}</template>
+	</EmptyState>
 	<template v-else>
 		<div class="d-flex gap-2 mb-3 justify-content-end flex-wrap">
 			<template v-if="isSelecting">
