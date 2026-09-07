@@ -4,7 +4,6 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { defineConfig, type PluginOption } from "vite";
 import vue from "@vitejs/plugin-vue";
-import vueJsx from "@vitejs/plugin-vue-jsx";
 import purgeCSSPlugin from "@fullhuman/postcss-purgecss";
 
 const apiProxy = {
@@ -46,7 +45,7 @@ function precacheManifestPlugin(): PluginOption {
 }
 
 export default defineConfig(({ command }) => ({
-	plugins: [vue(), vueJsx(), precacheManifestPlugin()],
+	plugins: [vue(), precacheManifestPlugin()],
 	resolve: {
 		alias: {
 			"@": fileURLToPath(new URL("./src", import.meta.url))
